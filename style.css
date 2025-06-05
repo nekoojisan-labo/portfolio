@@ -1,0 +1,198 @@
+/* Base Styles */
+body {
+    font-family: 'Poppins', 'Noto Sans JP', sans-serif;
+    background-color: #111827;
+    color: #E5E7EB;
+}
+
+/* Navigation */
+.navbar {
+    background-color: rgba(17, 24, 39, 0.8);
+    backdrop-filter: blur(10px);
+}
+
+/* Hero Section */
+.hero-section {
+    background: linear-gradient(rgba(17, 24, 39, 0.7), rgba(17, 24, 39, 0.9)), 
+                url("https://images.unsplash.com/photo-1519389950473-47ba0277781c?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80") no-repeat center center;
+    background-size: cover;
+}
+
+/* Cards */
+.card {
+    background-color: #1F2937;
+    border-radius: 12px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 255, 255, 0.1), 0 6px 6px rgba(0, 255, 255, 0.05);
+}
+
+/* Buttons */
+.btn-primary {
+    background-color: #00E5FF;
+    color: #111827;
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-primary:hover {
+    background-color: #00B8D4;
+}
+
+.btn-secondary {
+    border: 2px solid #00E5FF;
+    color: #00E5FF;
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-weight: 600;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-secondary:hover {
+    background-color: #00E5FF;
+    color: #111827;
+}
+
+/* Section Titles */
+.section-title {
+    color: #00E5FF;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+/* Navigation Links */
+.nav-link {
+    position: relative;
+    transition: color 0.3s ease;
+    text-decoration: none;
+}
+
+.nav-link::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    display: block;
+    margin-top: 5px;
+    right: 0;
+    background: #00E5FF;
+    transition: width 0.3s ease;
+    -webkit-transition: width 0.3s ease;
+}
+
+.nav-link:hover {
+    color: #00E5FF;
+}
+
+.nav-link:hover::after {
+    width: 100%;
+    left: 0;
+    background-color: #00E5FF;
+}
+
+/* Footer */
+.footer {
+    background-color: #1F2937;
+}
+
+/* Tags */
+.tag {
+    background-color: #374151;
+    color: #00E5FF;
+    border-radius: 16px;
+    padding: 4px 12px;
+    font-size: 0.8rem;
+    display: inline-block;
+}
+
+/* Card Image Placeholder */
+.card-image-placeholder {
+    background-color: #374151;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+}
+
+/* Modal */
+.modal-backdrop {
+    background-color: rgba(0,0,0,0.7);
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-content {
+    background-color: #1F2937;
+    border-radius: 12px;
+    max-width: 90%;
+    max-height: 90%;
+    overflow: auto;
+    padding: 2rem;
+    position: relative;
+}
+
+/* Mobile Menu Responsive */
+@media (max-width: 768px) {
+    #mobile-menu {
+        background-color: rgba(17, 24, 39, 0.95);
+        backdrop-filter: blur(10px);
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        border-radius: 0 0 12px 12px;
+    }
+}
+
+/* Smooth scroll behavior */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Custom animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Focus states for accessibility */
+.btn-primary:focus,
+.btn-secondary:focus,
+input:focus,
+textarea:focus {
+    outline: 2px solid #00E5FF;
+    outline-offset: 2px;
+}
+
+/* Form styling */
+input, textarea {
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+input:focus, textarea:focus {
+    border-color: #00E5FF;
+    box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.1);
+}

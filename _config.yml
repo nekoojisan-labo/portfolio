@@ -1,0 +1,38 @@
+# GitHub Pages Configuration
+# This file helps GitHub Pages properly serve your site
+
+# Site settings
+title: "MyPortfolio - スタイリッシュなポートフォリオサイト"
+description: "動画制作からWebアプリケーション開発まで、最新の技術とデザインでアイデアを形にします。"
+url: "" # Leave empty for GitHub Pages auto-detection
+baseurl: "" # Leave empty if hosting at username.github.io/repository
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+
+# Exclude files from processing
+exclude:
+  - README.md
+  - deploy.sh
+  - .gitignore
+
+# Include files
+include:
+  - .htaccess
+
+# Plugins
+plugins:
+  - jekyll-sitemap
+
+# Site verification (optional)
+# google_site_verification: "your-verification-code"
+
+# SEO settings
+lang: ja
+author: "MyPortfolio"
+
+# Social media (optional)
+github_username: ""
+twitter_username: ""
+linkedin_username: ""

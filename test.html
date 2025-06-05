@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Pages Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            margin: 0;
+            padding: 50px;
+            text-align: center;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        p {
+            font-size: 1.2rem;
+            max-width: 600px;
+            line-height: 1.6;
+        }
+        .success {
+            background: rgba(0, 255, 0, 0.1);
+            border: 2px solid #00ff00;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎉 GitHub Pages テスト成功！</h1>
+    <div class="success">
+        <p><strong>おめでとうございます！</strong><br>
+        GitHub Pagesが正常に動作しています。</p>
+    </div>
+    <p>
+        このテストページが表示されているということは、<br>
+        GitHubリポジトリとGitHub Pagesの設定が正しく完了しています。
+    </p>
+    <p>
+        <strong>次のステップ:</strong><br>
+        このテストファイル（test.html）を削除して、<br>
+        メインのindex.htmlファイルの表示を確認してください。
+    </p>
+    <p style="font-size: 0.9rem; opacity: 0.8; margin-top: 40px;">
+        現在時刻: <span id="time"></span>
+    </p>
+
+    <script>
+        document.getElementById('time').textContent = new Date().toLocaleString('ja-JP');
+    </script>
+</body>
+</html>

@@ -1,0 +1,220 @@
+---
+layout: null
+---
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>{{ site.title | default: "Portfolio - スタイリッシュな作品公開サイト" }}</title>
+    <meta name="description" content="{{ site.description | default: "動画制作からWebアプリケーション開発まで、最新の技術とデザインでアイデアを形にします。" }}"/>
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ site.url }}{{ site.baseurl }}/">
+    <meta property="og:title" content="{{ site.title | default: "MyPortfolio" }}">
+    <meta property="og:description" content="{{ site.description }}">
+    <meta property="og:image" content="{{ site.url }}{{ site.baseurl }}/assets/og-image.jpg">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="{{ site.url }}{{ site.baseurl }}/">
+    <meta property="twitter:title" content="{{ site.title | default: "MyPortfolio" }}">
+    <meta property="twitter:description" content="{{ site.description }}">
+    <meta property="twitter:image" content="{{ site.url }}{{ site.baseurl }}/assets/og-image.jpg">
+    
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;700&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+    <link rel="stylesheet" href="{{ site.baseurl }}/style.css"/>
+</head>
+<body class="antialiased">
+    <nav class="navbar fixed w-full z-50 top-0">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <a class="text-3xl font-bold text-white" href="#">
+                My<span class="text-cyan-400">Portfolio</span>
+            </a>
+            <div class="hidden md:flex space-x-6">
+                <a class="nav-link text-gray-300" href="#home">ホーム</a>
+                <a class="nav-link text-gray-300" href="#works">作品</a>
+                <a class="nav-link text-gray-300" href="#about">私について</a>
+                <a class="nav-link text-gray-300" href="#contact">連絡先</a>
+            </div>
+            <div class="md:hidden">
+                <button class="text-gray-300 focus:outline-none" id="mobile-menu-button">
+                    <span class="material-icons">menu</span>
+                </button>
+            </div>
+        </div>
+        <div class="hidden md:hidden" id="mobile-menu">
+            <a class="block py-2 px-4 text-sm text-gray-300 hover:bg-gray-700 hover:text-cyan-400" href="#home">ホーム</a>
+            <a class="block py-2 px-4 text-sm text-gray-300 hover:bg-gray-700 hover:text-cyan-400" href="#works">作品</a>
+            <a class="block py-2 px-4 text-sm text-gray-300 hover:bg-gray-700 hover:text-cyan-400" href="#about">私について</a>
+            <a class="block py-2 px-4 text-sm text-gray-300 hover:bg-gray-700 hover:text-cyan-400" href="#contact">連絡先</a>
+        </div>
+    </nav>
+
+    <section class="hero-section h-screen flex items-center justify-center text-center pt-16" id="home">
+        <div class="container mx-auto px-6">
+            <h1 class="text-5xl md:text-7xl font-bold mb-6 leading-tight">
+                創造性を解き放つ<br class="hidden md:block"/> <span class="text-cyan-400">デジタル作品</span>のポートフォリオ
+            </h1>
+            <p class="text-xl md:text-2xl text-gray-300 mb-10 max-w-3xl mx-auto">
+                動画制作からWebアプリケーション開発まで、最新の技術とデザインでアイデアを形にします。
+            </p>
+            <div>
+                <a class="btn-primary mr-4 mb-4 md:mb-0" href="#works">作品を見る</a>
+                <a class="btn-secondary" href="#contact">お問い合わせ</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-20 bg-gray-800" id="works">
+        <div class="container mx-auto px-6">
+            <h2 class="text-4xl section-title text-center">制作実績</h2>
+            <p class="text-center text-gray-400 mb-12 max-w-2xl mx-auto">
+                私が手がけた最新のプロジェクトをご覧ください。それぞれの作品には、情熱と革新が込められています。
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="card overflow-hidden project-card" 
+                     data-description="ユーザーがストーリーを選択できるインタラクティブな動画体験を提供するプラットフォーム。最新のストリーミング技術とUI/UXデザインを駆使しました。" 
+                     data-image="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60" 
+                     data-tags="動画編集,UI/UX,Web開発" 
+                     data-title="インタラクティブ動画プラットフォーム">
+                    <div class="card-image-placeholder h-56">
+                        <img alt="インタラクティブ動画プラットフォームのイメージ" class="w-full h-full object-cover" src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60"/>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-2xl font-semibold mb-2 text-white">インタラクティブ動画プラットフォーム</h3>
+                        <div class="mb-3">
+                            <span class="tag mr-2">動画編集</span>
+                            <span class="tag mr-2">UI/UX</span>
+                            <span class="tag">Web開発</span>
+                        </div>
+                        <p class="text-gray-400 text-sm mb-4 truncate">ユーザーがストーリーを選択できるインタラクティブな動画体験を提供するプラットフォーム...</p>
+                        <button class="text-cyan-400 hover:text-cyan-300 font-semibold flex items-center view-details-button">
+                            詳細を見る <span class="material-icons text-sm ml-1">arrow_forward</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card overflow-hidden project-card" 
+                     data-description="機械学習を活用してタスクの優先順位付けを自動化し、生産性向上をサポートするWebアプリケーション。クリーンなインターフェースと強力な機能が特徴です。" 
+                     data-image="https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60" 
+                     data-tags="Webアプリ,AI,効率化" 
+                     data-title="AI搭載タスク管理アプリ">
+                    <div class="card-image-placeholder h-56">
+                        <img alt="AI搭載タスク管理アプリのイメージ" class="w-full h-full object-cover" src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60"/>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-2xl font-semibold mb-2 text-white">AI搭載タスク管理アプリ</h3>
+                        <div class="mb-3">
+                            <span class="tag mr-2">Webアプリ</span>
+                            <span class="tag mr-2">AI</span>
+                            <span class="tag">効率化</span>
+                        </div>
+                        <p class="text-gray-400 text-sm mb-4 truncate">機械学習を活用してタスクの優先順位付けを自動化し、生産性向上をサポートするWebアプリケーション...</p>
+                        <button class="text-cyan-400 hover:text-cyan-300 font-semibold flex items-center view-details-button">
+                            詳細を見る <span class="material-icons text-sm ml-1">arrow_forward</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card overflow-hidden project-card" 
+                     data-description="仮想現実空間でアート作品を鑑賞できる没入型体験アプリ。3Dモデリングとインタラクションデザインに注力し、新しいアートの楽しみ方を提案します。" 
+                     data-image="https://images.unsplash.com/photo-1581091226809-5c086ff60127?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60" 
+                     data-tags="VR,3Dデザイン,アプリ開発" 
+                     data-title="VRアートギャラリー">
+                    <div class="card-image-placeholder h-56">
+                        <img alt="VRアートギャラリーのイメージ" class="w-full h-full object-cover" src="https://images.unsplash.com/photo-1581091226809-5c086ff60127?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=60"/>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="text-2xl font-semibold mb-2 text-white">VRアートギャラリー</h3>
+                        <div class="mb-3">
+                            <span class="tag mr-2">VR</span>
+                            <span class="tag mr-2">3Dデザイン</span>
+                            <span class="tag">アプリ開発</span>
+                        </div>
+                        <p class="text-gray-400 text-sm mb-4 truncate">仮想現実空間でアート作品を鑑賞できる没入型体験アプリ。3Dモデリングとインタラクションデザインに注力...</p>
+                        <button class="text-cyan-400 hover:text-cyan-300 font-semibold flex items-center view-details-button">
+                            詳細を見る <span class="material-icons text-sm ml-1">arrow_forward</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-20" id="about">
+        <div class="container mx-auto px-6">
+            <h2 class="text-4xl section-title text-center">私について</h2>
+            <div class="flex flex-col md:flex-row items-center justify-center md:space-x-12">
+                <div class="md:w-1/3 mb-8 md:mb-0">
+                    <img alt="私のプロフィール写真" class="rounded-full shadow-lg mx-auto w-64 h-64 object-cover border-4 border-cyan-400" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=60"/>
+                </div>
+                <div class="md:w-2/3 text-center md:text-left">
+                    <p class="text-lg text-gray-300 mb-6 leading-relaxed">
+                        こんにちは。私はクリエイティブなテクノロジーとデザインに情熱を燃やすデジタルクリエイターです。
+                        動画編集、Webアプリケーション開発、UI/UXデザインなど、多岐にわたるスキルを活かし、クライアントのビジョンを現実に変えるお手伝いをしています。
+                        常に新しい技術を学び、最高のクオリティでユーザーに感動を与える作品作りを目指しています。
+                        趣味は未来的なガジェット集めと、サイバーパンク映画鑑賞です。
+                    </p>
+                    <a class="btn-primary" href="#contact">話を聞く</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-20 bg-gray-800" id="contact">
+        <div class="container mx-auto px-6">
+            <h2 class="text-4xl section-title text-center">お問い合わせ</h2>
+            <p class="text-center text-gray-400 mb-12 max-w-2xl mx-auto">
+                プロジェクトのご相談、ご質問など、お気軽にご連絡ください。迅速に対応いたします。
+            </p>
+            <form class="max-w-xl mx-auto" id="contact-form">
+                <div class="mb-6">
+                    <label class="block mb-2 text-sm font-medium text-gray-300" for="name">お名前</label>
+                    <input class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-3" id="name" placeholder="山田 太郎" required type="text"/>
+                </div>
+                <div class="mb-6">
+                    <label class="block mb-2 text-sm font-medium text-gray-300" for="email">メールアドレス</label>
+                    <input class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-3" id="email" placeholder="name@example.com" required type="email"/>
+                </div>
+                <div class="mb-6">
+                    <label class="block mb-2 text-sm font-medium text-gray-300" for="message">メッセージ</label>
+                    <textarea class="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-3" id="message" placeholder="お問い合わせ内容をご記入ください..." required rows="4"></textarea>
+                </div>
+                <div class="text-center">
+                    <button class="btn-primary px-8 py-3" type="submit">メッセージを送信</button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <footer class="footer py-12">
+        <div class="container mx-auto px-6 text-center text-gray-400">
+            <div class="mb-4">
+                <a class="text-gray-400 hover:text-cyan-400 mx-3 text-2xl" href="#">X</a>
+                <a class="text-gray-400 hover:text-cyan-400 mx-3 text-2xl" href="#">GitHub</a>
+                <a class="text-gray-400 hover:text-cyan-400 mx-3 text-2xl" href="#">LinkedIn</a>
+            </div>
+            <p>© 2025 MyPortfolio. All Rights Reserved. スタイリッシュにデザインされました。</p>
+        </div>
+    </footer>
+
+    <div class="modal-backdrop hidden" id="project-modal">
+        <div class="modal-content relative w-full md:w-3/4 lg:w-1/2">
+            <button class="absolute top-4 right-4 text-gray-400 hover:text-white" id="close-modal-button">
+                <span class="material-icons text-3xl">close</span>
+            </button>
+            <img alt="プロジェクトの拡大画像" class="w-full h-64 object-cover rounded-t-lg mb-6" id="modal-image" src=""/>
+            <h3 class="text-3xl font-bold mb-3 text-cyan-400" id="modal-title"></h3>
+            <div class="mb-4" id="modal-tags"></div>
+            <p class="text-gray-300 leading-relaxed mb-6" id="modal-description"></p>
+            <a class="btn-primary inline-block" href="#" id="modal-project-link" target="_blank">プロジェクトを見る</a>
+        </div>
+    </div>
+
+    <script src="{{ site.baseurl }}/script.js"></script>
+</body>
+</html>
