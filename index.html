@@ -7,7 +7,11 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;700&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
-    <link rel="stylesheet" href="style.css"/>
+    <link rel="stylesheet" href="style.css?v=202506051500"/>
+    <!-- キャッシュバスター追加 -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
 </head>
 <body class="antialiased">
     <nav class="navbar fixed w-full z-50 top-0">
@@ -183,10 +187,12 @@
         </div>
     </footer>
 
+    <!-- モーダル：修正版 -->
     <div class="modal-backdrop hidden" id="project-modal">
         <div class="modal-content relative w-full md:w-3/4 lg:w-1/2">
-            <button class="absolute top-4 right-4 text-gray-400 hover:text-white" id="close-modal-button">
-                <span class="material-icons text-3xl">close</span>
+            <!-- 閉じるボタンを目立たせる -->
+            <button class="absolute top-4 right-4 text-gray-400 hover:text-white z-50 bg-gray-800 rounded-full p-2" id="close-modal-button" style="background-color: rgba(31, 41, 55, 0.9);">
+                <span class="material-icons text-2xl">close</span>
             </button>
             <img alt="プロジェクトの拡大画像" class="w-full h-64 object-cover rounded-t-lg mb-6" id="modal-image" src=""/>
             <h3 class="text-3xl font-bold mb-3 text-cyan-400" id="modal-title"></h3>
@@ -196,6 +202,32 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <!-- キャッシュバスター付きでJavaScriptを読み込み -->
+    <script src="script.js?v=202506051500"></script>
+
+    <!-- 緊急時のモーダル制御用スクリプト -->
+    <script>
+    // 緊急時にモーダルを閉じる関数をグローバルに定義
+    window.emergencyCloseModal = function() {
+        const modal = document.getElementById('project-modal');
+        if (modal) {
+            modal.style.display = 'none';
+            modal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+            console.log('緊急モーダル閉じ実行');
+        }
+    };
+
+    // ページ読み込み完了後に実行
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('キャッシュバスター版 v202506051500 読み込み完了');
+        
+        // デバッグ情報
+        const modal = document.getElementById('project-modal');
+        const closeBtn = document.getElementById('close-modal-button');
+        console.log('モーダル要素:', modal ? '見つかった' : '見つからない');
+        console.log('閉じるボタン:', closeBtn ? '見つかった' : '見つからない');
+    });
+    </script>
 </body>
 </html>
