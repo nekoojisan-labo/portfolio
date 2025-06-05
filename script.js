@@ -2,15 +2,17 @@
 const mobileMenuButton = document.getElementById('mobile-menu-button');
 const mobileMenu = document.getElementById('mobile-menu');
 
-mobileMenuButton.addEventListener('click', () => {
-    mobileMenu.classList.toggle('hidden');
-});
+if (mobileMenuButton && mobileMenu) {
+    mobileMenuButton.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+    });
+}
 
 // Smooth scrolling for nav links
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
         e.preventDefault();
-        if (mobileMenu.classList.contains('hidden') === false) {
+        if (mobileMenu && !mobileMenu.classList.contains('hidden')) {
             mobileMenu.classList.add('hidden');
         }
         const target = document.querySelector(this.getAttribute('href'));
@@ -23,8 +25,7 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
-// Project Modal Logic
-const projectCards = document.querySelectorAll('.project-card');
+// Project Modal Logic - 完全修正版
 const projectModal = document.getElementById('project-modal');
 const closeModalButton = document.getElementById('close-modal-button');
 const modalImage = document.getElementById('modal-image');
@@ -33,83 +34,139 @@ const modalTagsContainer = document.getElementById('modal-tags');
 const modalDescription = document.getElementById('modal-description');
 const viewDetailsButtons = document.querySelectorAll('.view-details-button');
 
-viewDetailsButtons.forEach(button => {
-    button.addEventListener('click', (e) => {
-        const card = e.target.closest('.project-card');
-        const title = card.dataset.title;
-        const description = card.dataset.description;
-        const image = card.dataset.image;
-        const tags = card.dataset.tags.split(',');
+// モーダルを閉じる関数
+function closeModal() {
+    if (projectModal) {
+        projectModal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+        console.log('Modal closed');
+    }
+}
 
-        modalTitle.textContent = title;
-        modalDescription.textContent = description;
-        modalImage.src = image;
-        modalImage.alt = title + " のイメージ";
+// モーダルを開く関数
+function openModal(card) {
+    if (!projectModal || !modalTitle || !modalDescription || !modalImage || !modalTagsContainer) {
+        console.error('Modal elements not found');
+        return;
+    }
 
-        modalTagsContainer.innerHTML = ''; // Clear previous tags
-        tags.forEach(tagText => {
+    const title = card.dataset.title;
+    const description = card.dataset.description;
+    const image = card.dataset.image;
+    const tags = card.dataset.tags ? card.dataset.tags.split(',') : [];
+
+    modalTitle.textContent = title || 'プロジェクト';
+    modalDescription.textContent = description || '説明がありません';
+    modalImage.src = image || '';
+    modalImage.alt = (title || 'プロジェクト') + " のイメージ";
+
+    // タグをクリア
+    modalTagsContainer.innerHTML = '';
+    
+    // タグを追加
+    tags.forEach(tagText => {
+        if (tagText && tagText.trim()) {
             const tagElement = document.createElement('span');
             tagElement.classList.add('tag', 'mr-2', 'mb-2', 'inline-block');
             tagElement.textContent = tagText.trim();
             modalTagsContainer.appendChild(tagElement);
-        });
+        }
+    });
 
-        projectModal.classList.remove('hidden');
-        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    // モーダルを表示
+    projectModal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    console.log('Modal opened');
+}
+
+// 詳細ボタンのイベントリスナー
+viewDetailsButtons.forEach(button => {
+    button.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const card = e.target.closest('.project-card');
+        if (card) {
+            openModal(card);
+        }
     });
 });
 
-closeModalButton.addEventListener('click', () => {
-    projectModal.classList.add('hidden');
-    document.body.style.overflow = 'auto'; // Restore scrolling
-});
+// 閉じるボタンのイベントリスナー
+if (closeModalButton) {
+    closeModalButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        closeModal();
+    });
+}
 
-projectModal.addEventListener('click', (e) => {
-    if (e.target === projectModal) { // Clicked on backdrop
-        projectModal.classList.add('hidden');
-        document.body.style.overflow = 'auto';
+// バックドロップクリックで閉じる
+if (projectModal) {
+    projectModal.addEventListener('click', (e) => {
+        if (e.target === projectModal) {
+            closeModal();
+        }
+    });
+}
+
+// ESCキーで閉じる
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && projectModal && !projectModal.classList.contains('hidden')) {
+        closeModal();
     }
 });
+
+// デバッグ用グローバル関数
+window.closeModal = closeModal;
+window.debugModal = function() {
+    console.log('Modal element:', projectModal);
+    console.log('Modal classes:', projectModal ? projectModal.className : 'Not found');
+    console.log('Close button:', closeModalButton);
+};
 
 // Contact form handling
 const contactForm = document.getElementById('contact-form');
 
-contactForm.addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    // Get form data
-    const name = document.getElementById('name').value;
-    const email = document.getElementById('email').value;
-    const message = document.getElementById('message').value;
-    
-    // Simple validation
-    if (!name || !email || !message) {
-        alert('すべてのフィールドを入力してください。');
-        return;
-    }
-    
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-        alert('有効なメールアドレスを入力してください。');
-        return;
-    }
-    
-    // Simulate form submission
-    alert('メッセージが送信されました！ありがとうございます。');
-    this.reset();
-});
+if (contactForm) {
+    contactForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Get form data
+        const name = document.getElementById('name')?.value || '';
+        const email = document.getElementById('email')?.value || '';
+        const message = document.getElementById('message')?.value || '';
+        
+        // Simple validation
+        if (!name || !email || !message) {
+            alert('すべてのフィールドを入力してください。');
+            return;
+        }
+        
+        // Email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            alert('有効なメールアドレスを入力してください。');
+            return;
+        }
+        
+        // Simulate form submission
+        alert('メッセージが送信されました！ありがとうございます。');
+        this.reset();
+    });
+}
 
 // Header background change on scroll
 const navbar = document.querySelector('.navbar');
 
-window.addEventListener('scroll', function() {
-    if (window.scrollY > 100) {
-        navbar.style.backgroundColor = 'rgba(17, 24, 39, 0.95)';
-    } else {
-        navbar.style.backgroundColor = 'rgba(17, 24, 39, 0.8)';
-    }
-});
+if (navbar) {
+    window.addEventListener('scroll', function() {
+        if (window.scrollY > 100) {
+            navbar.style.backgroundColor = 'rgba(17, 24, 39, 0.95)';
+        } else {
+            navbar.style.backgroundColor = 'rgba(17, 24, 39, 0.8)';
+        }
+    });
+}
 
 // Add scroll animations
 const observerOptions = {
@@ -136,30 +193,6 @@ document.addEventListener('DOMContentLoaded', function() {
         el.style.transition = 'all 0.6s ease';
         observer.observe(el);
     });
+
+    console.log('Portfolio JavaScript loaded successfully');
 });
-
-// Keyboard navigation for modal
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && !projectModal.classList.contains('hidden')) {
-        projectModal.classList.add('hidden');
-        document.body.style.overflow = 'auto';
-    }
-});
-
-// Lazy loading for images (optional enhancement)
-if ('IntersectionObserver' in window) {
-    const imageObserver = new IntersectionObserver((entries, observer) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const img = entry.target;
-                img.src = img.dataset.src || img.src;
-                img.classList.remove('lazy');
-                imageObserver.unobserve(img);
-            }
-        });
-    });
-
-    document.querySelectorAll('img[data-src]').forEach(img => {
-        imageObserver.observe(img);
-    });
-}
