@@ -1,67 +1,181 @@
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-        document.body.style.overflow = 'auto';
-      }
+<html>
+  <head>
+    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="" />
+    <link
+      rel="stylesheet"
+      as="style"
+      onload="this.rel='stylesheet'"
+      href="https://fonts.googleapis.com/css2?display=swap&amp;family=Inter%3Awght%40400%3B500%3B700%3B900&amp;family=Noto+Sans%3Awght%40400%3B500%3B700%3B900"
+    />
 
-      // プロジェクトカードのクリックイベント
-      document.querySelectorAll('.project-card').forEach(card => {
-        card.addEventListener('click', function() {
-          const title = this.getAttribute('data-title');
-          const image = this.getAttribute('data-image');
-          const tags = this.getAttribute('data-tags');
-          const description = this.getAttribute('data-description');
-          openModal(title, image, tags, description);
-        });
-      });
+    <title>Stitch Design</title>
+    <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64," />
 
-      // モーダルを閉じる
-      closeModal.addEventListener('click', hideModal);
-
-      // モーダル外をクリックして閉じる
-      modal.addEventListener('click', function(e) {
-        if (e.target === modal) {
-          hideModal();
-        }
-      });
-
-      // ESCキーでモーダルを閉じる
-      document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
-          hideModal();
-        }
-      });
-
-      // コンタクトフォーム
-      document.getElementById('contact-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const name = document.getElementById('name').value;
-        const email = document.getElementById('email').value;
-        const message = document.getElementById('message').value;
-        
-        if (!name || !email || !message) {
-          alert('すべてのフィールドを入力してください。');
-          return;
-        }
-        
-        // メールアドレスの簡単な検証
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(email)) {
-          alert('有効なメールアドレスを入力してください。');
-          return;
-        }
-        
-        alert('メッセージが送信されました！ありがとうございます。');
-        this.reset();
-      });
-
-      // ページ読み込み時のアニメーション
-      document.addEventListener('DOMContentLoaded', function() {
-        console.log('Game Portfolio loaded successfully');
-      });
-
-      // デバッグ用
-      window.emergencyCloseModal = hideModal;
-    </script>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  </head>
+  <body>
+    <div class="relative flex size-full min-h-screen flex-col bg-[#101923] dark group/design-root overflow-x-hidden" style='font-family: Inter, "Noto Sans", sans-serif;'>
+      <div class="layout-container flex h-full grow flex-col">
+        <header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-b-[#223449] px-10 py-3">
+          <div class="flex items-center gap-4 text-white">
+            <div class="size-4">
+              <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M24 4C25.7818 14.2173 33.7827 22.2182 44 24C33.7827 25.7818 25.7818 33.7827 24 44C22.2182 33.7827 14.2173 25.7818 4 24C14.2173 22.2182 22.2182 14.2173 24 4Z"
+                  fill="currentColor"
+                ></path>
+              </svg>
+            </div>
+            <h2 class="text-white text-lg font-bold leading-tight tracking-[-0.015em]">Game Portfolio</h2>
+          </div>
+          <div class="flex flex-1 justify-end gap-8">
+            <div class="flex items-center gap-9">
+              <a class="text-white text-sm font-medium leading-normal" href="#">Home</a>
+              <a class="text-white text-sm font-medium leading-normal" href="#">About</a>
+              <a class="text-white text-sm font-medium leading-normal" href="#">Projects</a>
+              <a class="text-white text-sm font-medium leading-normal" href="#">Contact</a>
+            </div>
+            <button
+              class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#0c77f2] text-white text-sm font-bold leading-normal tracking-[0.015em]"
+            >
+              <span class="truncate">Hire Me</span>
+            </button>
+          </div>
+        </header>
+        <div class="px-40 flex flex-1 justify-center py-5">
+          <div class="layout-content-container flex flex-col max-w-[960px] flex-1">
+            <div class="@container">
+              <div class="@[480px]:p-4">
+                <div
+                  class="flex min-h-[480px] flex-col gap-6 bg-cover bg-center bg-no-repeat @[480px]:gap-8 @[480px]:rounded-lg items-start justify-end px-4 pb-10 @[480px]:px-10"
+                  style='background-image: linear-gradient(rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.4) 100%), url("https://lh3.googleusercontent.com/aida-public/AB6AXuCZzPBGZt2BlGwexe1jWMg6GRmvF7ugyQDseLTKKpOYoi1XMJkMSm47FbQKdSTxaDmrSgqOO5O70Nb2Hk0iQEzAR_mSVcXXNf9TCOtCAa2TFI9EidP_lCu6QIHrgs8l46IYAprAbdFRFFK2B6PNHOYtGdzdLUQI4Mzy7SogMSzUt8eh7jCxYxZoXMs-F8P9XU2Gj_B0zqZfRu6OwXfIX6YUwgeJZhJ0SoRshqfS0rpxgGf0po7rYfdjj_6YOmg0C3BUfelxY7Sltw");'
+                >
+                  <div class="flex flex-col gap-2 text-left">
+                    <h1
+                      class="text-white text-4xl font-black leading-tight tracking-[-0.033em] @[480px]:text-5xl @[480px]:font-black @[480px]:leading-tight @[480px]:tracking-[-0.033em]"
+                    >
+                      Crafting Engaging Games and Curricula
+                    </h1>
+                    <h2 class="text-white text-sm font-normal leading-normal @[480px]:text-base @[480px]:font-normal @[480px]:leading-normal">
+                      I'm a passionate game developer and curriculum designer dedicated to creating immersive and educational experiences. Explore my portfolio to see how I blend
+                      creativity and learning.
+                    </h2>
+                  </div>
+                  <button
+                    class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 @[480px]:h-12 @[480px]:px-5 bg-[#0c77f2] text-white text-sm font-bold leading-normal tracking-[0.015em] @[480px]:text-base @[480px]:font-bold @[480px]:leading-normal @[480px]:tracking-[0.015em]"
+                  >
+                    <span class="truncate">View Projects</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <h2 class="text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">Featured Projects</h2>
+            <div class="flex overflow-y-auto [-ms-scrollbar-style:none] [scrollbar-width:none] [&amp;::-webkit-scrollbar]:hidden">
+              <div class="flex items-stretch p-4 gap-3">
+                <div class="flex h-full flex-1 flex-col gap-4 rounded-lg min-w-60">
+                  <div
+                    class="w-full bg-center bg-no-repeat aspect-video bg-cover rounded-lg flex flex-col"
+                    style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDlZXrIg_CsJ-a2cmu-BkME3KoFE8rQBRCHWgBNaPq88ETiKJfvcNv7bVaR0nuNsXJo6iEEr9rohAERwhH_wg25540ih3BRFqTWlaPtjB5kftChppFGA9KBVzqlEe5-srv_g28W0bDoTlZF5WBPLtzdbPtE7Ik39xsZ0GzSEDLkgNMsg_n9iPPmDQObJ0kIbLkBxUtWbPSKyglKekzL-v7_T3naGM5dniNJbVazfzYXFI1s-rRuN411R302GA6yeB0e1QuyX4jHVw");'
+                  ></div>
+                  <div>
+                    <p class="text-white text-base font-medium leading-normal">Interactive Learning Game</p>
+                    <p class="text-[#90abcb] text-sm font-normal leading-normal">An engaging game designed to teach coding concepts to children.</p>
+                  </div>
+                </div>
+                <div class="flex h-full flex-1 flex-col gap-4 rounded-lg min-w-60">
+                  <div
+                    class="w-full bg-center bg-no-repeat aspect-video bg-cover rounded-lg flex flex-col"
+                    style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBt_NOadwR7BvIK_FKvGO3Urgo-Ur2fN7L58JuSB64GADaYAnnmnZBUK7R6iLhPMQgr-0oGP7zOo4KALxJ13YvoeLNB30_ml7ywE3KuMGzOBzo-foMYGsJARSCc9TyloOwnhE3Fp8JNdq6gXj4FQ5OpwlP8Wk8yZFCz-APV9d_ll85VgjGyFOfHNqI7ff5qt6367azI8MGT_79QU3F5M_pd3j19Gd3GrXVVW2MCOQZ6zCLPQdNaNEDT3imcAHzqQS1OtDeCDwTGMg");'
+                  ></div>
+                  <div>
+                    <p class="text-white text-base font-medium leading-normal">Curriculum Design for STEM</p>
+                    <p class="text-[#90abcb] text-sm font-normal leading-normal">A comprehensive curriculum for teaching science, technology, engineering, and math.</p>
+                  </div>
+                </div>
+                <div class="flex h-full flex-1 flex-col gap-4 rounded-lg min-w-60">
+                  <div
+                    class="w-full bg-center bg-no-repeat aspect-video bg-cover rounded-lg flex flex-col"
+                    style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAv4lr8_DH-cQxSaUQSQTbXj59HY2U_YqMRDxKNkyHAw2KX95CMsHEKh8dJdpubuAWDDJWWUWMO7Q4ywrzV7RwjWhwzYfqu4CNG5ljeqPHTr9tKCP-YJdx8v22QdNOu-r4grMz7c_vImsiC-cOtFOWmh-od394fkI-7QEPpFs1sPA_uFs8IOjBnc3XFdzHIFYFaiXbUGqm--5wAUMKTIIdwtl850j-a6U2m706hauUYIill3-L9MbvL9EmavoZlK_bzRdiK1ECMRQ");'
+                  ></div>
+                  <div>
+                    <p class="text-white text-base font-medium leading-normal">Educational Adventure Game</p>
+                    <p class="text-[#90abcb] text-sm font-normal leading-normal">An adventure game that combines fun gameplay with educational content.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <h2 class="text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">About Me</h2>
+            <p class="text-white text-base font-normal leading-normal pb-3 pt-1 px-4">
+              I'm a game developer and curriculum designer with a background in education and a passion for creating engaging and effective learning experiences. My work combines
+              my technical skills with my understanding of pedagogy to produce games and curricula that are both fun and educational. I'm always looking for new challenges and
+              opportunities to collaborate on innovative projects.
+            </p>
+            <h2 class="text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">Contact</h2>
+            <div class="flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3">
+              <label class="flex flex-col min-w-40 flex-1">
+                <p class="text-white text-base font-medium leading-normal pb-2">Email</p>
+                <input
+                  placeholder="Your email"
+                  class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-white focus:outline-0 focus:ring-0 border-none bg-[#223449] focus:border-none h-14 placeholder:text-[#90abcb] p-4 text-base font-normal leading-normal"
+                  value=""
+                />
+              </label>
+            </div>
+            <div class="flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3">
+              <label class="flex flex-col min-w-40 flex-1">
+                <p class="text-white text-base font-medium leading-normal pb-2">Message</p>
+                <textarea
+                  placeholder="Your message"
+                  class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-white focus:outline-0 focus:ring-0 border-none bg-[#223449] focus:border-none min-h-36 placeholder:text-[#90abcb] p-4 text-base font-normal leading-normal"
+                ></textarea>
+              </label>
+            </div>
+            <div class="flex px-4 py-3 justify-start">
+              <button
+                class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#0c77f2] text-white text-sm font-bold leading-normal tracking-[0.015em]"
+              >
+                <span class="truncate">Send</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        <footer class="flex justify-center">
+          <div class="flex max-w-[960px] flex-1 flex-col">
+            <footer class="flex flex-col gap-6 px-5 py-10 text-center @container">
+              <div class="flex flex-wrap justify-center gap-4">
+                <a href="#">
+                  <div class="text-[#90abcb]" data-icon="TwitterLogo" data-size="24px" data-weight="regular">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                      <path
+                        d="M247.39,68.94A8,8,0,0,0,240,64H209.57A48.66,48.66,0,0,0,168.1,40a46.91,46.91,0,0,0-33.75,13.7A47.9,47.9,0,0,0,120,88v6.09C79.74,83.47,46.81,50.72,46.46,50.37a8,8,0,0,0-13.65,4.92c-4.31,47.79,9.57,79.77,22,98.18a110.93,110.93,0,0,0,21.88,24.2c-15.23,17.53-39.21,26.74-39.47,26.84a8,8,0,0,0-3.85,11.93c.75,1.12,3.75,5.05,11.08,8.72C53.51,229.7,65.48,232,80,232c70.67,0,129.72-54.42,135.75-124.44l29.91-29.9A8,8,0,0,0,247.39,68.94Zm-45,29.41a8,8,0,0,0-2.32,5.14C196,166.58,143.28,216,80,216c-10.56,0-18-1.4-23.22-3.08,11.51-6.25,27.56-17,37.88-32.48A8,8,0,0,0,92,169.08c-.47-.27-43.91-26.34-44-96,16,13,45.25,33.17,78.67,38.79A8,8,0,0,0,136,104V88a32,32,0,0,1,9.6-22.92A30.94,30.94,0,0,1,167.9,56c12.66.16,24.49,7.88,29.44,19.21A8,8,0,0,0,204.67,80h16Z"
+                      ></path>
+                    </svg>
+                  </div>
+                </a>
+                <a href="#">
+                  <div class="text-[#90abcb]" data-icon="LinkedinLogo" data-size="24px" data-weight="regular">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                      <path
+                        d="M216,24H40A16,16,0,0,0,24,40V216a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V40A16,16,0,0,0,216,24Zm0,192H40V40H216V216ZM96,112v64a8,8,0,0,1-16,0V112a8,8,0,0,1,16,0Zm88,28v36a8,8,0,0,1-16,0V140a20,20,0,0,0-40,0v36a8,8,0,0,1-16,0V112a8,8,0,0,1,15.79-1.78A36,36,0,0,1,184,140ZM100,84A12,12,0,1,1,88,72,12,12,0,0,1,100,84Z"
+                      ></path>
+                    </svg>
+                  </div>
+                </a>
+                <a href="#">
+                  <div class="text-[#90abcb]" data-icon="GithubLogo" data-size="24px" data-weight="regular">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
+                      <path
+                        d="M208.31,75.68A59.78,59.78,0,0,0,202.93,28,8,8,0,0,0,196,24a59.75,59.75,0,0,0-48,24H124A59.75,59.75,0,0,0,76,24a8,8,0,0,0-6.93,4,59.78,59.78,0,0,0-5.38,47.68A58.14,58.14,0,0,0,56,104v8a56.06,56.06,0,0,0,48.44,55.47A39.8,39.8,0,0,0,96,192v8H72a24,24,0,0,1-24-24A40,40,0,0,0,8,136a8,8,0,0,0,0,16,24,24,0,0,1,24,24,40,40,0,0,0,40,40H96v16a8,8,0,0,0,16,0V192a24,24,0,0,1,48,0v40a8,8,0,0,0,16,0V192a39.8,39.8,0,0,0-8.44-24.53A56.06,56.06,0,0,0,216,112v-8A58.14,58.14,0,0,0,208.31,75.68ZM200,112a40,40,0,0,1-40,40H112a40,40,0,0,1-40-40v-8a41.74,41.74,0,0,1,6.9-22.48A8,8,0,0,0,80,73.83a43.81,43.81,0,0,1,.79-33.58,43.88,43.88,0,0,1,32.32,20.06A8,8,0,0,0,119.82,64h32.35a8,8,0,0,0,6.74-3.69,43.87,43.87,0,0,1,32.32-20.06A43.81,43.81,0,0,1,192,73.83a8.09,8.09,0,0,0,1,7.65A41.72,41.72,0,0,1,200,104Z"
+                      ></path>
+                    </svg>
+                  </div>
+                </a>
+              </div>
+              <p class="text-[#90abcb] text-base font-normal leading-normal">@2024 Game Portfolio. All rights reserved.</p>
+            </footer>
+          </div>
+        </footer>
+      </div>
+    </div>
   </body>
 </html>
