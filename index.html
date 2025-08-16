@@ -134,11 +134,14 @@
             </div>
             <div class="order-1 md:order-2 flex justify-center">
               <div class="relative">
-                <div class="w-80 h-80 bg-gradient-to-br from-primary/20 to-primary-dark/20 rounded-full flex items-center justify-center">
-                  <div class="w-72 h-72 bg-bg-primary rounded-full flex items-center justify-center">
-                    <svg class="w-32 h-32 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                    </svg>
+                <div class="w-80 h-80 bg-gradient-to-br from-primary/20 to-primary-dark/20 rounded-full p-4">
+                  <div class="w-full h-full rounded-full overflow-hidden border-4 border-primary/30">
+                    <img 
+                      src="https://page.gensparksite.com/v1/base64_upload/820522e8a0f66062aaeba09e7bcf0575" 
+                      alt="プロフィール画像 - クリエイターとして活動中" 
+                      class="w-full h-full object-cover"
+                      loading="lazy"
+                    />
                   </div>
                 </div>
                 <div class="absolute top-4 right-4 w-8 h-8 bg-primary rounded-full animate-bounce"></div>
@@ -314,7 +317,7 @@
             <div>
               <h3 class="text-2xl font-bold text-text-primary mb-6">連絡方法</h3>
               <div class="space-y-6">
-                <!-- Email -->
+                <!-- Email Form -->
                 <div class="flex items-start gap-4 p-4 bg-bg-primary rounded-lg hover:bg-bg-tertiary/50 transition-colors duration-300">
                   <div class="flex-shrink-0 w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center">
                     <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -322,9 +325,9 @@
                     </svg>
                   </div>
                   <div>
-                    <h4 class="text-lg font-semibold text-text-primary mb-2">メール</h4>
-                    <p class="text-text-secondary mb-2">お仕事の依頼やご質問はこちらから</p>
-                    <a href="mailto:mp.store.contact.information@gmail.com" class="text-primary hover:text-primary-dark transition-colors duration-300">mp.store.contact.information@gmail.com</a>
+                    <h4 class="text-lg font-semibold text-text-primary mb-2">メールでのお問い合わせ</h4>
+                    <p class="text-text-secondary mb-2">お仕事の依頼やご質問は右のフォームからお送りください</p>
+                    <p class="text-primary text-sm">→ メッセージフォームをご利用ください</p>
                   </div>
                 </div>
                 
@@ -392,13 +395,19 @@
                             placeholder="お問い合わせ内容を詳しくお書きください"></textarea>
                 </div>
                 
-                <button type="submit" 
-                        class="w-full px-8 py-4 bg-gradient-to-r from-primary to-primary-dark text-white font-bold rounded-lg hover:shadow-lg hover:shadow-primary/25 transition-all duration-300 transform hover:scale-105">
-                  <span class="flex items-center justify-center gap-2">
+                <button type="submit" id="submit-btn"
+                        class="w-full px-8 py-4 bg-gradient-to-r from-primary to-primary-dark text-white font-bold rounded-lg hover:shadow-lg hover:shadow-primary/25 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+                  <span id="submit-text" class="flex items-center justify-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
                     </svg>
                     メッセージを送信
+                  </span>
+                  <span id="submit-loading" class="hidden flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    送信中...
                   </span>
                 </button>
               </form>
@@ -518,19 +527,29 @@
         
         // Contact form handling
         const contactForm = document.getElementById('contact-form');
+        const submitBtn = document.getElementById('submit-btn');
+        const submitText = document.getElementById('submit-text');
+        const submitLoading = document.getElementById('submit-loading');
+        
         contactForm.addEventListener('submit', function(e) {
           e.preventDefault();
+          
+          // Show loading state
+          submitBtn.disabled = true;
+          submitText.classList.add('hidden');
+          submitLoading.classList.remove('hidden');
           
           // Get form data
           const formData = new FormData(this);
           const name = formData.get('name');
           const email = formData.get('email');
-          const subject = formData.get('subject');
+          const subject = formData.get('subject') || 'ポートフォリオサイトからのお問い合わせ';
           const message = formData.get('message');
           
           // Simple validation
           if (!name || !email || !message) {
             alert('必須項目を入力してください。');
+            resetSubmitButton();
             return;
           }
           
@@ -538,13 +557,42 @@
           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
           if (!emailRegex.test(email)) {
             alert('正しいメールアドレスを入力してください。');
+            resetSubmitButton();
             return;
           }
           
-          // In a real application, you would send this data to a server
-          alert('メッセージを受け付けました。ありがとうございます！');
-          this.reset();
+          // Simulate processing time
+          setTimeout(() => {
+            // Create mailto link with form data
+            const mailtoSubject = encodeURIComponent(subject);
+            const mailtoBody = encodeURIComponent(
+              `お名前: ${name}\n` +
+              `メールアドレス: ${email}\n` +
+              `件名: ${subject}\n\n` +
+              `メッセージ:\n${message}\n\n` +
+              `---\n` +
+              `ポートフォリオサイトからの送信`
+            );
+            
+            const mailtoLink = `mailto:mp.store.contact.information@gmail.com?subject=${mailtoSubject}&body=${mailtoBody}`;
+            
+            // Open email client
+            window.location.href = mailtoLink;
+            
+            // Show success message
+            setTimeout(() => {
+              alert('メールクライアントを開きました。送信ボタンを押してメッセージを送信してください。\n\nメールクライアントが開かない場合は、LINEでのお問い合わせもご利用ください。');
+              this.reset();
+              resetSubmitButton();
+            }, 500);
+          }, 1000);
         });
+        
+        function resetSubmitButton() {
+          submitBtn.disabled = false;
+          submitText.classList.remove('hidden');
+          submitLoading.classList.add('hidden');
+        }
         
         // Intersection Observer for scroll animations
         const observerOptions = {
