@@ -1,181 +1,580 @@
-<html>
+<!DOCTYPE html>
+<html lang="ja">
   <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="" />
     <link
       rel="stylesheet"
       as="style"
       onload="this.rel='stylesheet'"
-      href="https://fonts.googleapis.com/css2?display=swap&amp;family=Inter%3Awght%40400%3B500%3B700%3B900&amp;family=Noto+Sans%3Awght%40400%3B500%3B700%3B900"
+      href="https://fonts.googleapis.com/css2?display=swap&amp;family=Inter%3Awght%40300%3B400%3B500%3B700%3B900&amp;family=Noto+Sans+JP%3Awght%40300%3B400%3B500%3B700%3B900"
     />
 
-    <title>Stitch Design</title>
+    <title>ポートフォリオ - 創造的なデジタル体験を</title>
+    <meta name="description" content="ゲーム開発、AI活用、動画制作のポートフォリオサイト。おみくじアプリ、タワーディフェンスゲーム、GPTsカスタムなど様々な作品をご紹介します。">
     <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64," />
 
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: '#00E5FF',
+              'primary-dark': '#00B8D4',
+              'bg-primary': '#0F172A',
+              'bg-secondary': '#1E293B',
+              'bg-tertiary': '#334155',
+              'text-primary': '#F1F5F9',
+              'text-secondary': '#94A3B8'
+            },
+            fontFamily: {
+              'ja': ['Noto Sans JP', 'Inter', 'sans-serif']
+            }
+          }
+        }
+      }
+    </script>
   </head>
-  <body>
-    <div class="relative flex size-full min-h-screen flex-col bg-[#101923] dark group/design-root overflow-x-hidden" style='font-family: Inter, "Noto Sans", sans-serif;'>
-      <div class="layout-container flex h-full grow flex-col">
-        <header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-b-[#223449] px-10 py-3">
-          <div class="flex items-center gap-4 text-white">
-            <div class="size-4">
-              <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path
-                  d="M24 4C25.7818 14.2173 33.7827 22.2182 44 24C33.7827 25.7818 25.7818 33.7827 24 44C22.2182 33.7827 14.2173 25.7818 4 24C14.2173 22.2182 22.2182 14.2173 24 4Z"
-                  fill="currentColor"
-                ></path>
+  <body class="font-ja">
+    <div class="relative min-h-screen bg-bg-primary overflow-x-hidden">
+      <!-- Header -->
+      <header class="fixed top-0 w-full bg-bg-primary/90 backdrop-blur-lg border-b border-bg-tertiary/50 z-50">
+        <div class="max-w-6xl mx-auto px-6 py-4">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 bg-gradient-to-r from-primary to-primary-dark rounded-lg flex items-center justify-center">
+                <svg viewBox="0 0 24 24" fill="none" class="w-5 h-5 text-white">
+                  <path d="M12 2L15.09 8.26L22 9L17 14L18.18 21L12 17.77L5.82 21L7 14L2 9L8.91 8.26L12 2Z" fill="currentColor"/>
+                </svg>
+              </div>
+              <h1 class="text-text-primary text-xl font-bold">ポートフォリオ</h1>
+            </div>
+            <nav class="hidden md:flex items-center gap-8">
+              <a href="#about" class="text-text-secondary hover:text-primary transition-colors duration-300">自己紹介</a>
+              <a href="#portfolio" class="text-text-secondary hover:text-primary transition-colors duration-300">作品</a>
+              <a href="#contact" class="text-text-secondary hover:text-primary transition-colors duration-300">お問い合わせ</a>
+            </nav>
+            <button id="mobile-menu-btn" class="md:hidden text-text-primary p-2">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
               </svg>
-            </div>
-            <h2 class="text-white text-lg font-bold leading-tight tracking-[-0.015em]">Game Portfolio</h2>
-          </div>
-          <div class="flex flex-1 justify-end gap-8">
-            <div class="flex items-center gap-9">
-              <a class="text-white text-sm font-medium leading-normal" href="#">Home</a>
-              <a class="text-white text-sm font-medium leading-normal" href="#">About</a>
-              <a class="text-white text-sm font-medium leading-normal" href="#">Projects</a>
-              <a class="text-white text-sm font-medium leading-normal" href="#">Contact</a>
-            </div>
-            <button
-              class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#0c77f2] text-white text-sm font-bold leading-normal tracking-[0.015em]"
-            >
-              <span class="truncate">Hire Me</span>
             </button>
           </div>
-        </header>
-        <div class="px-40 flex flex-1 justify-center py-5">
-          <div class="layout-content-container flex flex-col max-w-[960px] flex-1">
-            <div class="@container">
-              <div class="@[480px]:p-4">
-                <div
-                  class="flex min-h-[480px] flex-col gap-6 bg-cover bg-center bg-no-repeat @[480px]:gap-8 @[480px]:rounded-lg items-start justify-end px-4 pb-10 @[480px]:px-10"
-                  style='background-image: linear-gradient(rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.4) 100%), url("https://lh3.googleusercontent.com/aida-public/AB6AXuCZzPBGZt2BlGwexe1jWMg6GRmvF7ugyQDseLTKKpOYoi1XMJkMSm47FbQKdSTxaDmrSgqOO5O70Nb2Hk0iQEzAR_mSVcXXNf9TCOtCAa2TFI9EidP_lCu6QIHrgs8l46IYAprAbdFRFFK2B6PNHOYtGdzdLUQI4Mzy7SogMSzUt8eh7jCxYxZoXMs-F8P9XU2Gj_B0zqZfRu6OwXfIX6YUwgeJZhJ0SoRshqfS0rpxgGf0po7rYfdjj_6YOmg0C3BUfelxY7Sltw");'
-                >
-                  <div class="flex flex-col gap-2 text-left">
-                    <h1
-                      class="text-white text-4xl font-black leading-tight tracking-[-0.033em] @[480px]:text-5xl @[480px]:font-black @[480px]:leading-tight @[480px]:tracking-[-0.033em]"
-                    >
-                      Crafting Engaging Games and Curricula
-                    </h1>
-                    <h2 class="text-white text-sm font-normal leading-normal @[480px]:text-base @[480px]:font-normal @[480px]:leading-normal">
-                      I'm a passionate game developer and curriculum designer dedicated to creating immersive and educational experiences. Explore my portfolio to see how I blend
-                      creativity and learning.
-                    </h2>
-                  </div>
-                  <button
-                    class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 @[480px]:h-12 @[480px]:px-5 bg-[#0c77f2] text-white text-sm font-bold leading-normal tracking-[0.015em] @[480px]:text-base @[480px]:font-bold @[480px]:leading-normal @[480px]:tracking-[0.015em]"
-                  >
-                    <span class="truncate">View Projects</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-            <h2 class="text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">Featured Projects</h2>
-            <div class="flex overflow-y-auto [-ms-scrollbar-style:none] [scrollbar-width:none] [&amp;::-webkit-scrollbar]:hidden">
-              <div class="flex items-stretch p-4 gap-3">
-                <div class="flex h-full flex-1 flex-col gap-4 rounded-lg min-w-60">
-                  <div
-                    class="w-full bg-center bg-no-repeat aspect-video bg-cover rounded-lg flex flex-col"
-                    style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDlZXrIg_CsJ-a2cmu-BkME3KoFE8rQBRCHWgBNaPq88ETiKJfvcNv7bVaR0nuNsXJo6iEEr9rohAERwhH_wg25540ih3BRFqTWlaPtjB5kftChppFGA9KBVzqlEe5-srv_g28W0bDoTlZF5WBPLtzdbPtE7Ik39xsZ0GzSEDLkgNMsg_n9iPPmDQObJ0kIbLkBxUtWbPSKyglKekzL-v7_T3naGM5dniNJbVazfzYXFI1s-rRuN411R302GA6yeB0e1QuyX4jHVw");'
-                  ></div>
-                  <div>
-                    <p class="text-white text-base font-medium leading-normal">Interactive Learning Game</p>
-                    <p class="text-[#90abcb] text-sm font-normal leading-normal">An engaging game designed to teach coding concepts to children.</p>
-                  </div>
-                </div>
-                <div class="flex h-full flex-1 flex-col gap-4 rounded-lg min-w-60">
-                  <div
-                    class="w-full bg-center bg-no-repeat aspect-video bg-cover rounded-lg flex flex-col"
-                    style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBt_NOadwR7BvIK_FKvGO3Urgo-Ur2fN7L58JuSB64GADaYAnnmnZBUK7R6iLhPMQgr-0oGP7zOo4KALxJ13YvoeLNB30_ml7ywE3KuMGzOBzo-foMYGsJARSCc9TyloOwnhE3Fp8JNdq6gXj4FQ5OpwlP8Wk8yZFCz-APV9d_ll85VgjGyFOfHNqI7ff5qt6367azI8MGT_79QU3F5M_pd3j19Gd3GrXVVW2MCOQZ6zCLPQdNaNEDT3imcAHzqQS1OtDeCDwTGMg");'
-                  ></div>
-                  <div>
-                    <p class="text-white text-base font-medium leading-normal">Curriculum Design for STEM</p>
-                    <p class="text-[#90abcb] text-sm font-normal leading-normal">A comprehensive curriculum for teaching science, technology, engineering, and math.</p>
-                  </div>
-                </div>
-                <div class="flex h-full flex-1 flex-col gap-4 rounded-lg min-w-60">
-                  <div
-                    class="w-full bg-center bg-no-repeat aspect-video bg-cover rounded-lg flex flex-col"
-                    style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAv4lr8_DH-cQxSaUQSQTbXj59HY2U_YqMRDxKNkyHAw2KX95CMsHEKh8dJdpubuAWDDJWWUWMO7Q4ywrzV7RwjWhwzYfqu4CNG5ljeqPHTr9tKCP-YJdx8v22QdNOu-r4grMz7c_vImsiC-cOtFOWmh-od394fkI-7QEPpFs1sPA_uFs8IOjBnc3XFdzHIFYFaiXbUGqm--5wAUMKTIIdwtl850j-a6U2m706hauUYIill3-L9MbvL9EmavoZlK_bzRdiK1ECMRQ");'
-                  ></div>
-                  <div>
-                    <p class="text-white text-base font-medium leading-normal">Educational Adventure Game</p>
-                    <p class="text-[#90abcb] text-sm font-normal leading-normal">An adventure game that combines fun gameplay with educational content.</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <h2 class="text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">About Me</h2>
-            <p class="text-white text-base font-normal leading-normal pb-3 pt-1 px-4">
-              I'm a game developer and curriculum designer with a background in education and a passion for creating engaging and effective learning experiences. My work combines
-              my technical skills with my understanding of pedagogy to produce games and curricula that are both fun and educational. I'm always looking for new challenges and
-              opportunities to collaborate on innovative projects.
+        </div>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-bg-secondary border-t border-bg-tertiary/50">
+          <div class="px-6 py-4 space-y-4">
+            <a href="#about" class="block text-text-secondary hover:text-primary transition-colors duration-300">自己紹介</a>
+            <a href="#portfolio" class="block text-text-secondary hover:text-primary transition-colors duration-300">作品</a>
+            <a href="#contact" class="block text-text-secondary hover:text-primary transition-colors duration-300">お問い合わせ</a>
+          </div>
+        </div>
+      </header>
+
+      <!-- Hero Section -->
+      <section class="pt-20 min-h-screen flex items-center justify-center relative overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-primary"></div>
+        <div class="absolute inset-0 opacity-10">
+          <div class="absolute top-1/4 left-1/4 w-32 h-32 bg-primary rounded-full blur-3xl animate-pulse"></div>
+          <div class="absolute bottom-1/4 right-1/4 w-48 h-48 bg-primary-dark rounded-full blur-3xl animate-pulse delay-1000"></div>
+        </div>
+        <div class="relative z-10 max-w-4xl mx-auto px-6 text-center">
+          <div class="mb-8">
+            <h1 class="text-5xl md:text-7xl font-bold text-text-primary mb-6 leading-tight">
+              創造的な
+              <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-dark">
+                デジタル体験
+              </span>
+              を
+            </h1>
+            <p class="text-xl md:text-2xl text-text-secondary mb-8 leading-relaxed">
+              ゲーム開発からAI活用まで、<br class="md:hidden">
+              技術と創造性を組み合わせた作品をお届けします
             </p>
-            <h2 class="text-white text-[22px] font-bold leading-tight tracking-[-0.015em] px-4 pb-3 pt-5">Contact</h2>
-            <div class="flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3">
-              <label class="flex flex-col min-w-40 flex-1">
-                <p class="text-white text-base font-medium leading-normal pb-2">Email</p>
-                <input
-                  placeholder="Your email"
-                  class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-white focus:outline-0 focus:ring-0 border-none bg-[#223449] focus:border-none h-14 placeholder:text-[#90abcb] p-4 text-base font-normal leading-normal"
-                  value=""
-                />
-              </label>
+          </div>
+          <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="#portfolio" class="px-8 py-4 bg-gradient-to-r from-primary to-primary-dark text-white font-bold rounded-lg hover:shadow-lg hover:shadow-primary/25 transition-all duration-300 transform hover:scale-105">
+              作品を見る
+            </a>
+            <a href="#contact" class="px-8 py-4 border-2 border-primary text-primary font-bold rounded-lg hover:bg-primary hover:text-white transition-all duration-300">
+              お問い合わせ
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- About Section -->
+      <section id="about" class="py-20 bg-bg-secondary">
+        <div class="max-w-6xl mx-auto px-6">
+          <div class="text-center mb-16">
+            <h2 class="text-4xl md:text-5xl font-bold text-text-primary mb-6">自己紹介</h2>
+            <div class="w-24 h-1 bg-gradient-to-r from-primary to-primary-dark mx-auto"></div>
+          </div>
+          <div class="grid md:grid-cols-2 gap-12 items-center">
+            <div class="order-2 md:order-1">
+              <div class="prose prose-lg text-text-secondary leading-relaxed">
+                <p class="mb-6">
+                  こんにちは！私は技術と創造性を組み合わせて、人々に新しい体験を提供することに情熱を注いでいるクリエイターです。
+                </p>
+                <p class="mb-6">
+                  ゲーム開発、AI技術の活用、動画制作など、幅広い分野で活動しています。特に、ユーザーが楽しみながら学べるインタラクティブなコンテンツの制作を得意としています。
+                </p>
+                <p class="mb-6">
+                  常に新しい技術にチャレンジし、それらを使って実用的で魅力的な作品を生み出すことを心がけています。
+                </p>
+                <div class="flex flex-wrap gap-3 mt-8">
+                  <span class="px-4 py-2 bg-bg-tertiary text-text-primary rounded-lg text-sm">ゲーム開発</span>
+                  <span class="px-4 py-2 bg-bg-tertiary text-text-primary rounded-lg text-sm">AI活用</span>
+                  <span class="px-4 py-2 bg-bg-tertiary text-text-primary rounded-lg text-sm">動画制作</span>
+                  <span class="px-4 py-2 bg-bg-tertiary text-text-primary rounded-lg text-sm">Web開発</span>
+                </div>
+              </div>
             </div>
-            <div class="flex max-w-[480px] flex-wrap items-end gap-4 px-4 py-3">
-              <label class="flex flex-col min-w-40 flex-1">
-                <p class="text-white text-base font-medium leading-normal pb-2">Message</p>
-                <textarea
-                  placeholder="Your message"
-                  class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-white focus:outline-0 focus:ring-0 border-none bg-[#223449] focus:border-none min-h-36 placeholder:text-[#90abcb] p-4 text-base font-normal leading-normal"
-                ></textarea>
-              </label>
-            </div>
-            <div class="flex px-4 py-3 justify-start">
-              <button
-                class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#0c77f2] text-white text-sm font-bold leading-normal tracking-[0.015em]"
-              >
-                <span class="truncate">Send</span>
-              </button>
+            <div class="order-1 md:order-2 flex justify-center">
+              <div class="relative">
+                <div class="w-80 h-80 bg-gradient-to-br from-primary/20 to-primary-dark/20 rounded-full flex items-center justify-center">
+                  <div class="w-72 h-72 bg-bg-primary rounded-full flex items-center justify-center">
+                    <svg class="w-32 h-32 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                  </div>
+                </div>
+                <div class="absolute top-4 right-4 w-8 h-8 bg-primary rounded-full animate-bounce"></div>
+                <div class="absolute bottom-8 left-8 w-6 h-6 bg-primary-dark rounded-full animate-pulse"></div>
+              </div>
             </div>
           </div>
         </div>
-        <footer class="flex justify-center">
-          <div class="flex max-w-[960px] flex-1 flex-col">
-            <footer class="flex flex-col gap-6 px-5 py-10 text-center @container">
-              <div class="flex flex-wrap justify-center gap-4">
-                <a href="#">
-                  <div class="text-[#90abcb]" data-icon="TwitterLogo" data-size="24px" data-weight="regular">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
-                      <path
-                        d="M247.39,68.94A8,8,0,0,0,240,64H209.57A48.66,48.66,0,0,0,168.1,40a46.91,46.91,0,0,0-33.75,13.7A47.9,47.9,0,0,0,120,88v6.09C79.74,83.47,46.81,50.72,46.46,50.37a8,8,0,0,0-13.65,4.92c-4.31,47.79,9.57,79.77,22,98.18a110.93,110.93,0,0,0,21.88,24.2c-15.23,17.53-39.21,26.74-39.47,26.84a8,8,0,0,0-3.85,11.93c.75,1.12,3.75,5.05,11.08,8.72C53.51,229.7,65.48,232,80,232c70.67,0,129.72-54.42,135.75-124.44l29.91-29.9A8,8,0,0,0,247.39,68.94Zm-45,29.41a8,8,0,0,0-2.32,5.14C196,166.58,143.28,216,80,216c-10.56,0-18-1.4-23.22-3.08,11.51-6.25,27.56-17,37.88-32.48A8,8,0,0,0,92,169.08c-.47-.27-43.91-26.34-44-96,16,13,45.25,33.17,78.67,38.79A8,8,0,0,0,136,104V88a32,32,0,0,1,9.6-22.92A30.94,30.94,0,0,1,167.9,56c12.66.16,24.49,7.88,29.44,19.21A8,8,0,0,0,204.67,80h16Z"
-                      ></path>
+      </section>
+
+      <!-- Portfolio Section -->
+      <section id="portfolio" class="py-20 bg-bg-primary">
+        <div class="max-w-6xl mx-auto px-6">
+          <div class="text-center mb-16">
+            <h2 class="text-4xl md:text-5xl font-bold text-text-primary mb-6">ポートフォリオ</h2>
+            <div class="w-24 h-1 bg-gradient-to-r from-primary to-primary-dark mx-auto mb-4"></div>
+            <p class="text-xl text-text-secondary">これまでに制作した主な作品をご紹介します</p>
+          </div>
+          
+          <!-- Games & Apps -->
+          <div class="mb-16">
+            <h3 class="text-2xl font-bold text-text-primary mb-8 text-center">ゲーム・アプリケーション</h3>
+            <div class="grid md:grid-cols-2 gap-8">
+              <!-- おみくじアプリ -->
+              <div class="group bg-bg-secondary rounded-xl overflow-hidden hover:transform hover:scale-105 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10">
+                <div class="aspect-video bg-gradient-to-br from-primary/20 to-primary-dark/20 flex items-center justify-center">
+                  <div class="text-center">
+                    <svg class="w-16 h-16 text-primary mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    </svg>
+                    <p class="text-text-secondary text-sm">おみくじアプリ</p>
+                  </div>
+                </div>
+                <div class="p-6">
+                  <h4 class="text-xl font-bold text-text-primary mb-3">デジタルおみくじ</h4>
+                  <p class="text-text-secondary mb-4">日本の伝統的なおみくじをデジタル化したWebアプリケーション。美しいアニメーションと共に運勢を占えます。</p>
+                  <div class="flex gap-2 mb-4">
+                    <span class="px-3 py-1 bg-bg-tertiary text-text-primary rounded-lg text-xs">JavaScript</span>
+                    <span class="px-3 py-1 bg-bg-tertiary text-text-primary rounded-lg text-xs">CSS3</span>
+                    <span class="px-3 py-1 bg-bg-tertiary text-text-primary rounded-lg text-xs">HTML5</span>
+                  </div>
+                  <a href="#" class="inline-block px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors duration-300">詳細を見る</a>
+                </div>
+              </div>
+              
+              <!-- タワーディフェンスゲーム -->
+              <div class="group bg-bg-secondary rounded-xl overflow-hidden hover:transform hover:scale-105 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10">
+                <div class="aspect-video bg-gradient-to-br from-primary-dark/20 to-primary/20 flex items-center justify-center">
+                  <div class="text-center">
+                    <svg class="w-16 h-16 text-primary mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path>
+                    </svg>
+                    <p class="text-text-secondary text-sm">タワーディフェンス</p>
+                  </div>
+                </div>
+                <div class="p-6">
+                  <h4 class="text-xl font-bold text-text-primary mb-3">タワーディフェンスゲーム</h4>
+                  <p class="text-text-secondary mb-4">戦略性の高いタワーディフェンスゲーム。様々なタワーと敵キャラクターが登場する本格的なゲーム体験を提供します。</p>
+                  <div class="flex gap-2 mb-4">
+                    <span class="px-3 py-1 bg-bg-tertiary text-text-primary rounded-lg text-xs">Unity</span>
+                    <span class="px-3 py-1 bg-bg-tertiary text-text-primary rounded-lg text-xs">C#</span>
+                    <span class="px-3 py-1 bg-bg-tertiary text-text-primary rounded-lg text-xs">Game Design</span>
+                  </div>
+                  <a href="#" class="inline-block px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors duration-300">詳細を見る</a>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- GPTs Section -->
+          <div class="mb-16">
+            <h3 class="text-2xl font-bold text-text-primary mb-8 text-center">AI・GPTsカスタム</h3>
+            <div class="grid md:grid-cols-2 gap-8">
+              <!-- NOTE GPT -->
+              <div class="group bg-bg-secondary rounded-xl overflow-hidden hover:transform hover:scale-105 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10">
+                <div class="aspect-video bg-gradient-to-br from-green-500/20 to-blue-500/20 flex items-center justify-center">
+                  <div class="text-center">
+                    <svg class="w-16 h-16 text-green-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                    <p class="text-text-secondary text-sm">NOTE GPT</p>
+                  </div>
+                </div>
+                <div class="p-6">
+                  <h4 class="text-xl font-bold text-text-primary mb-3">ノート作成AI</h4>
+                  <p class="text-text-secondary mb-4">効率的なノート作成をサポートするカスタムGPT。構造化された情報整理と要約機能を提供します。</p>
+                  <div class="flex gap-2 mb-4">
+                    <span class="px-3 py-1 bg-bg-tertiary text-text-primary rounded-lg text-xs">OpenAI GPT</span>
+                    <span class="px-3 py-1 bg-bg-tertiary text-text-primary rounded-lg text-xs">AI</span>
+                    <span class="px-3 py-1 bg-bg-tertiary text-text-primary rounded-lg text-xs">Productivity</span>
+                  </div>
+                  <a href="#" class="inline-block px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors duration-300">NOTEで見る</a>
+                </div>
+              </div>
+              
+              <!-- Brain GPT -->
+              <div class="group bg-bg-secondary rounded-xl overflow-hidden hover:transform hover:scale-105 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10">
+                <div class="aspect-video bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
+                  <div class="text-center">
+                    <svg class="w-16 h-16 text-purple-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364-.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                    </svg>
+                    <p class="text-text-secondary text-sm">Brain GPT</p>
+                  </div>
+                </div>
+                <div class="p-6">
+                  <h4 class="text-xl font-bold text-text-primary mb-3">思考支援AI</h4>
+                  <p class="text-text-secondary mb-4">創造的思考とアイデア発想をサポートするカスタムGPT。ブレインストーミングや問題解決に最適化されています。</p>
+                  <div class="flex gap-2 mb-4">
+                    <span class="px-3 py-1 bg-bg-tertiary text-text-primary rounded-lg text-xs">OpenAI GPT</span>
+                    <span class="px-3 py-1 bg-bg-tertiary text-text-primary rounded-lg text-xs">Creativity</span>
+                    <span class="px-3 py-1 bg-bg-tertiary text-text-primary rounded-lg text-xs">Brainstorming</span>
+                  </div>
+                  <a href="#" class="inline-block px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors duration-300">Brainで見る</a>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Videos Section -->
+          <div>
+            <h3 class="text-2xl font-bold text-text-primary mb-8 text-center">動画・メディア制作</h3>
+            <div class="bg-bg-secondary rounded-xl p-8 text-center">
+              <svg class="w-16 h-16 text-primary mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+              </svg>
+              <h4 class="text-xl font-bold text-text-primary mb-3">動画コンテンツ制作</h4>
+              <p class="text-text-secondary mb-6">教育動画、プロモーション映像、チュートリアル動画など、様々なジャンルの動画制作を手がけています。企画から編集まで一貫してサポートします。</p>
+              <div class="flex flex-wrap gap-2 justify-center mb-6">
+                <span class="px-3 py-1 bg-bg-tertiary text-text-primary rounded-lg text-xs">Adobe Premiere</span>
+                <span class="px-3 py-1 bg-bg-tertiary text-text-primary rounded-lg text-xs">After Effects</span>
+                <span class="px-3 py-1 bg-bg-tertiary text-text-primary rounded-lg text-xs">Motion Graphics</span>
+              </div>
+              <a href="#contact" class="inline-block px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors duration-300">制作依頼はこちら</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Contact Section -->
+      <section id="contact" class="py-20 bg-bg-secondary">
+        <div class="max-w-4xl mx-auto px-6">
+          <div class="text-center mb-16">
+            <h2 class="text-4xl md:text-5xl font-bold text-text-primary mb-6">お問い合わせ</h2>
+            <div class="w-24 h-1 bg-gradient-to-r from-primary to-primary-dark mx-auto mb-4"></div>
+            <p class="text-xl text-text-secondary">お気軽にご連絡ください</p>
+          </div>
+          
+          <div class="grid md:grid-cols-2 gap-12">
+            <!-- Contact Info -->
+            <div>
+              <h3 class="text-2xl font-bold text-text-primary mb-6">連絡方法</h3>
+              <div class="space-y-6">
+                <!-- Email -->
+                <div class="flex items-start gap-4 p-4 bg-bg-primary rounded-lg hover:bg-bg-tertiary/50 transition-colors duration-300">
+                  <div class="flex-shrink-0 w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                     </svg>
                   </div>
+                  <div>
+                    <h4 class="text-lg font-semibold text-text-primary mb-2">メール</h4>
+                    <p class="text-text-secondary mb-2">お仕事の依頼やご質問はこちらから</p>
+                    <a href="mailto:contact@example.com" class="text-primary hover:text-primary-dark transition-colors duration-300">contact@example.com</a>
+                  </div>
+                </div>
+                
+                <!-- LINE -->
+                <div class="flex items-start gap-4 p-4 bg-bg-primary rounded-lg hover:bg-bg-tertiary/50 transition-colors duration-300">
+                  <div class="flex-shrink-0 w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-green-400" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63.349 0 .631.285.631.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 class="text-lg font-semibold text-text-primary mb-2">公式LINE</h4>
+                    <p class="text-text-secondary mb-2">お気軽にチャットでご相談ください</p>
+                    <a href="#" class="inline-block px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors duration-300">友達追加</a>
+                  </div>
+                </div>
+                
+                <!-- Response Time -->
+                <div class="bg-bg-primary rounded-lg p-4">
+                  <div class="flex items-center gap-3 mb-2">
+                    <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <h4 class="text-lg font-semibold text-text-primary">返信時間</h4>
+                  </div>
+                  <p class="text-text-secondary">通常24時間以内にご返信いたします</p>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Contact Form -->
+            <div>
+              <h3 class="text-2xl font-bold text-text-primary mb-6">メッセージを送る</h3>
+              <form class="space-y-6" id="contact-form">
+                <div>
+                  <label for="name" class="block text-text-primary font-medium mb-2">お名前 *</label>
+                  <input type="text" id="name" name="name" required 
+                         class="w-full px-4 py-3 bg-bg-primary border border-bg-tertiary rounded-lg text-text-primary placeholder-text-secondary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300" 
+                         placeholder="お名前を入力してください">
+                </div>
+                
+                <div>
+                  <label for="email" class="block text-text-primary font-medium mb-2">メールアドレス *</label>
+                  <input type="email" id="email" name="email" required 
+                         class="w-full px-4 py-3 bg-bg-primary border border-bg-tertiary rounded-lg text-text-primary placeholder-text-secondary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300" 
+                         placeholder="your@email.com">
+                </div>
+                
+                <div>
+                  <label for="subject" class="block text-text-primary font-medium mb-2">件名</label>
+                  <input type="text" id="subject" name="subject" 
+                         class="w-full px-4 py-3 bg-bg-primary border border-bg-tertiary rounded-lg text-text-primary placeholder-text-secondary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300" 
+                         placeholder="お問い合わせの件名">
+                </div>
+                
+                <div>
+                  <label for="message" class="block text-text-primary font-medium mb-2">メッセージ *</label>
+                  <textarea id="message" name="message" rows="5" required 
+                            class="w-full px-4 py-3 bg-bg-primary border border-bg-tertiary rounded-lg text-text-primary placeholder-text-secondary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300 resize-vertical" 
+                            placeholder="お問い合わせ内容を詳しくお書きください"></textarea>
+                </div>
+                
+                <button type="submit" 
+                        class="w-full px-8 py-4 bg-gradient-to-r from-primary to-primary-dark text-white font-bold rounded-lg hover:shadow-lg hover:shadow-primary/25 transition-all duration-300 transform hover:scale-105">
+                  <span class="flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                    </svg>
+                    メッセージを送信
+                  </span>
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <!-- Back to Top Button -->
+      <button id="back-to-top" class="fixed bottom-8 right-8 w-12 h-12 bg-primary hover:bg-primary-dark text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 opacity-0 pointer-events-none">
+        <svg class="w-6 h-6 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+        </svg>
+      </button>
+
+      <!-- Footer -->
+      <footer class="bg-bg-primary border-t border-bg-tertiary/50 py-12">
+        <div class="max-w-6xl mx-auto px-6">
+          <div class="grid md:grid-cols-3 gap-8">
+            <div>
+              <div class="flex items-center gap-3 mb-4">
+                <div class="w-8 h-8 bg-gradient-to-r from-primary to-primary-dark rounded-lg flex items-center justify-center">
+                  <svg viewBox="0 0 24 24" fill="none" class="w-5 h-5 text-white">
+                    <path d="M12 2L15.09 8.26L22 9L17 14L18.18 21L12 17.77L5.82 21L7 14L2 9L8.91 8.26L12 2Z" fill="currentColor"/>
+                  </svg>
+                </div>
+                <h3 class="text-text-primary text-lg font-bold">ポートフォリオ</h3>
+              </div>
+              <p class="text-text-secondary leading-relaxed">
+                技術と創造性を組み合わせて、新しいデジタル体験を創造しています。
+              </p>
+            </div>
+            
+            <div>
+              <h4 class="text-text-primary font-bold mb-4">サイトマップ</h4>
+              <ul class="space-y-2">
+                <li><a href="#about" class="text-text-secondary hover:text-primary transition-colors duration-300">自己紹介</a></li>
+                <li><a href="#portfolio" class="text-text-secondary hover:text-primary transition-colors duration-300">ポートフォリオ</a></li>
+                <li><a href="#contact" class="text-text-secondary hover:text-primary transition-colors duration-300">お問い合わせ</a></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h4 class="text-text-primary font-bold mb-4">SNS・リンク</h4>
+              <div class="flex gap-4">
+                <a href="#" class="w-10 h-10 bg-bg-secondary hover:bg-bg-tertiary rounded-lg flex items-center justify-center text-text-secondary hover:text-primary transition-all duration-300">
+                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                  </svg>
                 </a>
-                <a href="#">
-                  <div class="text-[#90abcb]" data-icon="LinkedinLogo" data-size="24px" data-weight="regular">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
-                      <path
-                        d="M216,24H40A16,16,0,0,0,24,40V216a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V40A16,16,0,0,0,216,24Zm0,192H40V40H216V216ZM96,112v64a8,8,0,0,1-16,0V112a8,8,0,0,1,16,0Zm88,28v36a8,8,0,0,1-16,0V140a20,20,0,0,0-40,0v36a8,8,0,0,1-16,0V112a8,8,0,0,1,15.79-1.78A36,36,0,0,1,184,140ZM100,84A12,12,0,1,1,88,72,12,12,0,0,1,100,84Z"
-                      ></path>
-                    </svg>
-                  </div>
+                <a href="#" class="w-10 h-10 bg-bg-secondary hover:bg-bg-tertiary rounded-lg flex items-center justify-center text-text-secondary hover:text-primary transition-all duration-300">
+                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.174-.105-.949-.199-2.403.041-3.439.219-.937 1.406-5.957 1.406-5.957s-.359-.72-.359-1.781c0-1.663.967-2.911 2.168-2.911 1.024 0 1.518.769 1.518 1.688 0 1.029-.653 2.567-.992 3.992-.285 1.193.6 2.165 1.775 2.165 2.128 0 3.768-2.245 3.768-5.487 0-2.861-2.063-4.869-5.008-4.869-3.41 0-5.409 2.562-5.409 5.199 0 1.033.394 2.143.889 2.741.099.12.112.225.085.345-.09.375-.293 1.199-.334 1.363-.053.225-.172.271-.402.165-1.495-.69-2.433-2.878-2.433-4.646 0-3.776 2.748-7.252 7.92-7.252 4.158 0 7.392 2.967 7.392 6.923 0 4.135-2.607 7.462-6.233 7.462-1.214 0-2.357-.629-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24.009 12.017 24.009c6.624 0 11.99-5.367 11.99-11.988C24.007 5.367 18.641.001.012.017 0z"/>
+                  </svg>
                 </a>
-                <a href="#">
-                  <div class="text-[#90abcb]" data-icon="GithubLogo" data-size="24px" data-weight="regular">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24px" height="24px" fill="currentColor" viewBox="0 0 256 256">
-                      <path
-                        d="M208.31,75.68A59.78,59.78,0,0,0,202.93,28,8,8,0,0,0,196,24a59.75,59.75,0,0,0-48,24H124A59.75,59.75,0,0,0,76,24a8,8,0,0,0-6.93,4,59.78,59.78,0,0,0-5.38,47.68A58.14,58.14,0,0,0,56,104v8a56.06,56.06,0,0,0,48.44,55.47A39.8,39.8,0,0,0,96,192v8H72a24,24,0,0,1-24-24A40,40,0,0,0,8,136a8,8,0,0,0,0,16,24,24,0,0,1,24,24,40,40,0,0,0,40,40H96v16a8,8,0,0,0,16,0V192a24,24,0,0,1,48,0v40a8,8,0,0,0,16,0V192a39.8,39.8,0,0,0-8.44-24.53A56.06,56.06,0,0,0,216,112v-8A58.14,58.14,0,0,0,208.31,75.68ZM200,112a40,40,0,0,1-40,40H112a40,40,0,0,1-40-40v-8a41.74,41.74,0,0,1,6.9-22.48A8,8,0,0,0,80,73.83a43.81,43.81,0,0,1,.79-33.58,43.88,43.88,0,0,1,32.32,20.06A8,8,0,0,0,119.82,64h32.35a8,8,0,0,0,6.74-3.69,43.87,43.87,0,0,1,32.32-20.06A43.81,43.81,0,0,1,192,73.83a8.09,8.09,0,0,0,1,7.65A41.72,41.72,0,0,1,200,104Z"
-                      ></path>
-                    </svg>
-                  </div>
+                <a href="#" class="w-10 h-10 bg-bg-secondary hover:bg-bg-tertiary rounded-lg flex items-center justify-center text-text-secondary hover:text-primary transition-all duration-300">
+                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12.048 0C5.383 0 .029 5.355.029 11.985c0 5.348 3.471 9.876 8.298 11.469-.114-.975-.218-2.469.046-3.531.24-961 1.547-6.551 1.547-6.551s-.334-.669-.334-1.659c0-1.554.9-2.717 2.024-2.717.954 0 1.415.716 1.415 1.574 0 958-.61 2.39-.925 3.716-.265 1.115.559 2.023 1.659 2.023 1.991 0 3.522-2.101 3.522-5.129 0-2.683-1.932-4.562-4.693-4.562-3.197 0-5.076.013-5.076 4.872 0 964.369 2.004.832 2.562.832.944 0 1.793-.266 2.51-.748.284-.192.638-.122.85.123.212.245.193.639-.042.854-.746.68-1.687 1.054-2.651 1.054-2.08 0-3.695-1.615-3.695-3.695 0-3.535 2.568-6.793 7.413-6.793 3.895 0 6.921 2.773 6.921 6.481 0 3.867-2.436 6.976-5.821 6.976-1.136 0-2.206-.594-2.571-1.299l-.699 2.666c-.253.959-.938 2.16-1.396 2.899 1.051.321 2.16.499 3.316.499 6.624 0 11.99-5.355 11.99-11.985C24.038 5.355 18.672.001 12.048.001z"/>
+                  </svg>
                 </a>
               </div>
-              <p class="text-[#90abcb] text-base font-normal leading-normal">@2024 Game Portfolio. All rights reserved.</p>
-            </footer>
+            </div>
           </div>
-        </footer>
-      </div>
+          
+          <div class="border-t border-bg-tertiary/50 mt-8 pt-8 text-center">
+            <p class="text-text-secondary">
+              &copy; 2024 ポートフォリオ. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </footer>
+      
+      <script>
+        // Mobile menu toggle
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        
+        mobileMenuBtn.addEventListener('click', () => {
+          mobileMenu.classList.toggle('hidden');
+        });
+        
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+          anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+              target.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start'
+              });
+              // Close mobile menu if open
+              mobileMenu.classList.add('hidden');
+            }
+          });
+        });
+        
+        // Back to top button
+        const backToTopBtn = document.getElementById('back-to-top');
+        
+        window.addEventListener('scroll', () => {
+          if (window.pageYOffset > 300) {
+            backToTopBtn.classList.remove('opacity-0', 'pointer-events-none');
+            backToTopBtn.classList.add('opacity-100');
+          } else {
+            backToTopBtn.classList.add('opacity-0', 'pointer-events-none');
+            backToTopBtn.classList.remove('opacity-100');
+          }
+        });
+        
+        backToTopBtn.addEventListener('click', () => {
+          window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+          });
+        });
+        
+        // Contact form handling
+        const contactForm = document.getElementById('contact-form');
+        contactForm.addEventListener('submit', function(e) {
+          e.preventDefault();
+          
+          // Get form data
+          const formData = new FormData(this);
+          const name = formData.get('name');
+          const email = formData.get('email');
+          const subject = formData.get('subject');
+          const message = formData.get('message');
+          
+          // Simple validation
+          if (!name || !email || !message) {
+            alert('必須項目を入力してください。');
+            return;
+          }
+          
+          // Email validation
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(email)) {
+            alert('正しいメールアドレスを入力してください。');
+            return;
+          }
+          
+          // In a real application, you would send this data to a server
+          alert('メッセージを受け付けました。ありがとうございます！');
+          this.reset();
+        });
+        
+        // Intersection Observer for scroll animations
+        const observerOptions = {
+          threshold: 0.1,
+          rootMargin: '0px 0px -50px 0px'
+        };
+        
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('animate-fadeIn');
+            }
+          });
+        }, observerOptions);
+        
+        // Observe all sections
+        document.querySelectorAll('section').forEach(section => {
+          observer.observe(section);
+        });
+      </script>
+      
+      <style>
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .animate-fadeIn {
+          animation: fadeIn 0.6s ease-out forwards;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+          width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+          background: #1E293B;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+          background: #00E5FF;
+          border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+          background: #00B8D4;
+        }
+        
+        /* Custom focus styles */
+        button:focus,
+        input:focus,
+        textarea:focus {
+          outline: 2px solid #00E5FF;
+          outline-offset: 2px;
+        }
+      </style>
     </div>
   </body>
 </html>
