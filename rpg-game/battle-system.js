@@ -22,6 +22,7 @@ class BattleSystem {
                 name: 'ウォッチャー',
                 emoji: '👁️',
                 hp: 25,
+                maxHp: 25,
                 mp: 10,
                 attack: 8,
                 defense: 5,
@@ -35,6 +36,7 @@ class BattleSystem {
                 name: 'ケルベロス',
                 emoji: '🐺',
                 hp: 45,
+                maxHp: 45,
                 mp: 15,
                 attack: 15,
                 defense: 10,
@@ -48,6 +50,7 @@ class BattleSystem {
                 name: 'ダスト・ゴーレム',
                 emoji: '🗿',
                 hp: 60,
+                maxHp: 60,
                 mp: 5,
                 attack: 12,
                 defense: 18,
@@ -61,6 +64,7 @@ class BattleSystem {
                 name: 'アルラウネ',
                 emoji: '🌱',
                 hp: 35,
+                maxHp: 35,
                 mp: 25,
                 attack: 10,
                 defense: 8,
@@ -74,6 +78,7 @@ class BattleSystem {
                 name: 'デウス・マキナ',
                 emoji: '🤖',
                 hp: 50,
+                maxHp: 50,
                 mp: 20,
                 attack: 14,
                 defense: 12,
@@ -121,13 +126,17 @@ class BattleSystem {
         const enemyData = this.enemyDatabase[enemyId];
         
         if (enemyData) {
-            // 戦闘開始
-            this.startBattle({
+            // 敵のステータスをコピーして戦闘開始
+            const enemy = {
                 ...enemyData,
                 currentHp: enemyData.hp,
-                currentMp: enemyData.mp,
+                currentMp: enemyData.mp || 0,
+                maxHp: enemyData.maxHp || enemyData.hp,
                 id: enemyId
-            });
+            };
+            
+            console.log('エンカウント:', enemy.name, 'HP:', enemy.currentHp, '/', enemy.maxHp, 'EXP:', enemy.exp, 'GOLD:', enemy.gold);
+            this.startBattle(enemy);
         }
     }
     
@@ -162,14 +171,27 @@ class BattleSystem {
             battleScreen.classList.add('active');
             document.getElementById('gameUI').style.display = 'none';
             
+            // 敵スプライトをリセット
+            const enemySprite = document.getElementById('enemySprite');
+            if (enemySprite) {
+                enemySprite.style.opacity = '1';
+                enemySprite.style.filter = 'none';
+                enemySprite.textContent = this.currentEnemy.emoji;
+            }
+            
             // 敵情報更新
-            document.getElementById('enemySprite').textContent = this.currentEnemy.emoji;
             document.getElementById('enemyName').textContent = this.currentEnemy.name;
             
             // コマンドを初期状態で非表示に
             const commands = document.getElementById('battleCommands');
             if (commands) {
                 commands.style.display = 'none';
+            }
+            
+            // バトルメッセージをクリア
+            const battleMessage = document.getElementById('battleMessage');
+            if (battleMessage) {
+                battleMessage.textContent = '';
             }
             
             this.updateBattleUI();
@@ -182,14 +204,17 @@ class BattleSystem {
         const variance = Math.floor(Math.random() * 5) - 2; // -2 to +2
         const damage = Math.max(1, baseDamage + variance - (this.currentEnemy.defense / 2));
         
-        this.currentEnemy.currentHp -= damage;
+        this.currentEnemy.currentHp = Math.max(0, this.currentEnemy.currentHp - damage);
         this.addBattleLog(`カイトの こうげき！`);
         this.addBattleLog(`${this.currentEnemy.name}に ${Math.floor(damage)}の ダメージ！`);
         
         this.showDamageEffect(damage, true);
         this.updateBattleUI();
         
+        // 敵が倒れたかチェック
         if (this.currentEnemy.currentHp <= 0) {
+            this.currentEnemy.currentHp = 0;
+            this.waitingForCommand = false;
             setTimeout(() => this.battleVictory(player), 1500);
         } else {
             // 敵のターンに移行
@@ -202,7 +227,10 @@ class BattleSystem {
         if (player.mp < 10) {
             this.addBattleLog('MPが たりない！');
             // コマンド選択に戻る
-            setTimeout(() => this.showCommands(), 1000);
+            setTimeout(() => {
+                this.waitingForCommand = true;
+                this.showCommands();
+            }, 1000);
             return;
         }
         
@@ -211,14 +239,17 @@ class BattleSystem {
         const variance = Math.floor(Math.random() * 10);
         const damage = baseDamage + variance;
         
-        this.currentEnemy.currentHp -= damage;
+        this.currentEnemy.currentHp = Math.max(0, this.currentEnemy.currentHp - damage);
         this.addBattleLog(`カイトは スサノオの力を よびだした！`);
         this.addBattleLog(`${this.currentEnemy.name}に ${damage}の ダメージ！`);
         
         this.showDamageEffect(damage, true, true);
         this.updateBattleUI();
         
+        // 敵が倒れたかチェック
         if (this.currentEnemy.currentHp <= 0) {
+            this.currentEnemy.currentHp = 0;
+            this.waitingForCommand = false;
             setTimeout(() => this.battleVictory(player), 1500);
         } else {
             // 敵のターンに移行
@@ -266,7 +297,6 @@ class BattleSystem {
     // 戦闘勝利
     battleVictory(player) {
         this.waitingForCommand = false;
-        this.addBattleLog(`${this.currentEnemy.name}を たおした！`);
         
         // コマンドを非表示に
         const commands = document.getElementById('battleCommands');
@@ -274,31 +304,55 @@ class BattleSystem {
             commands.style.display = 'none';
         }
         
+        // 勝利メッセージ
+        this.addBattleLog(`${this.currentEnemy.name}を たおした！`);
+        
         // 経験値とゴールド獲得
-        const expGained = this.currentEnemy.exp;
-        const goldGained = this.currentEnemy.gold;
+        const expGained = this.currentEnemy.exp || 10;
+        const goldGained = this.currentEnemy.gold || 5;
         
-        player.exp += expGained;
-        player.gold = (player.gold || 0) + goldGained;
-        
-        this.addBattleLog(`${expGained} の けいけんちを かくとく！`);
-        this.addBattleLog(`${goldGained} ゴールドを てにいれた！`);
-        
-        // レベルアップチェック
-        if (player.exp >= player.level * 100) {
-            player.level++;
-            player.maxHp += 20;
-            player.hp = player.maxHp;
-            player.maxMp += 10;
-            player.mp = player.maxMp;
-            player.attack = (player.attack || 15) + 3;
-            player.defense = (player.defense || 5) + 2;
+        // リザルト表示
+        setTimeout(() => {
+            this.addBattleLog(`せんとうに しょうり！`);
             
-            this.addBattleLog(`レベルアップ！`);
-            this.addBattleLog(`レベル ${player.level} になった！`);
-        }
-        
-        setTimeout(() => this.endBattle(), 3000);
+            // 経験値付与
+            player.exp = (player.exp || 0) + expGained;
+            this.addBattleLog(`${expGained} の けいけんちを かくとく！`);
+            
+            // ゴールド付与
+            player.gold = (player.gold || 0) + goldGained;
+            this.addBattleLog(`${goldGained} ゴールドを てにいれた！`);
+            
+            // レベルアップチェック
+            const expNeeded = player.level * 100;
+            if (player.exp >= expNeeded) {
+                setTimeout(() => {
+                    player.level++;
+                    player.maxHp += 20;
+                    player.hp = player.maxHp;
+                    player.maxMp += 10;
+                    player.mp = player.maxMp;
+                    player.attack = (player.attack || 15) + 3;
+                    player.defense = (player.defense || 5) + 2;
+                    
+                    this.addBattleLog(`レベルアップ！`);
+                    this.addBattleLog(`レベル ${player.level} になった！`);
+                    this.addBattleLog(`さいだいHPが ${player.maxHp} になった！`);
+                    this.addBattleLog(`さいだいMPが ${player.maxMp} になった！`);
+                    
+                    // UIを更新
+                    if (window.updateUI) {
+                        window.updateUI();
+                    }
+                    
+                    // 戦闘終了
+                    setTimeout(() => this.endBattle(), 2000);
+                }, 1000);
+            } else {
+                // レベルアップしない場合は戦闘終了
+                setTimeout(() => this.endBattle(), 2000);
+            }
+        }, 1000);
     }
     
     // 防御
@@ -329,6 +383,9 @@ class BattleSystem {
     endBattle() {
         this.inBattle = false;
         this.currentEnemy = null;
+        this.turnCount = 0;
+        this.waitingForCommand = false;
+        this.battleLog = [];
         
         const battleScreen = document.getElementById('battleScreen');
         if (battleScreen) {
@@ -339,6 +396,15 @@ class BattleSystem {
         // UI更新
         if (window.updateUI) {
             window.updateUI();
+        }
+        
+        // マップメッセージをクリア
+        const messageBox = document.getElementById('messageBox');
+        if (messageBox) {
+            messageBox.textContent = 'せんとうが おわった';
+            setTimeout(() => {
+                messageBox.textContent = '';
+            }, 2000);
         }
     }
     
@@ -357,7 +423,12 @@ class BattleSystem {
         this.battleLog.push(message);
         const battleMessage = document.getElementById('battleMessage');
         if (battleMessage) {
-            battleMessage.textContent = this.battleLog.slice(-3).join('\n');
+            // 最新の3行を表示
+            const recentLogs = this.battleLog.slice(-4);
+            battleMessage.textContent = recentLogs.join('\n');
+            
+            // スクロールを最下部に
+            battleMessage.scrollTop = battleMessage.scrollHeight;
         }
     }
     
@@ -386,20 +457,35 @@ class BattleSystem {
     updateBattleUI() {
         // 敵HP更新
         if (this.currentEnemy) {
-            const enemyHpRatio = Math.max(0, this.currentEnemy.currentHp / this.currentEnemy.hp);
+            const enemyHpRatio = Math.max(0, this.currentEnemy.currentHp / this.currentEnemy.maxHp);
             const enemyHpFill = document.getElementById('enemyHpFill');
             if (enemyHpFill) {
                 enemyHpFill.style.width = (enemyHpRatio * 100) + '%';
+            }
+            
+            // 敵が倒れたら表示を更新
+            if (this.currentEnemy.currentHp <= 0) {
+                const enemySprite = document.getElementById('enemySprite');
+                if (enemySprite) {
+                    enemySprite.style.opacity = '0.3';
+                    enemySprite.style.filter = 'grayscale(100%)';
+                }
             }
         }
         
         // プレイヤーステータス更新
         if (window.player) {
-            document.getElementById('battlePlayerLevel').textContent = window.player.level;
-            document.getElementById('battlePlayerHP').textContent = Math.max(0, window.player.hp);
-            document.getElementById('battlePlayerMaxHP').textContent = window.player.maxHp;
-            document.getElementById('battlePlayerMP').textContent = window.player.mp;
-            document.getElementById('battlePlayerMaxMP').textContent = window.player.maxMp;
+            const battlePlayerLevel = document.getElementById('battlePlayerLevel');
+            const battlePlayerHP = document.getElementById('battlePlayerHP');
+            const battlePlayerMaxHP = document.getElementById('battlePlayerMaxHP');
+            const battlePlayerMP = document.getElementById('battlePlayerMP');
+            const battlePlayerMaxMP = document.getElementById('battlePlayerMaxMP');
+            
+            if (battlePlayerLevel) battlePlayerLevel.textContent = window.player.level;
+            if (battlePlayerHP) battlePlayerHP.textContent = Math.max(0, window.player.hp);
+            if (battlePlayerMaxHP) battlePlayerMaxHP.textContent = window.player.maxHp;
+            if (battlePlayerMP) battlePlayerMP.textContent = window.player.mp;
+            if (battlePlayerMaxMP) battlePlayerMaxMP.textContent = window.player.maxMp;
         }
     }
     
