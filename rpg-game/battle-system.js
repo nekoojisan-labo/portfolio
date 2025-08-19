@@ -14,7 +14,8 @@ class BattleSystem {
         
         // エンカウント設定
         this.encounterSteps = 0;
-        this.encounterThreshold = this.getRandomEncounterSteps();
+        this.encounterThreshold = this.getRandomEncounterSteps('medium');
+        this.firstEncounter = true;  // 初回エンカウントフラグ
         
         // 敵データベース
         this.enemyDatabase = {
@@ -101,21 +102,58 @@ class BattleSystem {
     }
     
     // ランダムエンカウント歩数を決定
-    getRandomEncounterSteps() {
-        return Math.floor(Math.random() * 15) + 10; // 10-25歩でエンカウント
+    getRandomEncounterSteps(encounterRate = 'medium') {
+        // エンカウント率に応じて歩数を調整
+        const rateSettings = {
+            very_high: { min: 8, max: 15 },   // 8-15歩（都庁など危険エリア）
+            high: { min: 15, max: 25 },       // 15-25歩（地下鉄など）
+            medium: { min: 25, max: 40 },     // 25-40歩（通常エリア）
+            low: { min: 40, max: 60 },        // 40-60歩（植物園、神社など）
+            none: { min: 9999, max: 9999 }    // エンカウントなし
+        };
+        
+        const settings = rateSettings[encounterRate] || rateSettings.medium;
+        return Math.floor(Math.random() * (settings.max - settings.min + 1)) + settings.min;
     }
     
     // 歩数をカウント
-    countStep(currentArea = 'city') {
+    countStep(currentArea = 'city', encounterRate = 'medium') {
         if (this.inBattle) return;
+        
+        // エンカウント率がnoneの場合は何もしない
+        if (encounterRate === 'none') {
+            this.encounterSteps = 0;  // 歩数をリセット
+            return;
+        }
         
         this.encounterSteps++;
         
+        // 初回エンカウントは少し遅らせる
+        const threshold = this.firstEncounter ? 
+            this.encounterThreshold + 20 : 
+            this.encounterThreshold;
+        
         // エンカウントチェック
-        if (this.encounterSteps >= this.encounterThreshold) {
+        if (this.encounterSteps >= threshold) {
+            this.firstEncounter = false;
             this.encounterSteps = 0;
-            this.encounterThreshold = this.getRandomEncounterSteps();
-            this.triggerRandomEncounter(currentArea);
+            this.encounterThreshold = this.getRandomEncounterSteps(encounterRate);
+            
+            // エンカウント発生率をさらに調整（確率で発生）
+            const encounterChance = {
+                very_high: 0.9,  // 90%の確率で発生
+                high: 0.75,       // 75%の確率で発生
+                medium: 0.6,      // 60%の確率で発生
+                low: 0.4          // 40%の確率で発生
+            };
+            
+            const chance = encounterChance[encounterRate] || 0.6;
+            if (Math.random() < chance) {
+                this.triggerRandomEncounter(currentArea);
+            } else {
+                // エンカウントしなかった場合は次の閾値を少し短く
+                this.encounterThreshold = Math.floor(this.encounterThreshold * 0.7);
+            }
         }
     }
     
@@ -136,6 +174,7 @@ class BattleSystem {
             };
             
             console.log('エンカウント:', enemy.name, 'HP:', enemy.currentHp, '/', enemy.maxHp, 'EXP:', enemy.exp, 'GOLD:', enemy.gold);
+            console.log('次回エンカウントまで:', this.encounterThreshold, '歩');
             this.startBattle(enemy);
         }
     }
@@ -386,6 +425,10 @@ class BattleSystem {
         this.turnCount = 0;
         this.waitingForCommand = false;
         this.battleLog = [];
+        
+        // 戦闘後は少し安全期間を設ける
+        this.encounterSteps = 0;
+        this.encounterThreshold = Math.floor(this.getRandomEncounterSteps('medium') * 1.5);
         
         const battleScreen = document.getElementById('battleScreen');
         if (battleScreen) {

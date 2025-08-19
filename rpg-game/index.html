@@ -594,10 +594,12 @@
                 
                 // ランダムエンカウントチェック
                 const area = mapSystem.getCurrentArea();
-                battleSystem.countStep(area);
+                const encounterRate = mapSystem.getEncounterRate();
+                battleSystem.countStep(area, encounterRate);
                 
-                // エンカウント警告
-                if (battleSystem.encounterSteps > battleSystem.encounterThreshold - 5) {
+                // エンカウント警告（閾値に近づいたら表示）
+                const warningThreshold = Math.max(3, Math.floor(battleSystem.encounterThreshold * 0.2));
+                if (battleSystem.encounterSteps > battleSystem.encounterThreshold - warningThreshold) {
                     document.getElementById('encounterIndicator').classList.add('warning');
                 } else {
                     document.getElementById('encounterIndicator').classList.remove('warning');
@@ -762,9 +764,23 @@
                     'very_high': '極高',
                     'high': '高',
                     'medium': '中',
-                    'low': '低'
+                    'low': '低',
+                    'none': 'なし'
                 };
                 document.getElementById('encounterRate').textContent = rates[map.encounterRate] || '中';
+                
+                // エンカウント率に応じて色を変更
+                const encounterRateEl = document.getElementById('encounterRate');
+                if (encounterRateEl) {
+                    const colors = {
+                        'very_high': '#ff0000',
+                        'high': '#ff8800',
+                        'medium': '#ffff00',
+                        'low': '#00ff00',
+                        'none': '#00ffff'
+                    };
+                    encounterRateEl.style.color = colors[map.encounterRate] || '#ffffff';
+                }
             }
         }
 

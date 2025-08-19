@@ -27,7 +27,7 @@ class MapSystem {
             name: '新宿 - 中央区画',
             bgColor: '#1a1a2e',
             gridColor: '#0f3460',
-            encounterRate: 'medium',
+            encounterRate: 'low',  // 街の中心部は比較的安全
             area: 'city',
             buildings: [
                 { x: 50, y: 50, width: 100, height: 80, color: '#16213e' },
@@ -53,7 +53,7 @@ class MapSystem {
             name: '新宿駅 - 地下通路',
             bgColor: '#0a0a0a',
             gridColor: '#2a2a2a',
-            encounterRate: 'high',
+            encounterRate: 'medium',  // 地下は少し危険
             area: 'subway',
             buildings: [
                 { x: 100, y: 100, width: 600, height: 50, color: '#1a1a1a' },
@@ -75,7 +75,7 @@ class MapSystem {
             name: 'バイオドーム植物園',
             bgColor: '#0d1f0d',
             gridColor: '#1a3a1a',
-            encounterRate: 'low',
+            encounterRate: 'none',  // 管理された安全地帯
             area: 'garden',
             buildings: [
                 { x: 150, y: 150, width: 100, height: 100, color: '#2a4a2a', type: 'tree' },
@@ -97,7 +97,7 @@ class MapSystem {
             name: '闇市 - 地下マーケット',
             bgColor: '#1a0a1a',
             gridColor: '#3a0a3a',
-            encounterRate: 'medium',
+            encounterRate: 'low',  // 住民がいるので比較的安全
             area: 'market',
             buildings: [
                 { x: 50, y: 100, width: 80, height: 60, color: '#2a1a2a', type: 'stall' },
@@ -125,7 +125,7 @@ class MapSystem {
             name: '明治神宮 - 参道',
             bgColor: '#1a1a0a',
             gridColor: '#2a2a1a',
-            encounterRate: 'low',
+            encounterRate: 'none',  // 神聖な場所、エンカウントなし
             area: 'shrine',
             buildings: [
                 { x: 350, y: 100, width: 100, height: 150, color: '#4a3a2a', type: 'torii' },
@@ -148,7 +148,7 @@ class MapSystem {
             name: '東京都庁 - エントランス',
             bgColor: '#0a0a1a',
             gridColor: '#1a1a3a',
-            encounterRate: 'very_high',
+            encounterRate: 'high',  // 敵の本拠地に近い
             area: 'city',
             buildings: [
                 { x: 200, y: 100, width: 400, height: 50, color: '#2a2a4a', type: 'wall' },
