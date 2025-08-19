@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>デウス・コード 八百万の神託 - RPG Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(45deg, #1a1a2e, #16213e);
+            color: #ffffff;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .game-container {
+            border: 3px solid #0f3460;
+            border-radius: 10px;
+            background: #0a0a0a;
+            box-shadow: 0 0 20px rgba(15, 52, 96, 0.5);
+            overflow: hidden;
+        }
+
+        #gameCanvas {
+            display: block;
+            background: #1a1a2e;
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+        }
+
+        .ui-overlay {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #0f3460;
+            border-radius: 5px;
+            padding: 10px;
+            font-size: 14px;
+            color: #ffffff;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .hp-bar, .mp-bar {
+            width: 120px;
+            height: 12px;
+            background: #333;
+            border: 1px solid #555;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .hp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff4444, #ff6666);
+            transition: width 0.3s ease;
+        }
+
+        .mp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4444ff, #6666ff);
+            transition: width 0.3s ease;
+        }
+
+        .message-box {
+            min-height: 40px;
+            padding: 5px;
+            background: rgba(0, 0, 0, 0.9);
+            border-radius: 3px;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #0f3460;
+            border-radius: 5px;
+            padding: 10px;
+            font-size: 12px;
+        }
+
+        .title-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, #0a0a0a, #1a1a2e);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            z-index: 1000;
+        }
+
+        .title-screen h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            color: #00ffff;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+
+        .title-screen h2 {
+            font-size: 16px;
+            margin-bottom: 30px;
+            color: #ffffff;
+        }
+
+        .start-button {
+            padding: 12px 24px;
+            background: linear-gradient(45deg, #0f3460, #16213e);
+            border: 2px solid #00ffff;
+            border-radius: 5px;
+            color: #ffffff;
+            cursor: pointer;
+            font-size: 16px;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s ease;
+        }
+
+        .start-button:hover {
+            background: linear-gradient(45deg, #16213e, #0f3460);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        
+        <div class="title-screen" id="titleScreen">
+            <h1>デウス・コード</h1>
+            <h2>八百万の神託</h2>
+            <p style="margin-bottom: 20px; color: #aaa;">神々の力をその身に降ろし、AIが支配する無機質な世界に、人の心を取り戻せ</p>
+            <button class="start-button" onclick="startGame()">ゲーム開始</button>
+        </div>
+
+        <div class="ui-overlay" id="gameUI" style="display: none;">
+            <div class="status-bar">
+                <div>
+                    <div>HP: <span id="playerHP">100</span>/100</div>
+                    <div class="hp-bar"><div class="hp-fill" id="hpFill" style="width: 100%"></div></div>
+                </div>
+                <div>
+                    <div>MP: <span id="playerMP">50</span>/50</div>
+                    <div class="mp-bar"><div class="mp-fill" id="mpFill" style="width: 100%"></div></div>
+                </div>
+                <div>
+                    <div>レベル: <span id="playerLevel">1</span></div>
+                    <div>経験値: <span id="playerExp">0</span></div>
+                </div>
+            </div>
+            <div class="message-box" id="messageBox">
+                近未来の新宿、AIシステム『アーク』によって管理された街を歩いている...
+            </div>
+        </div>
+
+        <div class="controls">
+            <div><strong>操作方法:</strong></div>
+            <div>↑↓←→: 移動</div>
+            <div>SPACE: アクション</div>  
+            <div>Z: 神威発動</div>
+            <div>X: メニュー</div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Game state
+        let gameStarted = false;
+        let inBattle = false;
+        let currentEnemy = null;
+        let selectedCommand = 0;
+        let player = {
+            x: 400,
+            y: 300,
+            hp: 100,
+            maxHp: 100,
+            mp: 50,
+            maxMp: 50,
+            level: 1,
+            exp: 0,
+            facing: 'down'
+        };
+
+        // NPCs and enemies
+        let npcs = [
+            { x: 200, y: 150, emoji: '🤖', type: 'deus_machina', hp: 30, name: 'デウス・マキナ' },
+            { x: 600, y: 400, emoji: '👤', type: 'citizen', name: '市民' },
+            { x: 100, y: 500, emoji: '🧙‍♀️', type: 'akari', name: 'アカリ' }
+        ];
+
+        // Map data (simple grid)
+        const mapWidth = 25;
+        const mapHeight = 19;
+        const tileSize = 32;
+
+        // Input handling
+        const keys = {};
+        document.addEventListener('keydown', (e) => keys[e.key] = true);
+        document.addEventListener('keyup', (e) => keys[e.key] = false);
+
+        function startGame() {
+            document.getElementById('titleScreen').style.display = 'none';
+            document.getElementById('gameUI').style.display = 'block';
+            gameStarted = true;
+            gameLoop();
+        }
+
+        function drawBackground() {
+            // Draw futuristic city grid
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Grid pattern
+            ctx.strokeStyle = '#0f3460';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < canvas.width; x += tileSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += tileSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+
+            // Add some building-like rectangles
+            ctx.fillStyle = '#16213e';
+            ctx.fillRect(50, 50, 100, 80);
+            ctx.fillRect(200, 100, 120, 60);
+            ctx.fillRect(500, 200, 80, 100);
+            ctx.fillRect(600, 50, 150, 90);
+            ctx.fillRect(100, 400, 200, 100);
+            
+            // Add some "digital" elements
+            ctx.fillStyle = '#00ffff';
+            ctx.fillRect(52, 52, 4, 4);
+            ctx.fillRect(202, 102, 4, 4);
+            ctx.fillRect(502, 202, 4, 4);
+        }
+
+        function drawPlayer() {
+            // Player character (Kaito) - using emoji
+            const playerSize = 24;
+            ctx.font = `${playerSize}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.fillText('🧑‍💼', player.x, player.y + playerSize/2);
+            
+            // Player name
+            ctx.font = '12px Courier New';
+            ctx.fillStyle = '#00ffff';
+            ctx.fillText('カイト', player.x, player.y + playerSize + 12);
+            
+            // HP bar above player
+            const barWidth = 40;
+            const barHeight = 4;
+            const hpRatio = player.hp / player.maxHp;
+            
+            ctx.fillStyle = '#333';
+            ctx.fillRect(player.x - barWidth/2, player.y - 20, barWidth, barHeight);
+            ctx.fillStyle = hpRatio > 0.5 ? '#44ff44' : hpRatio > 0.25 ? '#ffff44' : '#ff4444';
+            ctx.fillRect(player.x - barWidth/2, player.y - 20, barWidth * hpRatio, barHeight);
+        }
+
+        function drawNPCs() {
+            npcs.forEach(npc => {
+                const npcSize = 24;
+                ctx.font = `${npcSize}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.fillText(npc.emoji, npc.x, npc.y + npcSize/2);
+                
+                // Name
+                ctx.font = '10px Courier New';
+                ctx.fillStyle = npc.type === 'deus_machina' ? '#ff4444' : 
+                               npc.type === 'akari' ? '#ffff44' : '#ffffff';
+                ctx.fillText(npc.name, npc.x, npc.y + npcSize + 10);
+                
+                // Enemy HP bar
+                if (npc.type === 'deus_machina' && npc.hp > 0) {
+                    const barWidth = 30;
+                    const barHeight = 3;
+                    const hpRatio = npc.hp / 30;
+                    
+                    ctx.fillStyle = '#333';
+                    ctx.fillRect(npc.x - barWidth/2, npc.y - 15, barWidth, barHeight);
+                    ctx.fillStyle = '#ff4444';
+                    ctx.fillRect(npc.x - barWidth/2, npc.y - 15, barWidth * hpRatio, barHeight);
+                }
+            });
+        }
+
+        function updatePlayer() {
+            if (!gameStarted) return;
+            
+            const speed = 3;
+            let moved = false;
+            
+            if (keys['ArrowUp'] || keys['w']) {
+                player.y = Math.max(20, player.y - speed);
+                player.facing = 'up';
+                moved = true;
+            }
+            if (keys['ArrowDown'] || keys['s']) {
+                player.y = Math.min(canvas.height - 20, player.y + speed);
+                player.facing = 'down';
+                moved = true;
+            }
+            if (keys['ArrowLeft'] || keys['a']) {
+                player.x = Math.max(20, player.x - speed);
+                player.facing = 'left';
+                moved = true;
+            }
+            if (keys['ArrowRight'] || keys['d']) {
+                player.x = Math.min(canvas.width - 20, player.x + speed);
+                player.facing = 'right';
+                moved = true;
+            }
+            
+            // Interaction
+            if (keys[' ']) {
+                keys[' '] = false; // Prevent multiple triggers
+                checkInteractions();
+            }
+            
+            // Kamui (神威) attack
+            if (keys['z'] || keys['Z']) {
+                keys['z'] = keys['Z'] = false;
+                useKamui();
+            }
+        }
+
+        function checkInteractions() {
+            const interactionRange = 50;
+            
+            npcs.forEach((npc, index) => {
+                const distance = Math.sqrt(
+                    Math.pow(player.x - npc.x, 2) + 
+                    Math.pow(player.y - npc.y, 2)
+                );
+                
+                if (distance < interactionRange) {
+                    if (npc.type === 'deus_machina' && npc.hp > 0) {
+                        // Battle with Deus Machina
+                        battleEnemy(npc, index);
+                    } else if (npc.type === 'citizen') {
+                        showMessage('市民: "......" (感情を失っている)');
+                    } else if (npc.type === 'akari') {
+                        showMessage('アカリ: "カイト、気をつけて。この街はAIの監視が強いわ。"');
+                    }
+                }
+            });
+        }
+
+        function battleEnemy(enemy, index) {
+            const damage = Math.floor(Math.random() * 15) + 10;
+            enemy.hp -= damage;
+            
+            if (enemy.hp <= 0) {
+                showMessage(`${enemy.name}を撃破した！ スサノオの力が宿っている...`);
+                player.exp += 25;
+                npcs.splice(index, 1);
+                
+                // Level up check
+                if (player.exp >= player.level * 100) {
+                    player.level++;
+                    player.maxHp += 20;
+                    player.hp = player.maxHp;
+                    player.maxMp += 10;
+                    player.mp = player.maxMp;
+                    showMessage(`レベルアップ！ レベル ${player.level} になった！`);
+                }
+            } else {
+                showMessage(`${enemy.name}に ${damage} のダメージ！`);
+                
+                // Enemy counterattack
+                setTimeout(() => {
+                    const enemyDamage = Math.floor(Math.random() * 8) + 3;
+                    player.hp = Math.max(0, player.hp - enemyDamage);
+                    showMessage(`${enemy.name}の攻撃！ ${enemyDamage} のダメージを受けた！`);
+                    updateUI();
+                }, 1000);
+            }
+            updateUI();
+        }
+
+        function useKamui() {
+            if (player.mp < 10) {
+                showMessage('MPが足りない！');
+                return;
+            }
+            
+            player.mp -= 10;
+            
+            // Lightning attack effect
+            ctx.fillStyle = 'rgba(255, 255, 0, 0.8)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Damage all enemies on screen
+            npcs.forEach((npc, index) => {
+                if (npc.type === 'deus_machina') {
+                    const damage = Math.floor(Math.random() * 20) + 15;
+                    npc.hp -= damage;
+                    
+                    if (npc.hp <= 0) {
+                        showMessage(`スサノオの雷撃！ ${npc.name}を一撃で撃破！`);
+                        player.exp += 35;
+                        npcs.splice(index, 1);
+                    }
+                }
+            });
+            
+            updateUI();
+            
+            setTimeout(() => {
+                // Clear lightning effect by redrawing normally
+            }, 200);
+        }
+
+        function showMessage(text) {
+            document.getElementById('messageBox').textContent = text;
+        }
+
+        function updateUI() {
+            document.getElementById('playerHP').textContent = player.hp;
+            document.getElementById('playerMP').textContent = player.mp;
+            document.getElementById('playerLevel').textContent = player.level;
+            document.getElementById('playerExp').textContent = player.exp;
+            
+            document.getElementById('hpFill').style.width = (player.hp / player.maxHp * 100) + '%';
+            document.getElementById('mpFill').style.width = (player.mp / player.maxMp * 100) + '%';
+        }
+
+        function gameLoop() {
+            if (!gameStarted) return;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw game elements
+            drawBackground();
+            drawNPCs();
+            drawPlayer();
+            
+            // Update game logic
+            updatePlayer();
+            
+            // Regenerate MP slowly
+            if (player.mp < player.maxMp) {
+                player.mp = Math.min(player.maxMp, player.mp + 0.1);
+                updateUI();
+            }
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Initialize UI
+        updateUI();
+    </script>
+</body>
+</html>
