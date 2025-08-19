@@ -37,6 +37,7 @@
             image-rendering: pixelated;
             image-rendering: -moz-crisp-edges;
             image-rendering: crisp-edges;
+            transition: opacity 0.3s ease;
         }
 
         .ui-overlay {
@@ -86,6 +87,7 @@
             border-radius: 3px;
             font-size: 12px;
             line-height: 1.4;
+            white-space: pre-line;
         }
 
         .controls {
@@ -97,6 +99,18 @@
             border-radius: 5px;
             padding: 10px;
             font-size: 12px;
+        }
+
+        .map-info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #0f3460;
+            border-radius: 5px;
+            padding: 10px;
+            font-size: 12px;
+            min-width: 150px;
         }
 
         /* Battle Screen Styles (サイバーパンク × ドラクエ風) */
@@ -113,6 +127,12 @@
 
         .battle-screen.active {
             display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         .battle-background {
@@ -121,10 +141,20 @@
             left: 0;
             width: 100%;
             height: 60%;
-            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480"><defs><linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:%23001122"/><stop offset="100%" style="stop-color:%23003366"/></linearGradient></defs><rect width="800" height="480" fill="url(%23bg)"/><g opacity="0.3"><rect x="50" y="100" width="100" height="200" fill="%230066ff"/><rect x="200" y="150" width="80" height="150" fill="%230055dd"/><rect x="500" y="80" width="120" height="220" fill="%230044bb"/></g></svg>') no-repeat center;
-            background-size: cover;
+            background: linear-gradient(180deg, #112233 0%, #001122 100%);
             border-bottom: 2px solid #00ffff;
             box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+
+        .battle-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                repeating-linear-gradient(0deg, rgba(0, 255, 255, 0.05) 0px, transparent 1px, transparent 31px, rgba(0, 255, 255, 0.05) 32px),
+                repeating-linear-gradient(90deg, rgba(0, 255, 255, 0.05) 0px, transparent 1px, transparent 31px, rgba(0, 255, 255, 0.05) 32px);
         }
 
         .enemy-area {
@@ -153,6 +183,11 @@
             text-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
         }
 
+        .enemy-hp-container {
+            margin: 10px auto;
+            width: 120px;
+        }
+
         .battle-ui {
             position: absolute;
             bottom: 0;
@@ -175,6 +210,7 @@
             font-size: 14px;
             box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
             overflow-y: auto;
+            white-space: pre-line;
         }
 
         .battle-commands {
@@ -304,6 +340,29 @@
             background: linear-gradient(45deg, #16213e, #0f3460);
             box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
         }
+
+        .encounter-indicator {
+            position: absolute;
+            top: 60px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #ff4444;
+            border-radius: 5px;
+            padding: 5px 10px;
+            font-size: 11px;
+            color: #ff4444;
+            display: none;
+        }
+
+        .encounter-indicator.warning {
+            display: block;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
     </style>
 </head>
 <body>
@@ -317,19 +376,32 @@
             <button class="start-button" onclick="startGame()">ゲーム開始</button>
         </div>
 
+        <div class="map-info" id="mapInfo" style="display: none;">
+            <div><strong id="mapName">新宿 - 中央区画</strong></div>
+            <div style="font-size: 10px; color: #aaa; margin-top: 5px;">
+                <div>歩数: <span id="stepCount">0</span></div>
+                <div>遭遇率: <span id="encounterRate">中</span></div>
+            </div>
+        </div>
+
+        <div class="encounter-indicator" id="encounterIndicator">
+            ⚠️ 敵の気配を感じる...
+        </div>
+
         <div class="ui-overlay" id="gameUI" style="display: none;">
             <div class="status-bar">
                 <div>
-                    <div>HP: <span id="playerHP">100</span>/100</div>
+                    <div>HP: <span id="playerHP">100</span>/<span id="playerMaxHP">100</span></div>
                     <div class="hp-bar"><div class="hp-fill" id="hpFill" style="width: 100%"></div></div>
                 </div>
                 <div>
-                    <div>MP: <span id="playerMP">50</span>/50</div>
+                    <div>MP: <span id="playerMP">50</span>/<span id="playerMaxMP">50</span></div>
                     <div class="mp-bar"><div class="mp-fill" id="mpFill" style="width: 100%"></div></div>
                 </div>
                 <div>
                     <div>レベル: <span id="playerLevel">1</span></div>
                     <div>経験値: <span id="playerExp">0</span></div>
+                    <div>ゴールド: <span id="playerGold">0</span></div>
                 </div>
             </div>
             <div class="message-box" id="messageBox">
@@ -340,11 +412,14 @@
         <!-- Battle Screen (サイバーパンク × ドラクエ風) -->
         <div class="battle-screen" id="battleScreen">
             <div class="battle-background">
+                <div class="battle-grid"></div>
                 <div class="enemy-area" id="enemyArea">
                     <div class="enemy-sprite" id="enemySprite">🤖</div>
                     <div class="enemy-name" id="enemyName">デウス・マキナ</div>
-                    <div class="hp-bar" style="width: 100px; margin: 10px auto;">
-                        <div class="hp-fill" id="enemyHpFill" style="width: 100%"></div>
+                    <div class="enemy-hp-container">
+                        <div class="hp-bar">
+                            <div class="hp-fill" id="enemyHpFill" style="width: 100%"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -381,18 +456,24 @@
             <div>SPACE: アクション</div>  
             <div>Z: 神威発動</div>
             <div>X: メニュー</div>
+            <div>S: セーブ（セーブポイント）</div>
         </div>
     </div>
 
+    <!-- 外部スクリプト読み込み -->
+    <script src="battle-system.js"></script>
+    <script src="map-system.js"></script>
+    
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         
+        // ゲームシステム
+        let battleSystem = null;
+        let mapSystem = null;
+        
         // Game state
         let gameStarted = false;
-        let inBattle = false;
-        let currentEnemy = null;
-        let selectedCommand = 0;
         let player = {
             x: 400,
             y: 300,
@@ -402,25 +483,20 @@
             maxMp: 50,
             level: 1,
             exp: 0,
-            facing: 'down'
+            gold: 0,
+            attack: 15,
+            defense: 5,
+            facing: 'down',
+            stepCount: 0
         };
 
-        // NPCs and enemies
-        let npcs = [
-            { x: 200, y: 150, emoji: '🤖', type: 'deus_machina', hp: 30, name: 'デウス・マキナ' },
-            { x: 600, y: 400, emoji: '👤', type: 'citizen', name: '市民' },
-            { x: 100, y: 500, emoji: '🧙‍♀️', type: 'akari', name: 'アカリ' }
-        ];
-
-        // Map data
-        const mapWidth = 25;
-        const mapHeight = 19;
-        const tileSize = 32;
+        // グローバルプレイヤー参照
+        window.player = player;
 
         // Input handling
         const keys = {};
         document.addEventListener('keydown', (e) => {
-            if (inBattle) {
+            if (battleSystem && battleSystem.inBattle) {
                 handleBattleInput(e.key);
             } else {
                 keys[e.key] = true;
@@ -431,43 +507,15 @@
         function startGame() {
             document.getElementById('titleScreen').style.display = 'none';
             document.getElementById('gameUI').style.display = 'block';
+            document.getElementById('mapInfo').style.display = 'block';
+            
+            // システム初期化
+            battleSystem = new BattleSystem();
+            mapSystem = new MapSystem();
+            
             gameStarted = true;
+            updateMapInfo();
             gameLoop();
-        }
-
-        function drawBackground() {
-            ctx.fillStyle = '#1a1a2e';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // Grid pattern
-            ctx.strokeStyle = '#0f3460';
-            ctx.lineWidth = 1;
-            for (let x = 0; x < canvas.width; x += tileSize) {
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, canvas.height);
-                ctx.stroke();
-            }
-            for (let y = 0; y < canvas.height; y += tileSize) {
-                ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(canvas.width, y);
-                ctx.stroke();
-            }
-
-            // Buildings
-            ctx.fillStyle = '#16213e';
-            ctx.fillRect(50, 50, 100, 80);
-            ctx.fillRect(200, 100, 120, 60);
-            ctx.fillRect(500, 200, 80, 100);
-            ctx.fillRect(600, 50, 150, 90);
-            ctx.fillRect(100, 400, 200, 100);
-            
-            // Digital elements
-            ctx.fillStyle = '#00ffff';
-            ctx.fillRect(52, 52, 4, 4);
-            ctx.fillRect(202, 102, 4, 4);
-            ctx.fillRect(502, 202, 4, 4);
         }
 
         function drawPlayer() {
@@ -491,125 +539,168 @@
             ctx.fillRect(player.x - barWidth/2, player.y - 20, barWidth * hpRatio, barHeight);
         }
 
-        function drawNPCs() {
-            npcs.forEach(npc => {
-                const npcSize = 24;
-                ctx.font = `${npcSize}px Arial`;
-                ctx.textAlign = 'center';
-                ctx.fillText(npc.emoji, npc.x, npc.y + npcSize/2);
-                
-                ctx.font = '10px Courier New';
-                ctx.fillStyle = npc.type === 'deus_machina' ? '#ff4444' : 
-                               npc.type === 'akari' ? '#ffff44' : '#ffffff';
-                ctx.fillText(npc.name, npc.x, npc.y + npcSize + 10);
-                
-                if (npc.type === 'deus_machina' && npc.hp > 0) {
-                    const barWidth = 30;
-                    const barHeight = 3;
-                    const hpRatio = npc.hp / 30;
-                    
-                    ctx.fillStyle = '#333';
-                    ctx.fillRect(npc.x - barWidth/2, npc.y - 15, barWidth, barHeight);
-                    ctx.fillStyle = '#ff4444';
-                    ctx.fillRect(npc.x - barWidth/2, npc.y - 15, barWidth * hpRatio, barHeight);
-                }
-            });
-        }
-
         function updatePlayer() {
-            if (!gameStarted || inBattle) return;
+            if (!gameStarted || battleSystem.inBattle) return;
             
             const speed = 3;
+            let moved = false;
+            let oldX = player.x;
+            let oldY = player.y;
             
             if (keys['ArrowUp'] || keys['w']) {
                 player.y = Math.max(20, player.y - speed);
                 player.facing = 'up';
+                moved = true;
             }
             if (keys['ArrowDown'] || keys['s']) {
                 player.y = Math.min(canvas.height - 20, player.y + speed);
                 player.facing = 'down';
+                moved = true;
             }
             if (keys['ArrowLeft'] || keys['a']) {
                 player.x = Math.max(20, player.x - speed);
                 player.facing = 'left';
+                moved = true;
             }
             if (keys['ArrowRight'] || keys['d']) {
                 player.x = Math.min(canvas.width - 20, player.x + speed);
                 player.facing = 'right';
+                moved = true;
             }
             
+            // 移動した場合
+            if (moved) {
+                player.stepCount++;
+                document.getElementById('stepCount').textContent = player.stepCount;
+                
+                // マップ遷移チェック
+                const transition = mapSystem.checkMapTransition(player.x, player.y);
+                if (transition) {
+                    if (transition.locked) {
+                        showMessage(transition.message);
+                        player.x = oldX;
+                        player.y = oldY;
+                    } else if (transition.nextMap) {
+                        mapSystem.transitionToMap(transition.nextMap);
+                        updateMapInfo();
+                        // プレイヤー位置調整
+                        if (transition.exit.x === 0) player.x = canvas.width - 30;
+                        else if (transition.exit.x >= 790) player.x = 30;
+                        if (transition.exit.y === 0) player.y = canvas.height - 30;
+                        else if (transition.exit.y >= 590) player.y = 30;
+                    }
+                }
+                
+                // ランダムエンカウントチェック
+                const area = mapSystem.getCurrentArea();
+                battleSystem.countStep(area);
+                
+                // エンカウント警告
+                if (battleSystem.encounterSteps > battleSystem.encounterThreshold - 5) {
+                    document.getElementById('encounterIndicator').classList.add('warning');
+                } else {
+                    document.getElementById('encounterIndicator').classList.remove('warning');
+                }
+            }
+            
+            // インタラクション
             if (keys[' ']) {
                 keys[' '] = false;
                 checkInteractions();
             }
+            
+            // セーブポイント
+            if ((keys['s'] || keys['S']) && checkSavePoint()) {
+                keys['s'] = keys['S'] = false;
+                saveGame();
+            }
         }
 
         function checkInteractions() {
-            const interactionRange = 50;
+            const npc = mapSystem.checkNPCInteraction(player.x, player.y);
             
-            npcs.forEach((npc, index) => {
-                const distance = Math.sqrt(
-                    Math.pow(player.x - npc.x, 2) + 
-                    Math.pow(player.y - npc.y, 2)
-                );
-                
-                if (distance < interactionRange) {
-                    if (npc.type === 'deus_machina' && npc.hp > 0) {
-                        startBattle(npc, index);
-                    } else if (npc.type === 'citizen') {
-                        showMessage('市民: "......" (感情を失っている)');
-                    } else if (npc.type === 'akari') {
-                        showMessage('アカリ: "カイト、気をつけて。この街はAIの監視が強いわ。"');
-                    }
+            if (npc) {
+                if (npc.hostile) {
+                    // 強制戦闘
+                    const enemyData = battleSystem.enemyDatabase.deusMachina;
+                    battleSystem.startBattle({
+                        ...enemyData,
+                        currentHp: enemyData.hp,
+                        currentMp: enemyData.mp,
+                        name: npc.name
+                    });
+                } else if (npc.shop) {
+                    showMessage(`${npc.name}: 「${npc.dialogue}」\n[ショップ機能は未実装]`);
+                } else {
+                    showMessage(`${npc.name}: 「${npc.dialogue}」`);
                 }
-            });
+            }
+        }
+
+        function checkSavePoint() {
+            const map = mapSystem.maps[mapSystem.currentMap];
+            if (!map || !map.savePoint) return false;
+            
+            const distance = Math.sqrt(
+                Math.pow(player.x - map.savePoint.x, 2) + 
+                Math.pow(player.y - map.savePoint.y, 2)
+            );
+            
+            return distance < 50;
+        }
+
+        function saveGame() {
+            const saveData = {
+                player: player,
+                currentMap: mapSystem.currentMap,
+                timestamp: new Date().toISOString()
+            };
+            
+            localStorage.setItem('deusCodeSave', JSON.stringify(saveData));
+            showMessage('ゲームを セーブしました');
+        }
+
+        function loadGame() {
+            const saveData = localStorage.getItem('deusCodeSave');
+            if (saveData) {
+                const data = JSON.parse(saveData);
+                Object.assign(player, data.player);
+                mapSystem.currentMap = data.currentMap;
+                return true;
+            }
+            return false;
         }
 
         // Battle System Functions
-        function startBattle(enemy, enemyIndex) {
-            inBattle = true;
-            currentEnemy = { ...enemy, index: enemyIndex, maxHp: enemy.hp };
-            selectedCommand = 0;
+        function handleBattleInput(key) {
+            const commands = document.querySelectorAll('.command-item');
+            const numCommands = commands.length;
             
-            document.getElementById('battleScreen').classList.add('active');
-            document.getElementById('enemySprite').textContent = enemy.emoji;
-            document.getElementById('enemyName').textContent = enemy.name;
-            document.getElementById('gameUI').style.display = 'none';
-            
-            updateBattleUI();
-            showBattleMessage(`${enemy.name}が あらわれた！`);
-            setupBattleCommands();
+            if (key === 'ArrowUp' || key === 'w') {
+                battleSystem.selectedCommand = (battleSystem.selectedCommand - 1 + numCommands) % numCommands;
+                setupBattleCommands();
+            } else if (key === 'ArrowDown' || key === 's') {
+                battleSystem.selectedCommand = (battleSystem.selectedCommand + 1) % numCommands;
+                setupBattleCommands();
+            } else if (key === 'Enter' || key === ' ') {
+                const selectedCmd = commands[battleSystem.selectedCommand];
+                executeBattleCommand(selectedCmd.dataset.command);
+            }
         }
 
         function setupBattleCommands() {
             const commands = document.querySelectorAll('.command-item');
             commands.forEach((cmd, index) => {
                 cmd.classList.remove('selected');
-                if (index === selectedCommand) {
+                if (index === battleSystem.selectedCommand) {
                     cmd.classList.add('selected');
                 }
                 
                 cmd.onclick = () => {
-                    selectedCommand = index;
+                    battleSystem.selectedCommand = index;
                     executeBattleCommand(cmd.dataset.command);
                 };
             });
-        }
-
-        function handleBattleInput(key) {
-            const commands = document.querySelectorAll('.command-item');
-            const numCommands = commands.length;
-            
-            if (key === 'ArrowUp' || key === 'w') {
-                selectedCommand = (selectedCommand - 1 + numCommands) % numCommands;
-                setupBattleCommands();
-            } else if (key === 'ArrowDown' || key === 's') {
-                selectedCommand = (selectedCommand + 1) % numCommands;
-                setupBattleCommands();
-            } else if (key === 'Enter' || key === ' ') {
-                const selectedCmd = commands[selectedCommand];
-                executeBattleCommand(selectedCmd.dataset.command);
-            }
         }
 
         function executeBattleCommand(command) {
@@ -618,161 +709,21 @@
             
             switch(command) {
                 case 'attack':
-                    playerAttack();
+                    battleSystem.playerAttack(player);
                     break;
                 case 'kamui':
-                    playerKamui();
+                    battleSystem.playerKamui(player);
                     break;
                 case 'item':
-                    showBattleMessage('どうぐを もっていない！');
+                    battleSystem.addBattleLog('どうぐを もっていない！');
                     setTimeout(() => {
                         commands.style.display = 'block';
                     }, 1500);
                     break;
                 case 'escape':
-                    if (Math.random() > 0.5) {
-                        showBattleMessage('にげきれた！');
-                        setTimeout(() => endBattle(false), 1500);
-                    } else {
-                        showBattleMessage('にげられない！');
-                        setTimeout(() => enemyTurn(), 1500);
-                    }
+                    battleSystem.tryEscape();
                     break;
             }
-        }
-
-        function playerAttack() {
-            const damage = Math.floor(Math.random() * 15) + 10;
-            currentEnemy.hp -= damage;
-            
-            showDamageNumber(damage, true);
-            showBattleMessage(`カイトの こうげき！\n${currentEnemy.name}に ${damage}の ダメージ！`);
-            updateBattleUI();
-            
-            if (currentEnemy.hp <= 0) {
-                setTimeout(() => battleVictory(), 2000);
-            } else {
-                setTimeout(() => enemyTurn(), 2000);
-            }
-        }
-
-        function playerKamui() {
-            if (player.mp >= 10) {
-                player.mp -= 10;
-                const damage = Math.floor(Math.random() * 25) + 20;
-                currentEnemy.hp -= damage;
-                
-                showDamageNumber(damage, true, true);
-                showBattleMessage(`カイトは スサノオの力を よびだした！\n${currentEnemy.name}に ${damage}の ダメージ！`);
-                updateBattleUI();
-                
-                if (currentEnemy.hp <= 0) {
-                    setTimeout(() => battleVictory(), 2000);
-                } else {
-                    setTimeout(() => enemyTurn(), 2000);
-                }
-            } else {
-                showBattleMessage('MPが たりない！');
-                setTimeout(() => {
-                    document.getElementById('battleCommands').style.display = 'block';
-                }, 1500);
-            }
-        }
-
-        function enemyTurn() {
-            const damage = Math.floor(Math.random() * 8) + 3;
-            player.hp = Math.max(0, player.hp - damage);
-            
-            showDamageNumber(damage, false);
-            showBattleMessage(`${currentEnemy.name}の こうげき！\nカイトに ${damage}の ダメージ！`);
-            updateBattleUI();
-            updateUI();
-            
-            if (player.hp <= 0) {
-                setTimeout(() => gameOver(), 2000);
-            } else {
-                setTimeout(() => {
-                    document.getElementById('battleCommands').style.display = 'block';
-                }, 1500);
-            }
-        }
-
-        function battleVictory() {
-            showBattleMessage(`${currentEnemy.name}を たおした！`);
-            player.exp += 25;
-            
-            // Remove defeated enemy
-            npcs.splice(currentEnemy.index, 1);
-            
-            // Level up check
-            if (player.exp >= player.level * 100) {
-                player.level++;
-                player.maxHp += 20;
-                player.hp = player.maxHp;
-                player.maxMp += 10;
-                player.mp = player.maxMp;
-                showBattleMessage(`レベルアップ！\nレベル ${player.level} になった！`);
-            }
-            
-            setTimeout(() => endBattle(true), 2000);
-        }
-
-        function endBattle(victory) {
-            inBattle = false;
-            currentEnemy = null;
-            document.getElementById('battleScreen').classList.remove('active');
-            document.getElementById('gameUI').style.display = 'block';
-            updateUI();
-            
-            if (victory) {
-                showMessage('戦闘に勝利した！');
-            }
-        }
-
-        function gameOver() {
-            showBattleMessage('カイトは たおれた...');
-            setTimeout(() => {
-                location.reload();
-            }, 3000);
-        }
-
-        function showDamageNumber(damage, isEnemy, isCritical = false) {
-            const damageEl = document.createElement('div');
-            damageEl.className = 'damage-number' + (isCritical ? ' critical' : '');
-            damageEl.textContent = damage;
-            
-            if (isEnemy) {
-                damageEl.style.left = '50%';
-                damageEl.style.top = '30%';
-            } else {
-                damageEl.style.right = '200px';
-                damageEl.style.bottom = '200px';
-            }
-            
-            document.getElementById('battleScreen').appendChild(damageEl);
-            
-            setTimeout(() => {
-                damageEl.remove();
-            }, 1000);
-        }
-
-        function showBattleMessage(text) {
-            document.getElementById('battleMessage').textContent = text;
-        }
-
-        function updateBattleUI() {
-            // Update enemy HP
-            if (currentEnemy) {
-                const enemyHpRatio = Math.max(0, currentEnemy.hp / currentEnemy.maxHp);
-                document.getElementById('enemyHpFill').style.width = (enemyHpRatio * 100) + '%';
-            }
-            
-            // Update player status
-            document.getElementById('battlePlayerLevel').textContent = player.level;
-            document.getElementById('battlePlayerHP').textContent = player.hp;
-            document.getElementById('battlePlayerMaxHP').textContent = player.maxHp;
-            document.getElementById('battlePlayerMP').textContent = player.mp;
-            document.getElementById('battlePlayerMaxMP').textContent = player.maxMp;
         }
 
         function showMessage(text) {
@@ -780,19 +731,42 @@
         }
 
         function updateUI() {
-            document.getElementById('playerHP').textContent = player.hp;
+            document.getElementById('playerHP').textContent = Math.max(0, player.hp);
+            document.getElementById('playerMaxHP').textContent = player.maxHp;
             document.getElementById('playerMP').textContent = player.mp;
+            document.getElementById('playerMaxMP').textContent = player.maxMp;
             document.getElementById('playerLevel').textContent = player.level;
             document.getElementById('playerExp').textContent = player.exp;
+            document.getElementById('playerGold').textContent = player.gold;
             
             document.getElementById('hpFill').style.width = (player.hp / player.maxHp * 100) + '%';
             document.getElementById('mpFill').style.width = (player.mp / player.maxMp * 100) + '%';
         }
 
+        function updateMapInfo() {
+            const map = mapSystem.maps[mapSystem.currentMap];
+            if (map) {
+                document.getElementById('mapName').textContent = map.name;
+                const rates = {
+                    'very_high': '極高',
+                    'high': '高',
+                    'medium': '中',
+                    'low': '低'
+                };
+                document.getElementById('encounterRate').textContent = rates[map.encounterRate] || '中';
+            }
+        }
+
+        // グローバル関数として公開
+        window.updateUI = updateUI;
+
         function gameLoop() {
-            if (!inBattle) {
-                drawBackground();
-                drawNPCs();
+            if (!battleSystem.inBattle) {
+                // マップ描画
+                mapSystem.drawCurrentMap(ctx, canvas);
+                mapSystem.drawNPCs(ctx);
+                
+                // プレイヤー描画と更新
                 drawPlayer();
                 updatePlayer();
             }
