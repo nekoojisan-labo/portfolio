@@ -217,7 +217,7 @@
             position: absolute;
             bottom: 90px;
             left: 10px;
-            width: 200px;
+            width: 220px;
             background: rgba(0, 0, 0, 0.9);
             border: 2px solid #00ffff;
             border-radius: 5px;
@@ -430,6 +430,7 @@
                 <div class="battle-commands" id="battleCommands">
                     <div class="command-item selected" data-command="attack">こうげき</div>
                     <div class="command-item" data-command="kamui">カムイ</div>
+                    <div class="command-item" data-command="defend">ぼうぎょ</div>
                     <div class="command-item" data-command="item">どうぐ</div>
                     <div class="command-item" data-command="escape">にげる</div>
                 </div>
@@ -697,13 +698,19 @@
                 }
                 
                 cmd.onclick = () => {
-                    battleSystem.selectedCommand = index;
-                    executeBattleCommand(cmd.dataset.command);
+                    if (battleSystem.waitingForCommand) {
+                        battleSystem.selectedCommand = index;
+                        executeBattleCommand(cmd.dataset.command);
+                    }
                 };
             });
         }
 
         function executeBattleCommand(command) {
+            // 連続実行を防ぐ
+            if (!battleSystem.waitingForCommand) return;
+            battleSystem.waitingForCommand = false;
+            
             const commands = document.getElementById('battleCommands');
             commands.style.display = 'none';
             
@@ -714,9 +721,13 @@
                 case 'kamui':
                     battleSystem.playerKamui(player);
                     break;
+                case 'defend':
+                    battleSystem.playerDefend(player);
+                    break;
                 case 'item':
                     battleSystem.addBattleLog('どうぐを もっていない！');
                     setTimeout(() => {
+                        battleSystem.waitingForCommand = true;
                         commands.style.display = 'block';
                     }, 1500);
                     break;

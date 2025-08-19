@@ -9,6 +9,8 @@ class BattleSystem {
         this.selectedCommand = 0;
         this.turnOrder = [];
         this.battleLog = [];
+        this.turnCount = 0;
+        this.waitingForCommand = false;
         
         // エンカウント設定
         this.encounterSteps = 0;
@@ -135,10 +137,19 @@ class BattleSystem {
         this.currentEnemy = enemy;
         this.selectedCommand = 0;
         this.battleLog = [];
+        this.turnCount = 1;
+        this.waitingForCommand = true;
         
         // 戦闘画面表示
         this.showBattleScreen();
         this.addBattleLog(`${enemy.name}が あらわれた！`);
+        
+        // 最初のターンのコマンド表示
+        setTimeout(() => {
+            this.addBattleLog(`ターン ${this.turnCount}`);
+            this.addBattleLog('コマンドを せんたくしてください');
+            this.showCommands();
+        }, 1000);
         
         // 戦闘BGM開始（オプション）
         // this.playBattleBGM();
@@ -154,6 +165,12 @@ class BattleSystem {
             // 敵情報更新
             document.getElementById('enemySprite').textContent = this.currentEnemy.emoji;
             document.getElementById('enemyName').textContent = this.currentEnemy.name;
+            
+            // コマンドを初期状態で非表示に
+            const commands = document.getElementById('battleCommands');
+            if (commands) {
+                commands.style.display = 'none';
+            }
             
             this.updateBattleUI();
         }
@@ -175,6 +192,7 @@ class BattleSystem {
         if (this.currentEnemy.currentHp <= 0) {
             setTimeout(() => this.battleVictory(player), 1500);
         } else {
+            // 敵のターンに移行
             setTimeout(() => this.enemyTurn(player), 1500);
         }
     }
@@ -183,7 +201,8 @@ class BattleSystem {
     playerKamui(player) {
         if (player.mp < 10) {
             this.addBattleLog('MPが たりない！');
-            this.showCommands();
+            // コマンド選択に戻る
+            setTimeout(() => this.showCommands(), 1000);
             return;
         }
         
@@ -202,6 +221,7 @@ class BattleSystem {
         if (this.currentEnemy.currentHp <= 0) {
             setTimeout(() => this.battleVictory(player), 1500);
         } else {
+            // 敵のターンに移行
             setTimeout(() => this.enemyTurn(player), 1500);
         }
     }
@@ -210,25 +230,49 @@ class BattleSystem {
     enemyTurn(player) {
         const baseDamage = this.currentEnemy.attack;
         const variance = Math.floor(Math.random() * 3);
-        const damage = Math.max(1, baseDamage + variance - (player.defense || 5) / 2);
+        let damage = Math.max(1, baseDamage + variance - (player.defense || 5) / 2);
         
-        player.hp -= damage;
-        this.addBattleLog(`${this.currentEnemy.name}の こうげき！`);
+        // 防御中はダメージ半減
+        if (player.defending) {
+            damage = Math.floor(damage / 2);
+            this.addBattleLog(`${this.currentEnemy.name}の こうげき！`);
+            this.addBattleLog(`カイトは ぼうぎょしている！`);
+            player.defending = false; // 防御状態をリセット
+        } else {
+            this.addBattleLog(`${this.currentEnemy.name}の こうげき！`);
+        }
+        
+        player.hp = Math.max(0, player.hp - damage);
         this.addBattleLog(`カイトに ${Math.floor(damage)}の ダメージ！`);
         
         this.showDamageEffect(damage, false);
         this.updateBattleUI();
         
         if (player.hp <= 0) {
+            this.waitingForCommand = false;
             setTimeout(() => this.gameOver(), 1500);
         } else {
-            this.showCommands();
+            // 必ず次のターンのコマンド選択に戻る
+            setTimeout(() => {
+                this.turnCount++;
+                this.addBattleLog(`ターン ${this.turnCount}`);
+                this.addBattleLog('コマンドを せんたくしてください');
+                this.waitingForCommand = true;
+                this.showCommands();
+            }, 1500);
         }
     }
     
     // 戦闘勝利
     battleVictory(player) {
+        this.waitingForCommand = false;
         this.addBattleLog(`${this.currentEnemy.name}を たおした！`);
+        
+        // コマンドを非表示に
+        const commands = document.getElementById('battleCommands');
+        if (commands) {
+            commands.style.display = 'none';
+        }
         
         // 経験値とゴールド獲得
         const expGained = this.currentEnemy.exp;
@@ -254,7 +298,16 @@ class BattleSystem {
             this.addBattleLog(`レベル ${player.level} になった！`);
         }
         
-        setTimeout(() => this.endBattle(), 2000);
+        setTimeout(() => this.endBattle(), 3000);
+    }
+    
+    // 防御
+    playerDefend(player) {
+        this.addBattleLog('カイトは みをまもっている！');
+        player.defending = true;
+        
+        // 防御してもターンは消費、敵のターンへ
+        setTimeout(() => this.enemyTurn(player), 1500);
     }
     
     // 逃走処理
@@ -263,9 +316,11 @@ class BattleSystem {
         
         if (escapeChance > 0.4) { // 60%の確率で逃走成功
             this.addBattleLog('うまく にげきれた！');
+            this.waitingForCommand = false;
             setTimeout(() => this.endBattle(), 1000);
         } else {
             this.addBattleLog('にげられない！');
+            // 逃走失敗時も敵のターンへ
             setTimeout(() => this.enemyTurn(window.player), 1500);
         }
     }
@@ -353,7 +408,23 @@ class BattleSystem {
         const commands = document.getElementById('battleCommands');
         if (commands) {
             commands.style.display = 'block';
+            this.waitingForCommand = true;
+            
+            // コマンド選択を初期化
+            this.selectedCommand = 0;
+            this.setupBattleCommands();
         }
+    }
+    
+    // バトルコマンドのセットアップ
+    setupBattleCommands() {
+        const commands = document.querySelectorAll('.command-item');
+        commands.forEach((cmd, index) => {
+            cmd.classList.remove('selected');
+            if (index === this.selectedCommand) {
+                cmd.classList.add('selected');
+            }
+        });
     }
 }
 
