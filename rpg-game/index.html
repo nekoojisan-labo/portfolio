@@ -481,6 +481,38 @@
             box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
         }
 
+        .save-slots {
+            display: grid;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .save-slot {
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid #333;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .save-slot:hover {
+            border-color: #00ffff;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        }
+
+        .save-slot.selected {
+            border-color: #ffff00;
+            background: rgba(255, 255, 0, 0.1);
+            box-shadow: 0 0 15px rgba(255, 255, 0, 0.3);
+        }
+
+        .save-slot-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
         .title-screen {
             position: absolute;
             top: 0;
@@ -558,7 +590,17 @@
             <h1>デウス・コード</h1>
             <h2>八百万の神託</h2>
             <p style="margin-bottom: 20px; color: #aaa;">神々の力をその身に降ろし、AIが支配する無機質な世界に、人の心を取り戻せ</p>
-            <button class="start-button" onclick="startGame()">ゲーム開始</button>
+            <button class="start-button" onclick="startGame()">新しいゲーム</button>
+            <button class="start-button" onclick="showLoadMenu()" style="margin-top: 15px;">ロード</button>
+        </div>
+
+        <!-- Load Menu -->
+        <div class="title-screen" id="loadScreen" style="display: none;">
+            <h1>セーブデータ選択</h1>
+            <div id="titleLoadSlots" style="width: 600px; max-height: 400px; overflow-y: auto; margin: 20px 0;">
+                <!-- Save slots will be loaded here -->
+            </div>
+            <button class="start-button" onclick="backToTitle()">戻る</button>
         </div>
 
         <div class="map-info" id="mapInfo" style="display: none;">
@@ -748,6 +790,89 @@
         });
         document.addEventListener('keyup', (e) => keys[e.key] = false);
 
+        // タイトル画面のロード機能
+        async function showLoadMenu() {
+            document.getElementById('titleScreen').style.display = 'none';
+            document.getElementById('loadScreen').style.display = 'flex';
+            
+            try {
+                const response = await fetch('/api/saves');
+                const saveSlots = await response.json();
+                
+                const slotsContainer = document.getElementById('titleLoadSlots');
+                slotsContainer.innerHTML = saveSlots.map((save, index) => `
+                    <div class="save-slot" onclick="loadGameFromTitle(${index})" style="margin: 10px 0;">
+                        <div class="save-slot-header">
+                            <strong>セーブスロット ${index + 1}</strong>
+                            <span style="font-size: 12px; color: #aaa;">${save ? new Date(save.timestamp).toLocaleString() : '空'}</span>
+                        </div>
+                        ${save ? `
+                            <div style="font-size: 14px; margin: 5px 0;">
+                                ${save.player.level}レベル | ${save.currentMap} | ゴールド:${save.player.gold}
+                            </div>
+                            <div style="font-size: 12px; color: #ccc;">
+                                HP: ${save.player.hp}/${save.player.maxHp} | MP: ${save.player.mp}/${save.player.maxMp}
+                            </div>
+                        ` : '<div style="color: #666;">空のスロット</div>'}
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('セーブデータの読み込みに失敗:', error);
+                document.getElementById('titleLoadSlots').innerHTML = '<div style="color: #ff4444;">セーブデータの読み込みに失敗しました</div>';
+            }
+        }
+        
+        function backToTitle() {
+            document.getElementById('loadScreen').style.display = 'none';
+            document.getElementById('titleScreen').style.display = 'flex';
+        }
+        
+        async function loadGameFromTitle(slotIndex) {
+            try {
+                const response = await fetch('/api/saves');
+                const saveSlots = await response.json();
+                const saveData = saveSlots[slotIndex];
+                
+                if (!saveData) {
+                    alert('そのスロットにはセーブデータがありません！');
+                    return;
+                }
+                
+                // プレイヤーデータをロード
+                Object.assign(player, saveData.player);
+                
+                // ゲームを開始
+                document.getElementById('loadScreen').style.display = 'none';
+                document.getElementById('gameUI').style.display = 'block';
+                document.getElementById('mapInfo').style.display = 'block';
+                
+                // システム初期化
+                battleSystem = new BattleSystem();
+                mapSystem = new MapSystem();
+                
+                // マップとUIを更新
+                if (mapSystem) {
+                    mapSystem.currentMap = saveData.currentMap;
+                    updateMapInfo();
+                }
+                
+                gameStarted = true;
+                updateUI();
+                updatePlayerStats();
+                gameLoop();
+                
+                // デバッグ用: グローバルアクセス
+                window.debugMapSystem = mapSystem;
+                window.debugPlayer = player;
+                
+                console.log(`セーブスロット ${slotIndex + 1} からゲームをロードしました`);
+                
+            } catch (error) {
+                console.error('ロードエラー:', error);
+                alert('ロードに失敗しました！');
+            }
+        }
+
         function startGame() {
             document.getElementById('titleScreen').style.display = 'none';
             document.getElementById('gameUI').style.display = 'block';
@@ -834,22 +959,23 @@
             let oldX = player.x;
             let oldY = player.y;
             
-            if (keys['ArrowUp'] || keys['w']) {
+            // 移動は十字キーのみ
+            if (keys['ArrowUp']) {
                 player.y = Math.max(5, player.y - speed);
                 player.facing = 'up';
                 moved = true;
             }
-            if (keys['ArrowDown'] || keys['s']) {
+            if (keys['ArrowDown']) {
                 player.y = Math.min(canvas.height - 5, player.y + speed);
                 player.facing = 'down';
                 moved = true;
             }
-            if (keys['ArrowLeft'] || keys['a']) {
+            if (keys['ArrowLeft']) {
                 player.x = Math.max(5, player.x - speed);
                 player.facing = 'left';
                 moved = true;
             }
-            if (keys['ArrowRight'] || keys['d']) {
+            if (keys['ArrowRight']) {
                 player.x = Math.min(canvas.width - 5, player.x + speed);
                 player.facing = 'right';
                 moved = true;
@@ -899,11 +1025,8 @@
                 checkInteractions();
             }
             
-            // セーブポイント
-            if ((keys['s'] || keys['S']) && checkSavePoint()) {
-                keys['s'] = keys['S'] = false;
-                saveGame();
-            }
+            // セーブポイント - セーブ機能をメニューに移行したため削除
+            // セーブは Xキー > セーブタブ から行います
         }
 
         function checkInteractions() {
@@ -1003,10 +1126,10 @@
         function handleMenuInput(key) {
             const menuItems = document.querySelectorAll('.menu-item');
             
-            if (key === 'ArrowUp' || key === 'w') {
+            if (key === 'ArrowUp') {
                 menuSelectedIndex = Math.max(0, menuSelectedIndex - 1);
                 updateMenuSelection();
-            } else if (key === 'ArrowDown' || key === 's') {
+            } else if (key === 'ArrowDown') {
                 menuSelectedIndex = Math.min(menuItems.length - 1, menuSelectedIndex + 1);
                 updateMenuSelection();
             } else if (key === 'Enter' || key === ' ') {
@@ -1043,8 +1166,17 @@
             }
             
             currentMenuTab = menuType;
-            showMenuContent(menuType);
-            setupMenuNavigation();
+            
+            // セーブメニューの場合はセーブスロットをロード
+            if (menuType === 'save') {
+                loadSaveSlots().then(() => {
+                    showMenuContent(menuType);
+                    setupMenuNavigation();
+                });
+            } else {
+                showMenuContent(menuType);
+                setupMenuNavigation();
+            }
         }
 
         function showMenuContent(contentType) {
@@ -1130,51 +1262,82 @@
             `;
         }
 
+        // 装備選択モード管理
+        let equipmentSelectionMode = null; // 'weapon' または 'armor'
+        
         function generateEquipmentContent() {
+            if (equipmentSelectionMode) {
+                return generateEquipmentSelectionContent(equipmentSelectionMode);
+            }
+            
             return `
                 <h3>装備管理</h3>
                 <div class="equipment-section">
                     <h4>装備スロット</h4>
-                    <div class="equipment-slot" onclick="openEquipmentSelection('weapon')">
+                    <div class="equipment-slot">
                         <div class="equipment-info">
                             <div class="equipment-name">武器</div>
                             <div class="equipment-stats">${player.equipment.weapon ? `${player.equipment.weapon.name} (攻撃+${player.equipment.weapon.attack})` : '装備なし'}</div>
                         </div>
-                        <div class="equipment-button">変更</div>
+                        <div class="equipment-button" onclick="openEquipmentSelection('weapon')">変更</div>
                     </div>
-                    <div class="equipment-slot" onclick="openEquipmentSelection('armor')">
+                    <div class="equipment-slot">
                         <div class="equipment-info">
                             <div class="equipment-name">防具</div>
                             <div class="equipment-stats">${player.equipment.armor ? `${player.equipment.armor.name} (防御+${player.equipment.armor.defense})` : '装備なし'}</div>
                         </div>
-                        <div class="equipment-button">変更</div>
+                        <div class="equipment-button" onclick="openEquipmentSelection('armor')">変更</div>
+                    </div>
+                    <div class="equipment-slot">
+                        <div class="equipment-info">
+                            <div class="equipment-name">アクセサリ</div>
+                            <div class="equipment-stats">${player.equipment.accessory ? `${player.equipment.accessory.name}` : '装備なし'}</div>
+                        </div>
+                        <div class="equipment-button" onclick="openEquipmentSelection('accessory')">変更</div>
                     </div>
                 </div>
-                <div class="equipment-section">
-                    <h4>武器一覧</h4>
-                    <div class="inventory-grid">
-                        ${player.inventory.weapons.map(weapon => `
-                            <div class="inventory-item ${isEquipped('weapon', weapon.id) ? 'equipped' : ''}" onclick="equipItem('weapon', '${weapon.id}')">
-                                <div class="equipment-name">${weapon.name}</div>
-                                <div class="equipment-stats">攻撃力 +${weapon.attack}</div>
-                                <div style="font-size: 12px; color: #aaa;">${weapon.description}</div>
-                                ${isEquipped('weapon', weapon.id) ? '<div style="color: #ffff00;">装備中</div>' : ''}
-                            </div>
-                        `).join('')}
-                    </div>
+                <div style="text-align: center; margin-top: 20px; color: #aaa;">
+                    装備を変更するには「変更」ボタンをクリックしてください
                 </div>
-                <div class="equipment-section">
-                    <h4>防具一覧</h4>
-                    <div class="inventory-grid">
-                        ${player.inventory.armor.map(armor => `
-                            <div class="inventory-item ${isEquipped('armor', armor.id) ? 'equipped' : ''}" onclick="equipItem('armor', '${armor.id}')">
-                                <div class="equipment-name">${armor.name}</div>
-                                <div class="equipment-stats">防御力 +${armor.defense}</div>
-                                <div style="font-size: 12px; color: #aaa;">${armor.description}</div>
-                                ${isEquipped('armor', armor.id) ? '<div style="color: #ffff00;">装備中</div>' : ''}
+            `;
+        }
+
+        function generateEquipmentSelectionContent(type) {
+            const typeNames = {
+                weapon: '武器',
+                armor: '防具', 
+                accessory: 'アクセサリ'
+            };
+            
+            const inventoryKey = type === 'weapon' ? 'weapons' : 
+                               type === 'armor' ? 'armor' : 
+                               'accessories';
+            
+            return `
+                <h3>${typeNames[type]}選択</h3>
+                <div style="margin-bottom: 20px;">
+                    <button onclick="closeEquipmentSelection()" 
+                            style="padding: 8px 15px; background: #444; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px;">
+                        ← 戻る
+                    </button>
+                    <button onclick="unequipCurrentItem('${type}')" 
+                            style="padding: 8px 15px; background: #800; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                        装備を外す
+                    </button>
+                </div>
+                <div class="inventory-grid">
+                    ${player.inventory[inventoryKey].map(item => `
+                        <div class="inventory-item ${isEquipped(type, item.id) ? 'equipped' : ''}" onclick="equipItem('${type}', '${item.id}')">
+                            <div class="equipment-name">${item.name}</div>
+                            <div class="equipment-stats">
+                                ${type === 'weapon' ? `攻撃力 +${item.attack}` : 
+                                  type === 'armor' ? `防御力 +${item.defense}` :
+                                  '特殊効果'}
                             </div>
-                        `).join('')}
-                    </div>
+                            <div style="font-size: 12px; color: #aaa;">${item.description}</div>
+                            ${isEquipped(type, item.id) ? '<div style="color: #ffff00;">装備中</div>' : '<div style="color: #0ff;">クリックで装備</div>'}
+                        </div>
+                    `).join('')}
                 </div>
             `;
         }
@@ -1193,28 +1356,91 @@
             `;
         }
 
+        // セーブシステム管理
+        let saveSlots = [];
+        let selectedSaveSlot = 0;
+        
+        async function loadSaveSlots() {
+            try {
+                const response = await fetch('/api/saves');
+                if (response.ok) {
+                    saveSlots = await response.json();
+                } else {
+                    saveSlots = [];
+                }
+            } catch (error) {
+                console.error('セーブデータの読み込みに失敗:', error);
+                saveSlots = [];
+            }
+        }
+        
         function generateSaveContent() {
-            const saveData = localStorage.getItem('deusCodeSave');
-            const saveInfo = saveData ? JSON.parse(saveData) : null;
-            
             return `
                 <h3>セーブ・ロード</h3>
+                <div style="margin-bottom: 20px;">
+                    <button onclick="refreshSaveSlots()" 
+                            style="padding: 10px 20px; background: #0f3460; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                        セーブデータ更新
+                    </button>
+                </div>
+                <div class="save-slots">
+                    ${saveSlots.map((save, index) => `
+                        <div class="save-slot ${index === selectedSaveSlot ? 'selected' : ''}" onclick="selectSaveSlot(${index})">
+                            <div class="save-slot-header">
+                                <strong>セーブスロット ${index + 1}</strong>
+                                <span style="font-size: 12px; color: #aaa;">${save ? new Date(save.timestamp).toLocaleString() : '空'}</span>
+                            </div>
+                            ${save ? `
+                                <div style="font-size: 14px; margin: 5px 0;">
+                                    ${save.player.level}レベル | ${save.currentMap} | ゴールド:${save.player.gold}
+                                </div>
+                                <div style="font-size: 12px; color: #ccc;">
+                                    HP: ${save.player.hp}/${save.player.maxHp} | MP: ${save.player.mp}/${save.player.maxMp}
+                                </div>
+                            ` : '<div style="color: #666;">空のスロット</div>'}
+                        </div>
+                    `).join('')}
+                </div>
                 <div class="save-load-buttons">
-                    <div class="save-load-button" onclick="saveGameFromMenu()">
+                    <div class="save-load-button" onclick="saveToSlot()">
                         <div>セーブ</div>
-                        <div style="font-size: 12px;">現在の状態を保存</div>
+                        <div style="font-size: 12px;">スロット ${selectedSaveSlot + 1} に保存</div>
                     </div>
-                    <div class="save-load-button" onclick="loadGameFromMenu()" ${!saveData ? 'style="opacity: 0.5;"' : ''}>
+                    <div class="save-load-button" onclick="loadFromSlot()" ${!saveSlots[selectedSaveSlot] ? 'style="opacity: 0.5;"' : ''}>
                         <div>ロード</div>
-                        <div style="font-size: 12px;">${saveInfo ? `保存日時: ${new Date(saveInfo.timestamp).toLocaleString()}` : 'セーブデータなし'}</div>
+                        <div style="font-size: 12px;">スロット ${selectedSaveSlot + 1} から読み込み</div>
                     </div>
                 </div>
             `;
         }
 
+        // Equipment Selection Functions
+        function openEquipmentSelection(type) {
+            equipmentSelectionMode = type;
+            showMenuContent('equipment');
+        }
+        
+        function closeEquipmentSelection() {
+            equipmentSelectionMode = null;
+            showMenuContent('equipment');
+        }
+        
+        function unequipCurrentItem(type) {
+            if (player.equipment[type]) {
+                unequipItem(type);
+                showMenuContent('equipment');
+                showMessage(`${player.equipment[type] ? player.equipment[type].name : '装備'}を外しました！`);
+            } else {
+                showMessage('何も装備していません！');
+            }
+        }
+
         // Equipment System Functions
         function equipItem(type, itemId) {
-            const inventory = player.inventory[type + 's'] || player.inventory[type];
+            const inventoryKey = type === 'weapon' ? 'weapons' : 
+                               type === 'armor' ? 'armor' : 
+                               'accessories';
+            const inventory = player.inventory[inventoryKey];
             const item = inventory.find(i => i.id === itemId);
             
             if (item) {
@@ -1222,14 +1448,14 @@
                 unequipItem(type);
                 
                 // 新しい装備を装着
-                player.equipment[type] = item;
+                player.equipment[type] = {...item}; // オブジェクトをコピー
                 updatePlayerStats();
                 
-                // メニュー内容を更新
-                showMenuContent('equipment');
-                setupEquipmentInteractions();
-                
                 showMessage(`${item.name}を装備しました！`);
+                
+                // 装備選択モードを終了して装備一覧に戻る
+                equipmentSelectionMode = null;
+                showMenuContent('equipment');
             }
         }
 
@@ -1307,25 +1533,82 @@
             }
         }
 
-        function saveGameFromMenu() {
+        function refreshSaveSlots() {
+            loadSaveSlots().then(() => {
+                showMenuContent('save');
+            });
+        }
+        
+        function selectSaveSlot(index) {
+            selectedSaveSlot = index;
+            showMenuContent('save');
+        }
+        
+        async function saveToSlot() {
             const saveData = {
-                player: player,
+                player: {...player},
                 currentMap: mapSystem ? mapSystem.currentMap : 'city_center',
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                slotIndex: selectedSaveSlot
             };
             
-            localStorage.setItem('deusCodeSave', JSON.stringify(saveData));
-            showMessage('ゲームをセーブしました！');
-            showMenuContent('save');
+            try {
+                const response = await fetch('/api/saves', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(saveData)
+                });
+                
+                if (response.ok) {
+                    showMessage(`スロット ${selectedSaveSlot + 1} にセーブしました！`);
+                    await loadSaveSlots(); // セーブスロットを更新
+                    showMenuContent('save');
+                } else {
+                    showMessage('セーブに失敗しました！');
+                }
+            } catch (error) {
+                console.error('セーブエラー:', error);
+                showMessage('セーブに失敗しました！');
+            }
+        }
+        
+        async function loadFromSlot() {
+            const saveData = saveSlots[selectedSaveSlot];
+            if (!saveData) {
+                showMessage('そのスロットにはセーブデータがありません！');
+                return;
+            }
+            
+            try {
+                // プレイヤーデータをロード
+                Object.assign(player, saveData.player);
+                
+                if (mapSystem) {
+                    mapSystem.currentMap = saveData.currentMap;
+                    updateMapInfo();
+                }
+                
+                updateUI();
+                updatePlayerStats();
+                
+                showMessage(`スロット ${selectedSaveSlot + 1} からロードしました！`);
+                toggleMenu(); // メニューを閉じる
+                
+            } catch (error) {
+                console.error('ロードエラー:', error);
+                showMessage('ロードに失敗しました！');
+            }
+        }
+        
+        // 旧セーブ関数（互換性のため残す）
+        function saveGameFromMenu() {
+            saveToSlot();
         }
 
         function loadGameFromMenu() {
-            if (loadGame()) {
-                showMessage('ゲームをロードしました！');
-                toggleMenu(); // メニューを閉じる
-            } else {
-                showMessage('セーブデータが見つかりません！');
-            }
+            loadFromSlot();
         }
 
         // Battle System Functions
@@ -1333,10 +1616,10 @@
             const commands = document.querySelectorAll('.command-item');
             const numCommands = commands.length;
             
-            if (key === 'ArrowUp' || key === 'w') {
+            if (key === 'ArrowUp') {
                 battleSystem.selectedCommand = (battleSystem.selectedCommand - 1 + numCommands) % numCommands;
                 battleSystem.updateCommandSelection();
-            } else if (key === 'ArrowDown' || key === 's') {
+            } else if (key === 'ArrowDown') {
                 battleSystem.selectedCommand = (battleSystem.selectedCommand + 1) % numCommands;
                 battleSystem.updateCommandSelection();
             } else if (key === 'Enter' || key === ' ') {
