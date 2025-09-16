@@ -609,29 +609,36 @@ class ShopSystem {
     constructor() {
         this.shopData = {
             weapons: [
-                { name: 'アイアンソード', price: 100, attack: 15, description: '鉄製の剣。攻撃力+15' },
-                { name: 'ミスリルブレード', price: 350, attack: 28, description: 'ミスリル製の刃。攻撃力+28' },
-                { name: '雷神の剣', price: 800, attack: 45, description: '雷の力を宿した神剣。攻撃力+45' },
-                { name: 'データカタナ', price: 1500, attack: 70, description: 'デジタル世界の最強剣。攻撃力+70' }
+                { id: 'iron_sword', name: 'アイアンソード', price: 100, attack: 15, description: '鉄製の剣。攻撃力+15' },
+                { id: 'mithril_blade', name: 'ミスリルブレード', price: 350, attack: 28, description: 'ミスリル製の刃。攻撃力+28' },
+                { id: 'thunder_sword', name: '雷神の剣', price: 800, attack: 45, description: '雷の力を宿した神剣。攻撃力+45' },
+                { id: 'data_katana', name: 'データカタナ', price: 1500, attack: 70, description: 'デジタル世界の最強剣。攻撃力+70' },
+                { id: 'basic_sword', name: 'ベーシックソード', price: 50, attack: 8, description: '基本的な剣' },
+                { id: 'cyber_blade', name: 'サイバーブレード', price: 200, attack: 15, description: '電子強化された刃' }
             ],
             armor: [
-                { name: 'レザーアーマー', price: 80, defense: 10, description: '革製の軽装鎧。防御力+10' },
-                { name: 'チェインメイル', price: 250, defense: 20, description: '鎖帷子。防御力+20' },
-                { name: 'プレートアーマー', price: 600, defense: 35, description: '板金鎧。防御力+35' },
-                { name: '神威の鎧', price: 1200, defense: 55, description: '神の加護を受けた鎧。防御力+55' }
+                { id: 'leather_armor', name: 'レザーアーマー', price: 80, defense: 10, description: '革製の軽装鎧。防御力+10' },
+                { id: 'chain_mail', name: 'チェインメイル', price: 250, defense: 20, description: '鎖帷子。防御力+20' },
+                { id: 'plate_armor', name: 'プレートアーマー', price: 600, defense: 35, description: '板金鎧。防御力+35' },
+                { id: 'kamui_armor', name: '神威の鎧', price: 1200, defense: 55, description: '神の加護を受けた鎧。防御力+55' },
+                { id: 'basic_armor', name: 'ベーシックアーマー', price: 60, defense: 3, description: '基本的な防具' },
+                { id: 'cyber_suit', name: 'サイバースーツ', price: 300, defense: 8, description: 'ハイテク防護服' }
             ],
             items: [
-                { name: 'ヒールポーション', price: 50, type: 'heal', value: 50, description: 'HP50回復' },
-                { name: 'ハイポーション', price: 120, type: 'heal', value: 150, description: 'HP150回復' },
-                { name: 'エナジードリンク', price: 80, type: 'mp', value: 30, description: 'MP30回復' },
-                { name: 'エリクサー', price: 300, type: 'full_heal', value: 999, description: 'HP・MP全回復' },
-                { name: '煙玉', price: 30, type: 'escape', value: 1, description: '戦闘から確実に逃走' }
+                { id: 'potion', name: 'ヒールポーション', price: 50, effect: 'heal', value: 50, count: 1, description: 'HP50回復' },
+                { id: 'hi_potion', name: 'ハイポーション', price: 120, effect: 'heal', value: 150, count: 1, description: 'HP150回復' },
+                { id: 'ether', name: 'エナジードリンク', price: 80, effect: 'mp_heal', value: 30, count: 1, description: 'MP30回復' },
+                { id: 'hi_ether', name: 'ハイエーテル', price: 150, effect: 'mp_heal', value: 80, count: 1, description: 'MP80回復' },
+                { id: 'elixir', name: 'エリクサー', price: 300, effect: 'full_heal', value: 999, count: 1, description: 'HP・MP全回復' },
+                { id: 'smoke_ball', name: '煙玉', price: 30, effect: 'escape', value: 1, count: 1, description: '戦闘から確実に逃走' }
             ],
             magic: [
-                { name: 'ファイアクリスタル', price: 200, type: 'spell', spell: 'fire', description: 'ファイア呪文を覚える' },
-                { name: 'ヒールクリスタル', price: 150, type: 'spell', spell: 'heal', description: 'ヒール呪文を覚える' },
-                { name: '雷撃の護符', price: 400, type: 'accessory', effect: 'thunder', description: '雷属性攻撃付与' },
-                { name: '魔力増幅リング', price: 600, type: 'accessory', effect: 'mp_boost', description: '最大MP+20' }
+                { id: 'fire_crystal', name: 'ファイアクリスタル', price: 200, type: 'spell', spell: 'fire', description: 'ファイア呪文を覚える' },
+                { id: 'heal_crystal', name: 'ヒールクリスタル', price: 150, type: 'spell', spell: 'heal', description: 'ヒール呪文を覚える' },
+                { id: 'thunder_charm', name: '雷撃の護符', price: 400, attack: 5, defense: 2, description: '雷属性攻撃付与。攻撃+5、防御+2' },
+                { id: 'mp_ring', name: '魔力増幅リング', price: 600, mp: 20, description: '最大MP+20' },
+                { id: 'power_glove', name: 'パワーグローブ', price: 300, attack: 8, description: '攻撃力を高める手袋。攻撃+8' },
+                { id: 'shield_ring', name: 'シールドリング', price: 350, defense: 12, description: '防御力を高める指輪。防御+12' }
             ]
         };
         
@@ -844,6 +851,34 @@ class ShopSystem {
                         ...item,
                         count: item.count || 1
                     });
+                }
+                break;
+                
+            case 'magic':
+                // マジックアイテム（アクセサリー含む）の処理
+                const magicItem = {...item};
+                
+                // アクセサリータイプの場合はアクセサリーインベントリーに追加
+                if (item.attack !== undefined || item.defense !== undefined || item.mp !== undefined) {
+                    const existingAccessory = window.player.inventory.accessories.find(a => a.id === item.id);
+                    if (!existingAccessory) {
+                        window.player.inventory.accessories.push(magicItem);
+                    } else {
+                        alert('そのアクセサリーは既に持っています！');
+                        window.player.gold += item.price; // 返金
+                        return;
+                    }
+                } else {
+                    // 魔法アイテムの場合はアイテムインベントリーに追加
+                    const existingMagic = window.player.inventory.items.find(i => i.id === item.id);
+                    if (existingMagic) {
+                        existingMagic.count += 1;
+                    } else {
+                        window.player.inventory.items.push({
+                            ...magicItem,
+                            count: 1
+                        });
+                    }
                 }
                 break;
                 

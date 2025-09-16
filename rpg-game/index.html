@@ -761,7 +761,9 @@
                     {id: 'basic_armor', name: 'ベーシックアーマー', defense: 3, price: 150, description: '基本的な防具'},
                     {id: 'cyber_suit', name: 'サイバースーツ', defense: 8, price: 800, description: 'ハイテク防護服'}
                 ],
-                accessories: [],
+                accessories: [
+                    {id: 'power_glove', name: 'パワーグローブ', attack: 8, price: 300, description: '攻撃力を高める手袋。攻撃+8'}
+                ],
                 items: [
                     {id: 'potion', name: 'ポーション', count: 3, effect: 'heal', value: 50, description: 'HP50回復'},
                     {id: 'ether', name: 'エーテル', count: 2, effect: 'mp_heal', value: 30, description: 'MP30回復'}
@@ -1330,8 +1332,10 @@
                         <div class="inventory-item ${isEquipped(type, item.id) ? 'equipped' : ''}" onclick="equipItem('${type}', '${item.id}')">
                             <div class="equipment-name">${item.name}</div>
                             <div class="equipment-stats">
-                                ${type === 'weapon' ? `攻撃力 +${item.attack}` : 
-                                  type === 'armor' ? `防御力 +${item.defense}` :
+                                ${type === 'weapon' ? `攻撃力 +${item.attack || 0}` : 
+                                  type === 'armor' ? `防御力 +${item.defense || 0}` :
+                                  type === 'accessory' ? 
+                                    `${item.attack ? `攻撃+${item.attack} ` : ''}${item.defense ? `防御+${item.defense} ` : ''}${item.mp ? `MP+${item.mp}` : ''}`.trim() || '特殊効果' :
                                   '特殊効果'}
                             </div>
                             <div style="font-size: 12px; color: #aaa;">${item.description}</div>
@@ -1475,16 +1479,32 @@
             player.attack = player.baseAttack;
             player.defense = player.baseDefense;
             
+            // 基礎最大MPを保存（初回のみ）
+            if (!player.baseMp) {
+                player.baseMp = player.maxMp;
+            }
+            player.maxMp = player.baseMp;
+            
             // 装備ボーナスを適用
             if (player.equipment.weapon) {
-                player.attack += player.equipment.weapon.attack;
+                if (player.equipment.weapon.attack) player.attack += player.equipment.weapon.attack;
+                if (player.equipment.weapon.defense) player.defense += player.equipment.weapon.defense;
+                if (player.equipment.weapon.mp) player.maxMp += player.equipment.weapon.mp;
             }
             if (player.equipment.armor) {
-                player.defense += player.equipment.armor.defense;
+                if (player.equipment.armor.defense) player.defense += player.equipment.armor.defense;
+                if (player.equipment.armor.attack) player.attack += player.equipment.armor.attack;
+                if (player.equipment.armor.mp) player.maxMp += player.equipment.armor.mp;
             }
             if (player.equipment.accessory) {
                 if (player.equipment.accessory.attack) player.attack += player.equipment.accessory.attack;
                 if (player.equipment.accessory.defense) player.defense += player.equipment.accessory.defense;
+                if (player.equipment.accessory.mp) player.maxMp += player.equipment.accessory.mp;
+            }
+            
+            // MPが最大値を超えていた場合は調整
+            if (player.mp > player.maxMp) {
+                player.mp = player.maxMp;
             }
             
             // UI更新
