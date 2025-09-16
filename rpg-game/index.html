@@ -296,6 +296,191 @@
             }
         }
 
+        /* Menu System Styles */
+        .menu-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 2000;
+            display: none;
+            padding: 20px;
+            color: #ffffff;
+        }
+
+        .menu-screen.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .menu-header {
+            text-align: center;
+            font-size: 28px;
+            color: #00ffff;
+            margin-bottom: 30px;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+
+        .menu-main {
+            display: flex;
+            height: calc(100% - 100px);
+        }
+
+        .menu-navigation {
+            width: 200px;
+            background: rgba(0, 50, 100, 0.3);
+            border: 2px solid #00ffff;
+            border-radius: 10px;
+            padding: 20px;
+            margin-right: 20px;
+        }
+
+        .menu-item {
+            padding: 15px;
+            margin: 5px 0;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #333;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .menu-item:hover, .menu-item.selected {
+            background: rgba(0, 255, 255, 0.2);
+            border-color: #00ffff;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        }
+
+        .menu-content {
+            flex: 1;
+            background: rgba(0, 50, 100, 0.3);
+            border: 2px solid #00ffff;
+            border-radius: 10px;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .equipment-slot {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin: 10px 0;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #333;
+            border-radius: 5px;
+            min-height: 50px;
+        }
+
+        .equipment-slot:hover {
+            border-color: #00ffff;
+            box-shadow: 0 0 5px rgba(0, 255, 255, 0.3);
+        }
+
+        .equipment-info {
+            flex: 1;
+        }
+
+        .equipment-name {
+            font-size: 16px;
+            color: #00ffff;
+            margin-bottom: 5px;
+        }
+
+        .equipment-stats {
+            font-size: 12px;
+            color: #cccccc;
+        }
+
+        .equipment-button {
+            padding: 8px 15px;
+            background: rgba(0, 255, 255, 0.2);
+            border: 1px solid #00ffff;
+            border-radius: 3px;
+            color: #ffffff;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .equipment-button:hover {
+            background: rgba(0, 255, 255, 0.4);
+        }
+
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .inventory-item {
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #333;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .inventory-item:hover {
+            border-color: #00ffff;
+            box-shadow: 0 0 5px rgba(0, 255, 255, 0.3);
+        }
+
+        .inventory-item.equipped {
+            border-color: #ffff00;
+            background: rgba(255, 255, 0, 0.1);
+        }
+
+        .status-display {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .status-section {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #333;
+        }
+
+        .status-row-menu {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            padding: 5px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .save-load-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .save-load-button {
+            flex: 1;
+            padding: 15px;
+            background: rgba(0, 100, 200, 0.3);
+            border: 2px solid #00ffff;
+            border-radius: 5px;
+            color: #ffffff;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        .save-load-button:hover {
+            background: rgba(0, 100, 200, 0.5);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+        }
+
         .title-screen {
             position: absolute;
             top: 0;
@@ -451,6 +636,25 @@
             </div>
         </div>
 
+        <!-- Menu Screen -->
+        <div class="menu-screen" id="menuScreen">
+            <div class="menu-header">
+                デウス・コード - メインメニュー
+            </div>
+            <div class="menu-main">
+                <div class="menu-navigation">
+                    <div class="menu-item selected" data-menu="status">ステータス</div>
+                    <div class="menu-item" data-menu="equipment">そうび</div>
+                    <div class="menu-item" data-menu="items">アイテム</div>
+                    <div class="menu-item" data-menu="save">セーブ</div>
+                    <div class="menu-item" data-menu="close">閉じる</div>
+                </div>
+                <div class="menu-content" id="menuContent">
+                    <!-- Content will be dynamically loaded here -->
+                </div>
+            </div>
+        </div>
+
         <div class="controls">
             <div><strong>操作方法:</strong></div>
             <div>↑↓←→: 移動</div>
@@ -482,6 +686,7 @@
         
         // Game state
         let gameStarted = false;
+        let menuOpen = false;
         let player = {
             x: 400,
             y: 300,
@@ -492,10 +697,34 @@
             level: 1,
             exp: 0,
             gold: 1000,
-            attack: 15,
-            defense: 5,
+            baseAttack: 15,    // 基礎攻撃力
+            baseDefense: 5,    // 基礎防御力
+            attack: 15,        // 装備込み攻撃力
+            defense: 5,        // 装備込み防御力
             facing: 'down',
-            stepCount: 0
+            stepCount: 0,
+            // 装備システム
+            equipment: {
+                weapon: null,
+                armor: null,
+                accessory: null
+            },
+            // インベントリー
+            inventory: {
+                weapons: [
+                    {id: 'basic_sword', name: 'ベーシックソード', attack: 8, price: 100, description: '基本的な剣'},
+                    {id: 'cyber_blade', name: 'サイバーブレード', attack: 15, price: 500, description: '電子強化された刃'}
+                ],
+                armor: [
+                    {id: 'basic_armor', name: 'ベーシックアーマー', defense: 3, price: 150, description: '基本的な防具'},
+                    {id: 'cyber_suit', name: 'サイバースーツ', defense: 8, price: 800, description: 'ハイテク防護服'}
+                ],
+                accessories: [],
+                items: [
+                    {id: 'potion', name: 'ポーション', count: 3, effect: 'heal', value: 50, description: 'HP50回復'},
+                    {id: 'ether', name: 'エーテル', count: 2, effect: 'mp_heal', value: 30, description: 'MP30回復'}
+                ]
+            }
         };
 
         // グローバルプレイヤー参照
@@ -506,8 +735,15 @@
         document.addEventListener('keydown', (e) => {
             if (battleSystem && battleSystem.inBattle) {
                 handleBattleInput(e.key);
+            } else if (menuOpen) {
+                handleMenuInput(e.key);
             } else {
                 keys[e.key] = true;
+                // メニュー開閉
+                if (e.key === 'x' || e.key === 'X') {
+                    keys[e.key] = false;
+                    toggleMenu();
+                }
             }
         });
         document.addEventListener('keyup', (e) => keys[e.key] = false);
@@ -523,6 +759,7 @@
             
             gameStarted = true;
             updateMapInfo();
+            updatePlayerStats(); // 装備システム初期化
             gameLoop();
             
             // デバッグ用: グローバルアクセス
@@ -729,10 +966,366 @@
             if (saveData) {
                 const data = JSON.parse(saveData);
                 Object.assign(player, data.player);
-                mapSystem.currentMap = data.currentMap;
+                if (mapSystem) {
+                    mapSystem.currentMap = data.currentMap;
+                    updateMapInfo();
+                }
+                updateUI();
+                updatePlayerStats();
                 return true;
             }
             return false;
+        }
+
+        // ==========================================
+        // Menu System Functions
+        // ==========================================
+        let currentMenuTab = 'status';
+        let menuSelectedIndex = 0;
+
+        function toggleMenu() {
+            if (!gameStarted || battleSystem.inBattle) return;
+            
+            menuOpen = !menuOpen;
+            const menuScreen = document.getElementById('menuScreen');
+            
+            if (menuOpen) {
+                menuScreen.classList.add('active');
+                currentMenuTab = 'status';
+                menuSelectedIndex = 0;
+                setupMenuNavigation();
+                showMenuContent('status');
+            } else {
+                menuScreen.classList.remove('active');
+            }
+        }
+
+        function handleMenuInput(key) {
+            const menuItems = document.querySelectorAll('.menu-item');
+            
+            if (key === 'ArrowUp' || key === 'w') {
+                menuSelectedIndex = Math.max(0, menuSelectedIndex - 1);
+                updateMenuSelection();
+            } else if (key === 'ArrowDown' || key === 's') {
+                menuSelectedIndex = Math.min(menuItems.length - 1, menuSelectedIndex + 1);
+                updateMenuSelection();
+            } else if (key === 'Enter' || key === ' ') {
+                const selectedItem = menuItems[menuSelectedIndex];
+                handleMenuSelection(selectedItem.dataset.menu);
+            } else if (key === 'x' || key === 'X' || key === 'Escape') {
+                toggleMenu();
+            }
+        }
+
+        function setupMenuNavigation() {
+            const menuItems = document.querySelectorAll('.menu-item');
+            menuItems.forEach((item, index) => {
+                item.classList.remove('selected');
+                if (index === menuSelectedIndex) {
+                    item.classList.add('selected');
+                }
+                
+                item.onclick = () => {
+                    menuSelectedIndex = index;
+                    handleMenuSelection(item.dataset.menu);
+                };
+            });
+        }
+
+        function updateMenuSelection() {
+            setupMenuNavigation();
+        }
+
+        function handleMenuSelection(menuType) {
+            if (menuType === 'close') {
+                toggleMenu();
+                return;
+            }
+            
+            currentMenuTab = menuType;
+            showMenuContent(menuType);
+            setupMenuNavigation();
+        }
+
+        function showMenuContent(contentType) {
+            const content = document.getElementById('menuContent');
+            
+            switch(contentType) {
+                case 'status':
+                    content.innerHTML = generateStatusContent();
+                    break;
+                case 'equipment':
+                    content.innerHTML = generateEquipmentContent();
+                    setupEquipmentInteractions();
+                    break;
+                case 'items':
+                    content.innerHTML = generateItemsContent();
+                    setupItemInteractions();
+                    break;
+                case 'save':
+                    content.innerHTML = generateSaveContent();
+                    setupSaveInteractions();
+                    break;
+            }
+        }
+
+        function generateStatusContent() {
+            return `
+                <h3>プレイヤー ステータス</h3>
+                <div class="status-display">
+                    <div class="status-section">
+                        <h4>基本情報</h4>
+                        <div class="status-row-menu">
+                            <span>名前</span>
+                            <span>カイト</span>
+                        </div>
+                        <div class="status-row-menu">
+                            <span>レベル</span>
+                            <span>${player.level}</span>
+                        </div>
+                        <div class="status-row-menu">
+                            <span>経験値</span>
+                            <span>${player.exp}</span>
+                        </div>
+                        <div class="status-row-menu">
+                            <span>ゴールド</span>
+                            <span>${player.gold}</span>
+                        </div>
+                    </div>
+                    <div class="status-section">
+                        <h4>能力値</h4>
+                        <div class="status-row-menu">
+                            <span>HP</span>
+                            <span>${player.hp} / ${player.maxHp}</span>
+                        </div>
+                        <div class="status-row-menu">
+                            <span>MP</span>
+                            <span>${player.mp} / ${player.maxMp}</span>
+                        </div>
+                        <div class="status-row-menu">
+                            <span>攻撃力</span>
+                            <span>${player.attack} (基礎: ${player.baseAttack})</span>
+                        </div>
+                        <div class="status-row-menu">
+                            <span>防御力</span>
+                            <span>${player.defense} (基礎: ${player.baseDefense})</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="status-section">
+                    <h4>装備中</h4>
+                    <div class="status-row-menu">
+                        <span>武器</span>
+                        <span>${player.equipment.weapon ? player.equipment.weapon.name : '装備なし'}</span>
+                    </div>
+                    <div class="status-row-menu">
+                        <span>防具</span>
+                        <span>${player.equipment.armor ? player.equipment.armor.name : '装備なし'}</span>
+                    </div>
+                    <div class="status-row-menu">
+                        <span>アクセサリ</span>
+                        <span>${player.equipment.accessory ? player.equipment.accessory.name : '装備なし'}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function generateEquipmentContent() {
+            return `
+                <h3>装備管理</h3>
+                <div class="equipment-section">
+                    <h4>装備スロット</h4>
+                    <div class="equipment-slot" onclick="openEquipmentSelection('weapon')">
+                        <div class="equipment-info">
+                            <div class="equipment-name">武器</div>
+                            <div class="equipment-stats">${player.equipment.weapon ? `${player.equipment.weapon.name} (攻撃+${player.equipment.weapon.attack})` : '装備なし'}</div>
+                        </div>
+                        <div class="equipment-button">変更</div>
+                    </div>
+                    <div class="equipment-slot" onclick="openEquipmentSelection('armor')">
+                        <div class="equipment-info">
+                            <div class="equipment-name">防具</div>
+                            <div class="equipment-stats">${player.equipment.armor ? `${player.equipment.armor.name} (防御+${player.equipment.armor.defense})` : '装備なし'}</div>
+                        </div>
+                        <div class="equipment-button">変更</div>
+                    </div>
+                </div>
+                <div class="equipment-section">
+                    <h4>武器一覧</h4>
+                    <div class="inventory-grid">
+                        ${player.inventory.weapons.map(weapon => `
+                            <div class="inventory-item ${isEquipped('weapon', weapon.id) ? 'equipped' : ''}" onclick="equipItem('weapon', '${weapon.id}')">
+                                <div class="equipment-name">${weapon.name}</div>
+                                <div class="equipment-stats">攻撃力 +${weapon.attack}</div>
+                                <div style="font-size: 12px; color: #aaa;">${weapon.description}</div>
+                                ${isEquipped('weapon', weapon.id) ? '<div style="color: #ffff00;">装備中</div>' : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="equipment-section">
+                    <h4>防具一覧</h4>
+                    <div class="inventory-grid">
+                        ${player.inventory.armor.map(armor => `
+                            <div class="inventory-item ${isEquipped('armor', armor.id) ? 'equipped' : ''}" onclick="equipItem('armor', '${armor.id}')">
+                                <div class="equipment-name">${armor.name}</div>
+                                <div class="equipment-stats">防御力 +${armor.defense}</div>
+                                <div style="font-size: 12px; color: #aaa;">${armor.description}</div>
+                                ${isEquipped('armor', armor.id) ? '<div style="color: #ffff00;">装備中</div>' : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function generateItemsContent() {
+            return `
+                <h3>アイテム</h3>
+                <div class="inventory-grid">
+                    ${player.inventory.items.map(item => `
+                        <div class="inventory-item" onclick="useItem('${item.id}')">
+                            <div class="equipment-name">${item.name} x${item.count}</div>
+                            <div class="equipment-stats">${item.description}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function generateSaveContent() {
+            const saveData = localStorage.getItem('deusCodeSave');
+            const saveInfo = saveData ? JSON.parse(saveData) : null;
+            
+            return `
+                <h3>セーブ・ロード</h3>
+                <div class="save-load-buttons">
+                    <div class="save-load-button" onclick="saveGameFromMenu()">
+                        <div>セーブ</div>
+                        <div style="font-size: 12px;">現在の状態を保存</div>
+                    </div>
+                    <div class="save-load-button" onclick="loadGameFromMenu()" ${!saveData ? 'style="opacity: 0.5;"' : ''}>
+                        <div>ロード</div>
+                        <div style="font-size: 12px;">${saveInfo ? `保存日時: ${new Date(saveInfo.timestamp).toLocaleString()}` : 'セーブデータなし'}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Equipment System Functions
+        function equipItem(type, itemId) {
+            const inventory = player.inventory[type + 's'] || player.inventory[type];
+            const item = inventory.find(i => i.id === itemId);
+            
+            if (item) {
+                // 現在の装備を外す
+                unequipItem(type);
+                
+                // 新しい装備を装着
+                player.equipment[type] = item;
+                updatePlayerStats();
+                
+                // メニュー内容を更新
+                showMenuContent('equipment');
+                setupEquipmentInteractions();
+                
+                showMessage(`${item.name}を装備しました！`);
+            }
+        }
+
+        function unequipItem(type) {
+            if (player.equipment[type]) {
+                player.equipment[type] = null;
+                updatePlayerStats();
+            }
+        }
+
+        function isEquipped(type, itemId) {
+            return player.equipment[type] && player.equipment[type].id === itemId;
+        }
+
+        function updatePlayerStats() {
+            // 基礎ステータスから開始
+            player.attack = player.baseAttack;
+            player.defense = player.baseDefense;
+            
+            // 装備ボーナスを適用
+            if (player.equipment.weapon) {
+                player.attack += player.equipment.weapon.attack;
+            }
+            if (player.equipment.armor) {
+                player.defense += player.equipment.armor.defense;
+            }
+            if (player.equipment.accessory) {
+                if (player.equipment.accessory.attack) player.attack += player.equipment.accessory.attack;
+                if (player.equipment.accessory.defense) player.defense += player.equipment.accessory.defense;
+            }
+            
+            // UI更新
+            updateUI();
+        }
+
+        function setupEquipmentInteractions() {
+            // Equipment interactions are handled by onclick in HTML
+        }
+
+        function setupItemInteractions() {
+            // Item interactions are handled by onclick in HTML
+        }
+
+        function setupSaveInteractions() {
+            // Save interactions are handled by onclick in HTML
+        }
+
+        function useItem(itemId) {
+            const item = player.inventory.items.find(i => i.id === itemId);
+            if (!item || item.count <= 0) return;
+            
+            switch(item.effect) {
+                case 'heal':
+                    if (player.hp < player.maxHp) {
+                        player.hp = Math.min(player.maxHp, player.hp + item.value);
+                        item.count--;
+                        showMessage(`${item.name}を使用した！HPが${item.value}回復した！`);
+                        updateUI();
+                        showMenuContent('items');
+                    } else {
+                        showMessage('HPは満タンです！');
+                    }
+                    break;
+                case 'mp_heal':
+                    if (player.mp < player.maxMp) {
+                        player.mp = Math.min(player.maxMp, player.mp + item.value);
+                        item.count--;
+                        showMessage(`${item.name}を使用した！MPが${item.value}回復した！`);
+                        updateUI();
+                        showMenuContent('items');
+                    } else {
+                        showMessage('MPは満タンです！');
+                    }
+                    break;
+            }
+        }
+
+        function saveGameFromMenu() {
+            const saveData = {
+                player: player,
+                currentMap: mapSystem ? mapSystem.currentMap : 'city_center',
+                timestamp: new Date().toISOString()
+            };
+            
+            localStorage.setItem('deusCodeSave', JSON.stringify(saveData));
+            showMessage('ゲームをセーブしました！');
+            showMenuContent('save');
+        }
+
+        function loadGameFromMenu() {
+            if (loadGame()) {
+                showMessage('ゲームをロードしました！');
+                toggleMenu(); // メニューを閉じる
+            } else {
+                showMessage('セーブデータが見つかりません！');
+            }
         }
 
         // Battle System Functions

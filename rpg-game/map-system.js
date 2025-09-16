@@ -793,14 +793,98 @@ class ShopSystem {
     // アイテム購入
     buyItem(shopType, itemIndex) {
         const item = this.shopData[shopType][itemIndex];
-        // ここでプレイヤーの所持金チェックとアイテム追加処理
-        // 実装は後でゲームシステムと連携
+        
+        if (!window.player) {
+            alert('プレイヤーデータが見つかりません！');
+            return;
+        }
+        
+        // 所持金チェック
+        if (window.player.gold < item.price) {
+            alert('お金が足りません！');
+            return;
+        }
+        
+        // 購入処理
+        window.player.gold -= item.price;
+        
+        // インベントリーに追加
+        switch(shopType) {
+            case 'weapons':
+                // 既に持っている武器かチェック
+                const existingWeapon = window.player.inventory.weapons.find(w => w.id === item.id);
+                if (!existingWeapon) {
+                    window.player.inventory.weapons.push({...item});
+                } else {
+                    alert('その武器は既に持っています！');
+                    window.player.gold += item.price; // 返金
+                    return;
+                }
+                break;
+                
+            case 'armor':
+                // 既に持っている防具かチェック
+                const existingArmor = window.player.inventory.armor.find(a => a.id === item.id);
+                if (!existingArmor) {
+                    window.player.inventory.armor.push({...item});
+                } else {
+                    alert('その防具は既に持っています！');
+                    window.player.gold += item.price; // 返金
+                    return;
+                }
+                break;
+                
+            case 'items':
+                // アイテムの場合は数量を追加
+                const existingItem = window.player.inventory.items.find(i => i.id === item.id);
+                if (existingItem) {
+                    existingItem.count += (item.count || 1);
+                } else {
+                    window.player.inventory.items.push({
+                        ...item,
+                        count: item.count || 1
+                    });
+                }
+                break;
+                
+            default:
+                alert('このショップタイプはまだ実装されていません！');
+                window.player.gold += item.price; // 返金
+                return;
+        }
+        
+        // UI更新
+        if (window.updateUI) {
+            window.updateUI();
+        }
+        
         alert(`${item.name}を購入しました！`);
         this.closeShop();
     }
     
     // 宿屋に泊まる
     stayAtInn() {
+        if (!window.player) {
+            alert('プレイヤーデータが見つかりません！');
+            return;
+        }
+        
+        const innPrice = 50;
+        if (window.player.gold < innPrice) {
+            alert('お金が足りません！宿代は50ゴールドです。');
+            return;
+        }
+        
+        // 宿代を支払い、HP・MPを全回復
+        window.player.gold -= innPrice;
+        window.player.hp = window.player.maxHp;
+        window.player.mp = window.player.maxMp;
+        
+        // UI更新
+        if (window.updateUI) {
+            window.updateUI();
+        }
+        
         alert('ぐっすり眠りました！HP・MPが全回復しました！');
         this.closeShop();
     }
