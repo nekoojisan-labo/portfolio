@@ -742,10 +742,10 @@
             
             if (key === 'ArrowUp' || key === 'w') {
                 battleSystem.selectedCommand = (battleSystem.selectedCommand - 1 + numCommands) % numCommands;
-                setupBattleCommands();
+                battleSystem.updateCommandSelection();
             } else if (key === 'ArrowDown' || key === 's') {
                 battleSystem.selectedCommand = (battleSystem.selectedCommand + 1) % numCommands;
-                setupBattleCommands();
+                battleSystem.updateCommandSelection();
             } else if (key === 'Enter' || key === ' ') {
                 const selectedCmd = commands[battleSystem.selectedCommand];
                 executeBattleCommand(selectedCmd.dataset.command);
@@ -770,9 +770,8 @@
         }
 
         function executeBattleCommand(command) {
-            // 連続実行を防ぐ
+            // waitingForCommandチェックのみ行い、各関数で個別に管理
             if (!battleSystem.waitingForCommand) return;
-            battleSystem.waitingForCommand = false;
             
             const commands = document.getElementById('battleCommands');
             commands.style.display = 'none';
@@ -788,6 +787,7 @@
                     battleSystem.playerDefend(player);
                     break;
                 case 'item':
+                    battleSystem.waitingForCommand = false;
                     battleSystem.addBattleLog('どうぐを もっていない！');
                     setTimeout(() => {
                         battleSystem.waitingForCommand = true;

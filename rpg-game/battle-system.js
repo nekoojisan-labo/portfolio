@@ -566,12 +566,12 @@ class BattleSystem {
             
             // コマンド選択を初期化
             this.selectedCommand = 0;
-            this.setupBattleCommands();
+            this.updateCommandSelection();
         }
     }
     
-    // バトルコマンドのセットアップ
-    setupBattleCommands() {
+    // バトルコマンドのセットアップ（内部用）
+    updateCommandSelection() {
         const commands = document.querySelectorAll('.command-item');
         commands.forEach((cmd, index) => {
             cmd.classList.remove('selected');
