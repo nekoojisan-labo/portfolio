@@ -53,41 +53,31 @@
             color: #ffffff;
         }
 
-        .status-bar {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-        }
 
-        .hp-bar, .mp-bar {
-            width: 120px;
-            height: 12px;
-            background: #333;
-            border: 1px solid #555;
-            border-radius: 6px;
-            overflow: hidden;
-        }
-
-        .hp-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #ff4444, #ff6666);
-            transition: width 0.3s ease;
-        }
-
-        .mp-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #4444ff, #6666ff);
-            transition: width 0.3s ease;
-        }
 
         .message-box {
-            min-height: 40px;
-            padding: 5px;
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            min-height: 60px;
+            padding: 15px;
             background: rgba(0, 0, 0, 0.9);
-            border-radius: 3px;
-            font-size: 12px;
+            border: 2px solid #00ffff;
+            border-radius: 5px;
+            font-size: 14px;
             line-height: 1.4;
+            color: #ffffff;
             white-space: pre-line;
+            z-index: 100;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .message-box.hidden {
+            opacity: 0;
+            transform: translateY(20px);
+            pointer-events: none;
         }
 
         .controls {
@@ -615,25 +605,9 @@
             ⚠️ 敵の気配を感じる...
         </div>
 
-        <div class="ui-overlay" id="gameUI" style="display: none;">
-            <div class="status-bar">
-                <div>
-                    <div>HP: <span id="playerHP">100</span>/<span id="playerMaxHP">100</span></div>
-                    <div class="hp-bar"><div class="hp-fill" id="hpFill" style="width: 100%"></div></div>
-                </div>
-                <div>
-                    <div>MP: <span id="playerMP">50</span>/<span id="playerMaxMP">50</span></div>
-                    <div class="mp-bar"><div class="mp-fill" id="mpFill" style="width: 100%"></div></div>
-                </div>
-                <div>
-                    <div>レベル: <span id="playerLevel">1</span></div>
-                    <div>経験値: <span id="playerExp">0</span></div>
-                    <div>ゴールド: <span id="playerGold">0</span></div>
-                </div>
-            </div>
-            <div class="message-box" id="messageBox">
-                近未来の新宿、AIシステム『アーク』によって管理された街を歩いている...
-            </div>
+        <!-- Message Box (standalone) -->
+        <div class="message-box" id="messageBox" style="display: none;">
+            近未来の新宿、AIシステム『アーク』によって管理された街を歩いている...
         </div>
 
         <!-- Battle Screen (サイバーパンク × ドラクエ風) -->
@@ -774,6 +748,42 @@
         // グローバルプレイヤー参照
         window.player = player;
 
+        // メッセージシステム
+        let messageTimeout = null;
+        
+        function showMessage(text, duration = 5000) {
+            const messageBox = document.getElementById('messageBox');
+            if (messageBox) {
+                messageBox.textContent = text;
+                messageBox.style.display = 'block';
+                messageBox.classList.remove('hidden');
+                
+                // 既存のタイムアウトをクリア
+                if (messageTimeout) {
+                    clearTimeout(messageTimeout);
+                }
+                
+                // 一定時間後に自動で隠す
+                messageTimeout = setTimeout(() => {
+                    hideMessage();
+                }, duration);
+            }
+        }
+        
+        function hideMessage() {
+            const messageBox = document.getElementById('messageBox');
+            if (messageBox) {
+                messageBox.classList.add('hidden');
+                setTimeout(() => {
+                    messageBox.style.display = 'none';
+                }, 300); // アニメーション時間分待機
+            }
+            if (messageTimeout) {
+                clearTimeout(messageTimeout);
+                messageTimeout = null;
+            }
+        }
+
         // Input handling
         const keys = {};
         document.addEventListener('keydown', (e) => {
@@ -845,7 +855,6 @@
                 
                 // ゲームを開始
                 document.getElementById('loadScreen').style.display = 'none';
-                document.getElementById('gameUI').style.display = 'block';
                 document.getElementById('mapInfo').style.display = 'block';
                 
                 // システム初期化
@@ -877,7 +886,6 @@
 
         function startGame() {
             document.getElementById('titleScreen').style.display = 'none';
-            document.getElementById('gameUI').style.display = 'block';
             document.getElementById('mapInfo').style.display = 'block';
             
             // システム初期化
@@ -904,6 +912,11 @@
             console.log('   ⬇️  BOTTOM-LEFT: Go to Shopping District');
             console.log('   ⬇️  BOTTOM-RIGHT: Go to Black Market');
             console.log('🎮 Exit areas are now ENLARGED and easier to access!');
+            
+            // 初回メッセージ表示
+            setTimeout(() => {
+                showMessage('近未来の新宿、AIシステム『アーク』によって管理された街を歩いている...\nXキーでメニューを開け、矢印キーで移動できる。');
+            }, 1000);
         }
 
         function drawPlayer() {
@@ -985,6 +998,9 @@
             
             // 移動した場合
             if (moved) {
+                // メッセージを隠す
+                hideMessage();
+                
                 player.stepCount++;
                 document.getElementById('stepCount').textContent = player.stepCount;
                 
@@ -1230,19 +1246,27 @@
                         <h4>能力値</h4>
                         <div class="status-row-menu">
                             <span>HP</span>
-                            <span>${player.hp} / ${player.maxHp}</span>
+                            <span style="color: ${player.hp > player.maxHp * 0.5 ? '#44ff44' : player.hp > player.maxHp * 0.25 ? '#ffff44' : '#ff4444'}">${player.hp} / ${player.maxHp}</span>
                         </div>
                         <div class="status-row-menu">
                             <span>MP</span>
-                            <span>${player.mp} / ${player.maxMp}</span>
+                            <span style="color: #4444ff">${player.mp} / ${player.maxMp}</span>
                         </div>
                         <div class="status-row-menu">
                             <span>攻撃力</span>
-                            <span>${player.attack} (基礎: ${player.baseAttack})</span>
+                            <span>${player.attack} ${player.attack > player.baseAttack ? `<span style="color: #44ff44">(+${player.attack - player.baseAttack})</span>` : ''}</span>
                         </div>
                         <div class="status-row-menu">
                             <span>防御力</span>
-                            <span>${player.defense} (基礎: ${player.baseDefense})</span>
+                            <span>${player.defense} ${player.defense > player.baseDefense ? `<span style="color: #44ff44">(+${player.defense - player.baseDefense})</span>` : ''}</span>
+                        </div>
+                        <div class="status-row-menu">
+                            <span>現在地</span>
+                            <span style="color: #aaa">${mapSystem ? mapSystem.maps[mapSystem.currentMap].name : '不明'}</span>
+                        </div>
+                        <div class="status-row-menu">
+                            <span>歩数</span>
+                            <span style="color: #aaa">${player.stepCount}</span>
                         </div>
                     </div>
                 </div>
@@ -1696,21 +1720,9 @@
             }
         }
 
-        function showMessage(text) {
-            document.getElementById('messageBox').textContent = text;
-        }
-
         function updateUI() {
-            document.getElementById('playerHP').textContent = Math.max(0, player.hp);
-            document.getElementById('playerMaxHP').textContent = player.maxHp;
-            document.getElementById('playerMP').textContent = player.mp;
-            document.getElementById('playerMaxMP').textContent = player.maxMp;
-            document.getElementById('playerLevel').textContent = player.level;
-            document.getElementById('playerExp').textContent = player.exp;
-            document.getElementById('playerGold').textContent = player.gold;
-            
-            document.getElementById('hpFill').style.width = (player.hp / player.maxHp * 100) + '%';
-            document.getElementById('mpFill').style.width = (player.mp / player.maxMp * 100) + '%';
+            // UI要素がメニューに移動したため、この関数は基本的に空
+            // 必要に応じて他のUI更新処理をここに追加
         }
 
         function updateMapInfo() {
