@@ -182,11 +182,19 @@ class BattleSystem {
     // 戦闘開始
     startBattle(enemy) {
         this.inBattle = true;
-        this.currentEnemy = enemy;
+        this.currentEnemy = { ...enemy }; // 敵データをコピー
+        // currentHpを確実に初期化
+        if (!this.currentEnemy.currentHp) {
+            this.currentEnemy.currentHp = this.currentEnemy.hp;
+        }
+        if (!this.currentEnemy.currentMp) {
+            this.currentEnemy.currentMp = this.currentEnemy.mp;
+        }
+        
         this.selectedCommand = 0;
         this.battleLog = [];
         this.turnCount = 1;
-        this.waitingForCommand = true;
+        this.waitingForCommand = false; // 初期状態では待機しない
         
         // 戦闘画面表示
         this.showBattleScreen();
@@ -194,13 +202,19 @@ class BattleSystem {
         
         // 最初のターンのコマンド表示
         setTimeout(() => {
-            this.addBattleLog(`ターン ${this.turnCount}`);
-            this.addBattleLog('コマンドを せんたくしてください');
-            this.showCommands();
+            this.startPlayerTurn();
         }, 1000);
         
         // 戦闘BGM開始（オプション）
         // this.playBattleBGM();
+    }
+    
+    // プレイヤーターン開始
+    startPlayerTurn() {
+        this.addBattleLog(`ターン ${this.turnCount}`);
+        this.addBattleLog('コマンドを せんたくしてください');
+        this.waitingForCommand = true;
+        this.showCommands();
     }
     
     // 戦闘画面表示
@@ -239,9 +253,12 @@ class BattleSystem {
     
     // プレイヤーの攻撃
     playerAttack(player) {
+        if (!this.waitingForCommand) return; // 重複実行防止
+        this.waitingForCommand = false;
+        
         const baseDamage = player.attack || 15;
         const variance = Math.floor(Math.random() * 5) - 2; // -2 to +2
-        const damage = Math.max(1, baseDamage + variance - (this.currentEnemy.defense / 2));
+        const damage = Math.max(1, baseDamage + variance - Math.floor(this.currentEnemy.defense / 2));
         
         this.currentEnemy.currentHp = Math.max(0, this.currentEnemy.currentHp - damage);
         this.addBattleLog(`カイトの こうげき！`);
@@ -253,7 +270,7 @@ class BattleSystem {
         // 敵が倒れたかチェック
         if (this.currentEnemy.currentHp <= 0) {
             this.currentEnemy.currentHp = 0;
-            this.waitingForCommand = false;
+            this.updateBattleUI();
             setTimeout(() => this.battleVictory(player), 1500);
         } else {
             // 敵のターンに移行
@@ -263,6 +280,8 @@ class BattleSystem {
     
     // 神威（カムイ）攻撃
     playerKamui(player) {
+        if (!this.waitingForCommand) return; // 重複実行防止
+        
         if (player.mp < 10) {
             this.addBattleLog('MPが たりない！');
             // コマンド選択に戻る
@@ -273,6 +292,7 @@ class BattleSystem {
             return;
         }
         
+        this.waitingForCommand = false;
         player.mp -= 10;
         const baseDamage = 25;
         const variance = Math.floor(Math.random() * 10);
@@ -288,7 +308,7 @@ class BattleSystem {
         // 敵が倒れたかチェック
         if (this.currentEnemy.currentHp <= 0) {
             this.currentEnemy.currentHp = 0;
-            this.waitingForCommand = false;
+            this.updateBattleUI();
             setTimeout(() => this.battleVictory(player), 1500);
         } else {
             // 敵のターンに移行
@@ -298,9 +318,11 @@ class BattleSystem {
     
     // 敵のターン
     enemyTurn(player) {
+        if (this.waitingForCommand) return; // 重複実行防止
+        
         const baseDamage = this.currentEnemy.attack;
         const variance = Math.floor(Math.random() * 3);
-        let damage = Math.max(1, baseDamage + variance - (player.defense || 5) / 2);
+        let damage = Math.max(1, baseDamage + variance - Math.floor((player.defense || 5) / 2));
         
         // 防御中はダメージ半減
         if (player.defending) {
@@ -319,16 +341,14 @@ class BattleSystem {
         this.updateBattleUI();
         
         if (player.hp <= 0) {
-            this.waitingForCommand = false;
+            player.hp = 0;
+            this.updateBattleUI();
             setTimeout(() => this.gameOver(), 1500);
         } else {
-            // 必ず次のターンのコマンド選択に戻る
+            // 次のターンのコマンド選択に戻る
             setTimeout(() => {
                 this.turnCount++;
-                this.addBattleLog(`ターン ${this.turnCount}`);
-                this.addBattleLog('コマンドを せんたくしてください');
-                this.waitingForCommand = true;
-                this.showCommands();
+                this.startPlayerTurn();
             }, 1500);
         }
     }
@@ -396,6 +416,9 @@ class BattleSystem {
     
     // 防御
     playerDefend(player) {
+        if (!this.waitingForCommand) return; // 重複実行防止
+        this.waitingForCommand = false;
+        
         this.addBattleLog('カイトは みをまもっている！');
         player.defending = true;
         
@@ -405,11 +428,13 @@ class BattleSystem {
     
     // 逃走処理
     tryEscape() {
+        if (!this.waitingForCommand) return; // 重複実行防止
+        this.waitingForCommand = false;
+        
         const escapeChance = Math.random();
         
         if (escapeChance > 0.4) { // 60%の確率で逃走成功
             this.addBattleLog('うまく にげきれた！');
-            this.waitingForCommand = false;
             setTimeout(() => this.endBattle(), 1000);
         } else {
             this.addBattleLog('にげられない！');

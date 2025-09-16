@@ -13,6 +13,9 @@ class MapSystem {
         // マップデータ定義
         this.initializeMaps();
         
+        // デバッグ: 利用可能なマップをログ出力
+        console.log('Available maps:', Object.keys(this.maps));
+        
         // NPCとイベント
         this.npcs = [];
         this.events = [];
@@ -37,10 +40,11 @@ class MapSystem {
                 { x: 100, y: 400, width: 200, height: 100, color: '#16213e' }
             ],
             exits: [
-                { x: 0, y: 250, width: 10, height: 100, to: 'subway_entrance', label: '地下鉄へ' },
-                { x: 790, y: 250, width: 10, height: 100, to: 'tokyo_gov', label: '都庁へ' },
-                { x: 350, y: 0, width: 100, height: 10, to: 'shrine_path', label: '神社への道' },
-                { x: 350, y: 590, width: 100, height: 10, to: 'black_market', label: '闇市へ' }
+                { x: 0, y: 200, width: 30, height: 200, to: 'subway_entrance', label: '地下鉄へ' },
+                { x: 770, y: 200, width: 30, height: 200, to: 'tokyo_gov', label: '都庁へ' },
+                { x: 300, y: 0, width: 200, height: 20, to: 'shrine_path', label: '神社への道' },
+                { x: 300, y: 580, width: 200, height: 20, to: 'black_market', label: '闇市へ' },
+                { x: 100, y: 580, width: 200, height: 20, to: 'shopping_district', label: '商業街へ' }
             ],
             npcs: [
                 { x: 300, y: 200, emoji: '👤', name: '感情を失った市民', dialogue: '...。' },
@@ -62,8 +66,8 @@ class MapSystem {
                 { x: 540, y: 200, width: 60, height: 200, color: '#333333' }
             ],
             exits: [
-                { x: 790, y: 250, width: 10, height: 100, to: 'shinjuku_city', label: '地上へ' },
-                { x: 0, y: 250, width: 10, height: 100, to: 'deep_tunnel', label: '深部へ' }
+                { x: 770, y: 200, width: 30, height: 200, to: 'shinjuku_city', label: '地上へ' },
+                { x: 0, y: 200, width: 30, height: 200, to: 'deep_tunnel', label: '深部へ' }
             ],
             npcs: [
                 { x: 400, y: 300, emoji: '🤖', name: 'パトロールドローン', dialogue: 'スキャン中...異常なし。', hostile: true }
@@ -156,13 +160,153 @@ class MapSystem {
                 { x: 350, y: 200, width: 100, height: 100, color: '#3a3a5a', type: 'elevator' }
             ],
             exits: [
-                { x: 0, y: 250, width: 10, height: 100, to: 'shinjuku_city', label: '外へ' },
+                { x: 0, y: 200, width: 30, height: 200, to: 'shinjuku_city', label: '外へ' },
                 { x: 350, y: 200, width: 100, height: 100, to: 'ark_core', label: 'アーク中枢へ', locked: true, requirement: 'key_card' }
             ],
             npcs: [
                 { x: 300, y: 300, emoji: '🤖', name: 'セキュリティドローン', dialogue: '警告：不正アクセスを検知。', hostile: true },
                 { x: 500, y: 300, emoji: '🤖', name: 'セキュリティドローン', dialogue: '警告：不正アクセスを検知。', hostile: true }
             ]
+        };
+        
+        // 深層地下トンネル（ダンジョン）
+        this.maps.deep_tunnel = {
+            name: '深層地下トンネル - 第1層',
+            bgColor: '#0f0f0f',
+            gridColor: '#2f1f1f',
+            encounterRate: 'very_high',  // ダンジョンは高い遭遇率
+            area: 'dungeon',
+            buildings: [
+                // 壁や障害物
+                { x: 0, y: 0, width: 800, height: 50, color: '#1f1f1f', type: 'wall' },
+                { x: 0, y: 550, width: 800, height: 50, color: '#1f1f1f', type: 'wall' },
+                { x: 0, y: 0, width: 50, height: 600, color: '#1f1f1f', type: 'wall' },
+                { x: 750, y: 0, width: 50, height: 600, color: '#1f1f1f', type: 'wall' },
+                
+                // 内部の柱や障害物
+                { x: 200, y: 150, width: 40, height: 40, color: '#2f2f2f', type: 'pillar' },
+                { x: 560, y: 150, width: 40, height: 40, color: '#2f2f2f', type: 'pillar' },
+                { x: 200, y: 410, width: 40, height: 40, color: '#2f2f2f', type: 'pillar' },
+                { x: 560, y: 410, width: 40, height: 40, color: '#2f2f2f', type: 'pillar' },
+                { x: 380, y: 280, width: 40, height: 40, color: '#2f2f2f', type: 'pillar' },
+                
+                // 宝箱
+                { x: 100, y: 500, width: 30, height: 30, color: '#8B4513', type: 'treasure' },
+                { x: 670, y: 100, width: 30, height: 30, color: '#8B4513', type: 'treasure' }
+            ],
+            exits: [
+                { x: 790, y: 275, width: 10, height: 50, to: 'subway_entrance', label: '地下鉄へ' },
+                { x: 375, y: 590, width: 50, height: 10, to: 'deep_tunnel_2', label: '更なる深部へ' }
+            ],
+            npcs: [
+                { x: 300, y: 200, emoji: '👹', name: 'シャドウエンティティ', dialogue: 'この領域は...我々のものだ。', hostile: true, level: 3 },
+                { x: 500, y: 350, emoji: '🕷️', name: 'データスパイダー', dialogue: 'ジジジ...侵入者発見...', hostile: true, level: 2 },
+                { x: 150, y: 400, emoji: '⚡', name: 'グリッチスピリット', dialogue: 'エラー...エラー...削除シマス...', hostile: true, level: 2 }
+            ],
+            treasures: [
+                { x: 100, y: 500, item: 'ヒールポーション', opened: false },
+                { x: 670, y: 100, item: 'エナジーコア', opened: false }
+            ]
+        };
+        
+        // 深層地下トンネル第2層
+        this.maps.deep_tunnel_2 = {
+            name: '深層地下トンネル - 第2層',
+            bgColor: '#0a0a0f',
+            gridColor: '#2f1f2f',
+            encounterRate: 'extreme',
+            area: 'dungeon',
+            buildings: [
+                { x: 0, y: 0, width: 800, height: 50, color: '#1a1a2f', type: 'wall' },
+                { x: 0, y: 550, width: 800, height: 50, color: '#1a1a2f', type: 'wall' },
+                { x: 0, y: 0, width: 50, height: 600, color: '#1a1a2f', type: 'wall' },
+                { x: 750, y: 0, width: 50, height: 600, color: '#1a1a2f', type: 'wall' },
+                
+                // 複雑な迷路構造
+                { x: 150, y: 100, width: 200, height: 40, color: '#2a2a3f', type: 'wall' },
+                { x: 450, y: 100, width: 200, height: 40, color: '#2a2a3f', type: 'wall' },
+                { x: 150, y: 460, width: 200, height: 40, color: '#2a2a3f', type: 'wall' },
+                { x: 450, y: 460, width: 200, height: 40, color: '#2a2a3f', type: 'wall' },
+                { x: 350, y: 200, width: 100, height: 200, color: '#2a2a3f', type: 'wall' },
+                
+                // ボス部屋
+                { x: 300, y: 250, width: 200, height: 100, color: '#4a1a1a', type: 'boss_area' }
+            ],
+            exits: [
+                { x: 375, y: 0, width: 50, height: 10, to: 'deep_tunnel', label: '上の階へ' },
+                { x: 375, y: 590, width: 50, height: 10, to: 'ancient_chamber', label: '古代の部屋へ', locked: true, requirement: 'boss_key' }
+            ],
+            npcs: [
+                { x: 200, y: 300, emoji: '💀', name: 'ネクロマンサー', dialogue: '死者の軍団よ、目覚めよ！', hostile: true, level: 5 },
+                { x: 600, y: 300, emoji: '🐉', name: 'データドラゴン', dialogue: 'この深淵で眠りを妨げるとは...', hostile: true, level: 6, boss: true }
+            ]
+        };
+        
+        // 商業街エリア（ショップが充実）
+        this.maps.shopping_district = {
+            name: '渋谷商業街 - ショッピングモール',
+            bgColor: '#1a1a3e',
+            gridColor: '#3a3a5e',
+            encounterRate: 'none',  // ショッピング街は安全
+            area: 'town',
+            buildings: [
+                // ショップ建物
+                { x: 50, y: 100, width: 120, height: 80, color: '#2a4a2a', type: 'weapon_shop' },
+                { x: 200, y: 100, width: 120, height: 80, color: '#4a2a2a', type: 'armor_shop' },
+                { x: 350, y: 100, width: 120, height: 80, color: '#2a2a4a', type: 'item_shop' },
+                { x: 500, y: 100, width: 120, height: 80, color: '#4a4a2a', type: 'magic_shop' },
+                
+                { x: 50, y: 420, width: 120, height: 80, color: '#3a3a4a', type: 'inn' },
+                { x: 200, y: 420, width: 120, height: 80, color: '#4a3a3a', type: 'bank' },
+                { x: 500, y: 420, width: 120, height: 80, color: '#3a4a3a', type: 'guild' },
+                
+                // 中央広場
+                { x: 300, y: 250, width: 200, height: 150, color: '#1e3e5e', type: 'plaza' }
+            ],
+            exits: [
+                { x: 0, y: 275, width: 10, height: 50, to: 'shinjuku_city', label: '新宿へ' },
+                { x: 790, y: 275, width: 10, height: 50, to: 'residential_area', label: '住宅街へ' }
+            ],
+            npcs: [
+                { x: 110, y: 160, emoji: '🗡️', name: '武器商人リョウ', dialogue: 'いらっしゃい！最新の神器武器を取り揃えてるよ！', shop: true, shopType: 'weapons' },
+                { x: 260, y: 160, emoji: '🛡️', name: '防具商人サクラ', dialogue: 'お疲れさま！丈夫な防具なら任せて！', shop: true, shopType: 'armor' },
+                { x: 410, y: 160, emoji: '🧪', name: 'アイテム商人ユウキ', dialogue: 'ポーション、回復アイテム何でもあります！', shop: true, shopType: 'items' },
+                { x: 560, y: 160, emoji: '🔮', name: '魔法商人ミコト', dialogue: '古の魔法アイテムを求めるなら...', shop: true, shopType: 'magic' },
+                
+                { x: 110, y: 480, emoji: '🏠', name: '宿屋の主人', dialogue: 'お疲れ様！ゆっくり休んでいってくださいな。', shop: true, shopType: 'inn' },
+                { x: 260, y: 480, emoji: '💰', name: '銀行員', dialogue: 'お金の預入・引出しをどうぞ。', shop: true, shopType: 'bank' },
+                { x: 560, y: 480, emoji: '⚔️', name: 'ギルドマスター', dialogue: 'クエストの受注・報告はこちらで。', shop: true, shopType: 'guild' },
+                
+                { x: 400, y: 325, emoji: '👥', name: '街の住民', dialogue: 'この街は平和でいいところよ。でも最近、地下で変な音が...' }
+            ]
+        };
+        
+        // 住宅街エリア
+        this.maps.residential_area = {
+            name: '住宅街 - 平和な街並み',
+            bgColor: '#1e2e1e',
+            gridColor: '#2e4e2e',
+            encounterRate: 'none',
+            area: 'town',
+            buildings: [
+                { x: 100, y: 100, width: 100, height: 80, color: '#3e4e3e', type: 'house' },
+                { x: 250, y: 100, width: 100, height: 80, color: '#4e3e3e', type: 'house' },
+                { x: 500, y: 100, width: 100, height: 80, color: '#3e3e4e', type: 'house' },
+                { x: 100, y: 300, width: 100, height: 80, color: '#4e4e3e', type: 'house' },
+                { x: 500, y: 300, width: 100, height: 80, color: '#3e5e3e', type: 'house' },
+                { x: 250, y: 450, width: 100, height: 80, color: '#5e3e3e', type: 'house' },
+                { x: 400, y: 450, width: 100, height: 80, color: '#3e3e5e', type: 'house' }
+            ],
+            exits: [
+                { x: 0, y: 275, width: 10, height: 50, to: 'shopping_district', label: '商業街へ' }
+            ],
+            npcs: [
+                { x: 150, y: 150, emoji: '👨‍👩‍👧‍👦', name: '家族', dialogue: '平和な毎日に感謝しています。' },
+                { x: 300, y: 200, emoji: '🐱', name: 'ミケ', dialogue: 'にゃーん（人懐っこい猫のようだ）' },
+                { x: 550, y: 350, emoji: '👵', name: 'おばあさん', dialogue: '昔はもっと賑やかな街だったのよ...'},
+                { x: 450, y: 500, emoji: '📮', name: '郵便ポスト', dialogue: '手紙を出しますか？（まだ実装されていません）' }
+            ],
+            savePoint: { x: 325, y: 250, emoji: '💤', name: '公園のベンチ' }
         };
     }
     
@@ -209,19 +353,79 @@ class MapSystem {
                 ctx.font = '20px Arial';
                 ctx.textAlign = 'center';
                 ctx.fillText('🏪', building.x + building.width/2, building.y + building.height/2);
+            } else if (building.type === 'pillar') {
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('🏛️', building.x + building.width/2, building.y + building.height/2);
+            } else if (building.type === 'treasure') {
+                ctx.font = '20px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('📦', building.x + building.width/2, building.y + building.height/2);
+            } else if (building.type === 'weapon_shop') {
+                ctx.font = '24px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('🗡️', building.x + building.width/2, building.y + building.height/2);
+                ctx.font = '10px Courier New';
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText('武器店', building.x + building.width/2, building.y + building.height/2 + 15);
+            } else if (building.type === 'armor_shop') {
+                ctx.font = '24px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('🛡️', building.x + building.width/2, building.y + building.height/2);
+                ctx.font = '10px Courier New';
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText('防具店', building.x + building.width/2, building.y + building.height/2 + 15);
+            } else if (building.type === 'item_shop') {
+                ctx.font = '24px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('🧪', building.x + building.width/2, building.y + building.height/2);
+                ctx.font = '10px Courier New';
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText('道具店', building.x + building.width/2, building.y + building.height/2 + 15);
+            } else if (building.type === 'magic_shop') {
+                ctx.font = '24px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('🔮', building.x + building.width/2, building.y + building.height/2);
+                ctx.font = '10px Courier New';
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText('魔法店', building.x + building.width/2, building.y + building.height/2 + 15);
+            } else if (building.type === 'inn') {
+                ctx.font = '24px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('🏠', building.x + building.width/2, building.y + building.height/2);
+                ctx.font = '10px Courier New';
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText('宿屋', building.x + building.width/2, building.y + building.height/2 + 15);
+            } else if (building.type === 'house') {
+                ctx.font = '20px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('🏘️', building.x + building.width/2, building.y + building.height/2);
             }
         });
         
-        // 出口マーカー
-        ctx.fillStyle = 'rgba(0, 255, 255, 0.3)';
+        // 出口マーカー（より目立つようにする）
         map.exits.forEach(exit => {
+            // 出口エリアのハイライト
+            ctx.fillStyle = 'rgba(0, 255, 255, 0.5)';
             ctx.fillRect(exit.x, exit.y, exit.width, exit.height);
             
-            // ラベル表示
-            ctx.font = '10px Courier New';
+            // 境界線
+            ctx.strokeStyle = '#00ffff';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(exit.x, exit.y, exit.width, exit.height);
+            
+            // ラベル表示（より大きく）
+            ctx.font = '12px Courier New';
             ctx.fillStyle = '#00ffff';
             ctx.textAlign = 'center';
-            ctx.fillText(exit.label, exit.x + exit.width/2, exit.y - 5);
+            ctx.fillText(exit.label, exit.x + exit.width/2, exit.y - 8);
+            
+            // 矢印表示
+            ctx.font = '16px Arial';
+            if (exit.y === 0) ctx.fillText('↑', exit.x + exit.width/2, exit.y + 20);
+            else if (exit.y >= 590) ctx.fillText('↓', exit.x + exit.width/2, exit.y - 10);
+            else if (exit.x === 0) ctx.fillText('←', exit.x + 20, exit.y + exit.height/2);
+            else if (exit.x >= 790) ctx.fillText('→', exit.x - 10, exit.y + exit.height/2);
         });
         
         // セーブポイント
@@ -252,8 +456,15 @@ class MapSystem {
             
             // 名前表示
             ctx.font = '10px Courier New';
-            ctx.fillStyle = npc.hostile ? '#ff4444' : '#ffffff';
+            ctx.fillStyle = npc.hostile ? '#ff4444' : (npc.shop ? '#44ff44' : '#ffffff');
             ctx.fillText(npc.name, npc.x, npc.y + 20);
+            
+            // ショップマーク表示
+            if (npc.shop) {
+                ctx.font = '12px Arial';
+                ctx.fillStyle = '#ffff00';
+                ctx.fillText('💰', npc.x + 15, npc.y - 15);
+            }
         });
     }
     
@@ -296,6 +507,9 @@ class MapSystem {
                 
                 // マップ名表示
                 this.showMapName();
+                
+                // デバッグ: 遷移完了
+                console.log(`Map transition completed! New map: ${this.currentMap}`);
             }, 300);
         }
         
@@ -353,7 +567,256 @@ class MapSystem {
         
         return map.area || 'city';
     }
+    
+    // 宝箱チェック
+    checkTreasureInteraction(playerX, playerY) {
+        const map = this.maps[this.currentMap];
+        if (!map || !map.treasures) return null;
+        
+        const interactionRange = 40;
+        
+        for (const treasure of map.treasures) {
+            if (treasure.opened) continue;
+            
+            const distance = Math.sqrt(
+                Math.pow(playerX - treasure.x, 2) + 
+                Math.pow(playerY - treasure.y, 2)
+            );
+            
+            if (distance < interactionRange) {
+                return treasure;
+            }
+        }
+        
+        return null;
+    }
+    
+    // 宝箱を開く
+    openTreasure(treasure) {
+        if (treasure && !treasure.opened) {
+            treasure.opened = true;
+            return treasure.item;
+        }
+        return null;
+    }
+}
+
+// ==========================================
+// ショップシステム (Shop System)
+// ==========================================
+
+class ShopSystem {
+    constructor() {
+        this.shopData = {
+            weapons: [
+                { name: 'アイアンソード', price: 100, attack: 15, description: '鉄製の剣。攻撃力+15' },
+                { name: 'ミスリルブレード', price: 350, attack: 28, description: 'ミスリル製の刃。攻撃力+28' },
+                { name: '雷神の剣', price: 800, attack: 45, description: '雷の力を宿した神剣。攻撃力+45' },
+                { name: 'データカタナ', price: 1500, attack: 70, description: 'デジタル世界の最強剣。攻撃力+70' }
+            ],
+            armor: [
+                { name: 'レザーアーマー', price: 80, defense: 10, description: '革製の軽装鎧。防御力+10' },
+                { name: 'チェインメイル', price: 250, defense: 20, description: '鎖帷子。防御力+20' },
+                { name: 'プレートアーマー', price: 600, defense: 35, description: '板金鎧。防御力+35' },
+                { name: '神威の鎧', price: 1200, defense: 55, description: '神の加護を受けた鎧。防御力+55' }
+            ],
+            items: [
+                { name: 'ヒールポーション', price: 50, type: 'heal', value: 50, description: 'HP50回復' },
+                { name: 'ハイポーション', price: 120, type: 'heal', value: 150, description: 'HP150回復' },
+                { name: 'エナジードリンク', price: 80, type: 'mp', value: 30, description: 'MP30回復' },
+                { name: 'エリクサー', price: 300, type: 'full_heal', value: 999, description: 'HP・MP全回復' },
+                { name: '煙玉', price: 30, type: 'escape', value: 1, description: '戦闘から確実に逃走' }
+            ],
+            magic: [
+                { name: 'ファイアクリスタル', price: 200, type: 'spell', spell: 'fire', description: 'ファイア呪文を覚える' },
+                { name: 'ヒールクリスタル', price: 150, type: 'spell', spell: 'heal', description: 'ヒール呪文を覚える' },
+                { name: '雷撃の護符', price: 400, type: 'accessory', effect: 'thunder', description: '雷属性攻撃付与' },
+                { name: '魔力増幅リング', price: 600, type: 'accessory', effect: 'mp_boost', description: '最大MP+20' }
+            ]
+        };
+        
+        this.currentShop = null;
+        this.isShopOpen = false;
+    }
+    
+    // ショップを開く
+    openShop(shopType, shopkeeper) {
+        this.currentShop = shopType;
+        this.isShopOpen = true;
+        this.showShopUI(shopType, shopkeeper);
+    }
+    
+    // ショップUIを表示
+    showShopUI(shopType, shopkeeper) {
+        // 既存のショップUIを削除
+        const existingShop = document.getElementById('shopUI');
+        if (existingShop) {
+            existingShop.remove();
+        }
+        
+        // ショップUI作成
+        const shopUI = document.createElement('div');
+        shopUI.id = 'shopUI';
+        shopUI.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(20, 20, 40, 0.95);
+            border: 3px solid #0f3460;
+            border-radius: 10px;
+            padding: 20px;
+            color: white;
+            font-family: 'Courier New', monospace;
+            z-index: 1000;
+            max-width: 600px;
+            max-height: 500px;
+            overflow-y: auto;
+        `;
+        
+        let shopTitle = '';
+        let items = [];
+        
+        switch(shopType) {
+            case 'weapons': 
+                shopTitle = '🗡️ 武器店';
+                items = this.shopData.weapons;
+                break;
+            case 'armor':
+                shopTitle = '🛡️ 防具店';
+                items = this.shopData.armor;
+                break;
+            case 'items':
+                shopTitle = '🧪 道具店';
+                items = this.shopData.items;
+                break;
+            case 'magic':
+                shopTitle = '🔮 魔法店';
+                items = this.shopData.magic;
+                break;
+            case 'inn':
+                this.showInnUI(shopkeeper);
+                return;
+            default:
+                shopTitle = '🏪 一般店';
+                items = this.shopData.items;
+        }
+        
+        shopUI.innerHTML = `
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h2>${shopTitle}</h2>
+                <p>"${shopkeeper.dialogue}"</p>
+                <p>所持金: <span id="playerMoney">${window.player ? window.player.gold : 1000}</span> ギル</p>
+            </div>
+            <div id="shopItems"></div>
+            <div style="text-align: center; margin-top: 20px;">
+                <button onclick="window.gameShop.closeShop()" 
+                        style="padding: 10px 20px; background: #444; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                    店を出る
+                </button>
+            </div>
+        `;
+        
+        const itemsContainer = shopUI.querySelector('#shopItems');
+        items.forEach((item, index) => {
+            const itemDiv = document.createElement('div');
+            itemDiv.style.cssText = `
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 10px;
+                margin: 5px 0;
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 5px;
+                cursor: pointer;
+            `;
+            
+            itemDiv.innerHTML = `
+                <div>
+                    <strong>${item.name}</strong><br>
+                    <small style="color: #aaa;">${item.description}</small>
+                </div>
+                <div style="text-align: right;">
+                    <div>${item.price} ギル</div>
+                    <button onclick="window.gameShop.buyItem('${shopType}', ${index})"
+                            style="padding: 5px 10px; background: #0f3460; color: white; border: none; border-radius: 3px; cursor: pointer; margin-top: 5px;">
+                        購入
+                    </button>
+                </div>
+            `;
+            
+            itemsContainer.appendChild(itemDiv);
+        });
+        
+        document.body.appendChild(shopUI);
+    }
+    
+    // 宿屋UI
+    showInnUI(shopkeeper) {
+        const innUI = document.createElement('div');
+        innUI.id = 'shopUI';
+        innUI.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(40, 30, 20, 0.95);
+            border: 3px solid #8B4513;
+            border-radius: 10px;
+            padding: 30px;
+            color: white;
+            font-family: 'Courier New', monospace;
+            z-index: 1000;
+            text-align: center;
+        `;
+        
+        innUI.innerHTML = `
+            <h2>🏠 ${shopkeeper.name}の宿屋</h2>
+            <p>"${shopkeeper.dialogue}"</p>
+            <br>
+            <p>一晩: 50ギル</p>
+            <p>HP・MPが全回復します</p>
+            <br>
+            <button onclick="window.gameShop.stayAtInn()" 
+                    style="padding: 15px 30px; background: #8B4513; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 10px;">
+                宿泊する (50ギル)
+            </button>
+            <button onclick="window.gameShop.closeShop()" 
+                    style="padding: 15px 30px; background: #444; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 10px;">
+                やめる
+            </button>
+        `;
+        
+        document.body.appendChild(innUI);
+    }
+    
+    // アイテム購入
+    buyItem(shopType, itemIndex) {
+        const item = this.shopData[shopType][itemIndex];
+        // ここでプレイヤーの所持金チェックとアイテム追加処理
+        // 実装は後でゲームシステムと連携
+        alert(`${item.name}を購入しました！`);
+        this.closeShop();
+    }
+    
+    // 宿屋に泊まる
+    stayAtInn() {
+        alert('ぐっすり眠りました！HP・MPが全回復しました！');
+        this.closeShop();
+    }
+    
+    // ショップを閉じる
+    closeShop() {
+        const shopUI = document.getElementById('shopUI');
+        if (shopUI) {
+            shopUI.remove();
+        }
+        this.isShopOpen = false;
+        this.currentShop = null;
+    }
 }
 
 // グローバルにエクスポート
 window.MapSystem = MapSystem;
+window.ShopSystem = ShopSystem;
+window.gameShop = new ShopSystem();

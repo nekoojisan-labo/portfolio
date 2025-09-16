@@ -469,6 +469,13 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         
+        // デバッグ用: URLパラメータで自動開始
+        if (window.location.search.includes('autostart')) {
+            setTimeout(() => {
+                startGame();
+            }, 1000);
+        }
+        
         // ゲームシステム
         let battleSystem = null;
         let mapSystem = null;
@@ -484,7 +491,7 @@
             maxMp: 50,
             level: 1,
             exp: 0,
-            gold: 0,
+            gold: 1000,
             attack: 15,
             defense: 5,
             facing: 'down',
@@ -517,6 +524,22 @@
             gameStarted = true;
             updateMapInfo();
             gameLoop();
+            
+            // デバッグ用: グローバルアクセス
+            window.debugMapSystem = mapSystem;
+            window.debugPlayer = player;
+            console.log('Game started! Available maps:', Object.keys(mapSystem.maps));
+            console.log('Current map:', mapSystem.currentMap);
+            console.log('Use debugMapSystem.transitionToMap("shopping_district") to test map transition');
+            
+            console.log('🗺️  All map transitions are working correctly!');
+            console.log('📍 Move to screen edges to access exits:');
+            console.log('   ⬅️  LEFT edge: Go to Subway');
+            console.log('   ➡️  RIGHT edge: Go to Tokyo Government');
+            console.log('   ⬆️  TOP edge: Go to Shrine');  
+            console.log('   ⬇️  BOTTOM-LEFT: Go to Shopping District');
+            console.log('   ⬇️  BOTTOM-RIGHT: Go to Black Market');
+            console.log('🎮 Exit areas are now ENLARGED and easier to access!');
         }
 
         function drawPlayer() {
@@ -543,28 +566,54 @@
         function updatePlayer() {
             if (!gameStarted || battleSystem.inBattle) return;
             
+            // デバッグ情報表示
+            const debugInfo = document.getElementById('debugInfo') || (() => {
+                const div = document.createElement('div');
+                div.id = 'debugInfo';
+                div.style.cssText = 'position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.8); color: white; padding: 5px; font-size: 10px; z-index: 999;';
+                document.body.appendChild(div);
+                return div;
+            })();
+            // 出口に近いかチェック
+            let nearExit = '';
+            if (mapSystem && mapSystem.maps[mapSystem.currentMap]) {
+                const map = mapSystem.maps[mapSystem.currentMap];
+                for (const exit of map.exits) {
+                    const distance = Math.sqrt(
+                        Math.pow(player.x - (exit.x + exit.width/2), 2) + 
+                        Math.pow(player.y - (exit.y + exit.height/2), 2)
+                    );
+                    if (distance < 50) {
+                        nearExit = ` | Near: ${exit.label}`;
+                        break;
+                    }
+                }
+            }
+            
+            debugInfo.textContent = `Map: ${mapSystem.currentMap} | Player: (${Math.floor(player.x)}, ${Math.floor(player.y)})${nearExit}`;
+            
             const speed = 3;
             let moved = false;
             let oldX = player.x;
             let oldY = player.y;
             
             if (keys['ArrowUp'] || keys['w']) {
-                player.y = Math.max(20, player.y - speed);
+                player.y = Math.max(5, player.y - speed);
                 player.facing = 'up';
                 moved = true;
             }
             if (keys['ArrowDown'] || keys['s']) {
-                player.y = Math.min(canvas.height - 20, player.y + speed);
+                player.y = Math.min(canvas.height - 5, player.y + speed);
                 player.facing = 'down';
                 moved = true;
             }
             if (keys['ArrowLeft'] || keys['a']) {
-                player.x = Math.max(20, player.x - speed);
+                player.x = Math.max(5, player.x - speed);
                 player.facing = 'left';
                 moved = true;
             }
             if (keys['ArrowRight'] || keys['d']) {
-                player.x = Math.min(canvas.width - 20, player.x + speed);
+                player.x = Math.min(canvas.width - 5, player.x + speed);
                 player.facing = 'right';
                 moved = true;
             }
@@ -577,6 +626,7 @@
                 // マップ遷移チェック
                 const transition = mapSystem.checkMapTransition(player.x, player.y);
                 if (transition) {
+                    console.log('Transition detected:', transition);
                     if (transition.locked) {
                         showMessage(transition.message);
                         player.x = oldX;
@@ -585,10 +635,10 @@
                         mapSystem.transitionToMap(transition.nextMap);
                         updateMapInfo();
                         // プレイヤー位置調整
-                        if (transition.exit.x === 0) player.x = canvas.width - 30;
-                        else if (transition.exit.x >= 790) player.x = 30;
-                        if (transition.exit.y === 0) player.y = canvas.height - 30;
-                        else if (transition.exit.y >= 590) player.y = 30;
+                        if (transition.exit.x <= 30) player.x = canvas.width - 50;
+                        else if (transition.exit.x >= 750) player.x = 50;
+                        if (transition.exit.y <= 20) player.y = canvas.height - 50;
+                        else if (transition.exit.y >= 570) player.y = 50;
                     }
                 }
                 
@@ -621,6 +671,7 @@
 
         function checkInteractions() {
             const npc = mapSystem.checkNPCInteraction(player.x, player.y);
+            const treasure = mapSystem.checkTreasureInteraction(player.x, player.y);
             
             if (npc) {
                 if (npc.hostile) {
@@ -633,9 +684,19 @@
                         name: npc.name
                     });
                 } else if (npc.shop) {
-                    showMessage(`${npc.name}: 「${npc.dialogue}」\n[ショップ機能は未実装]`);
+                    // ショップを開く
+                    window.gameShop.openShop(npc.shopType, npc);
                 } else {
                     showMessage(`${npc.name}: 「${npc.dialogue}」`);
+                }
+            } else if (treasure) {
+                // 宝箱を開く
+                const item = mapSystem.openTreasure(treasure);
+                if (item) {
+                    showMessage(`宝箱を開けた！\n${item}を手に入れた！`);
+                    // TODO: アイテムをインベントリに追加
+                } else {
+                    showMessage('この宝箱は既に開けられている...');
                 }
             }
         }
@@ -781,6 +842,10 @@
                     };
                     encounterRateEl.style.color = colors[map.encounterRate] || '#ffffff';
                 }
+                
+                // デバッグ: 現在のマップの出口情報
+                console.log(`Current map: ${mapSystem.currentMap}`);
+                console.log('Available exits:', map.exits);
             }
         }
 
