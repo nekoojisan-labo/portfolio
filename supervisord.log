@@ -1,0 +1,6 @@
+2025-09-21 02:35:24,836 INFO RPC interface 'supervisor' initialized
+2025-09-21 02:35:24,836 CRIT Server 'unix_http_server' running without any HTTP authentication checking
+2025-09-21 02:35:24,838 INFO daemonizing the supervisord process
+2025-09-21 02:35:24,838 INFO supervisord started with pid 1645
+2025-09-21 02:35:25,842 INFO spawned: 'webserver' with pid 1648
+2025-09-21 02:35:26,844 INFO success: webserver entered RUNNING state, process has stayed up for > than 1 seconds (startsecs)
