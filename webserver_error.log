@@ -1,0 +1,11 @@
+10.12.241.58 - - [21/Sep/2025 02:35:34] code 404, message File not found
+10.12.241.58 - - [21/Sep/2025 02:35:34] "GET /robots.txt HTTP/1.1" 404 -
+10.12.241.58 - - [21/Sep/2025 02:35:34] "GET / HTTP/1.1" 200 -
+10.12.241.58 - - [21/Sep/2025 02:35:47] code 404, message File not found
+10.12.241.58 - - [21/Sep/2025 02:35:47] "GET /robots.txt HTTP/1.1" 404 -
+10.12.241.58 - - [21/Sep/2025 02:35:47] "GET /puyo-puzzle-game/ HTTP/1.1" 200 -
+10.12.241.58 - - [21/Sep/2025 02:35:48] "GET /puyo-puzzle-game/ HTTP/1.1" 200 -
+10.12.241.58 - - [21/Sep/2025 02:35:48] "GET /favicon.ico HTTP/1.1" 200 -
+10.12.241.58 - - [21/Sep/2025 02:36:19] "GET / HTTP/1.1" 200 -
+10.12.241.58 - - [21/Sep/2025 02:36:20] "GET /profile.jpg HTTP/1.1" 200 -
+10.12.241.58 - - [21/Sep/2025 02:36:25] "GET /nyanko-tower/ HTTP/1.1" 200 -
