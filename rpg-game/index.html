@@ -363,9 +363,36 @@
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
         }
+        
+        /* Back to Portfolio Button */
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #0f3460;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            border: 2px solid #0f3460;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            z-index: 2000;
+        }
+        
+        .back-button:hover {
+            background: #0f3460;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(15, 52, 96, 0.5);
+        }
     </style>
 </head>
 <body>
+    <a href="../" class="back-button">← ポートフォリオに戻る</a>
     <div class="game-container">
         <canvas id="gameCanvas" width="800" height="600"></canvas>
         
