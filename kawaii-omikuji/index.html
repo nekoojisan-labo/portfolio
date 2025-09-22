@@ -1,0 +1,2204 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>かわいいおみくじ</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html {
+            font-size: 16px;
+            -webkit-text-size-adjust: 100%;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+            background: linear-gradient(135deg, #ffb3e6 0%, #b3d9ff 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        .screen {
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(20px);
+            transition: all 0.5s ease-in-out;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            width: calc(100% - 40px);
+        }
+
+        .screen.active {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+            position: relative;
+            top: auto;
+            left: auto;
+            right: auto;
+            width: auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .title {
+            font-size: clamp(2rem, 5vw, 2.5rem);
+            color: #ff6b9d;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 0.625rem;
+            animation: bounce 2s infinite;
+            line-height: 1.2;
+        }
+
+        .subtitle {
+            font-size: clamp(1rem, 3vw, 1.2rem);
+            color: #666;
+            font-weight: 300;
+        }
+
+        .omikuji-box {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 30px;
+            padding: clamp(30px, 5vw, 40px);
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .omikuji-illustration {
+            margin-bottom: 2rem;
+            position: relative;
+            height: 100px;
+        }
+
+        .shrine {
+            font-size: clamp(3rem, 8vw, 4rem);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .clouds {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: clamp(1.5rem, 4vw, 2rem);
+            opacity: 0.7;
+            animation: drift 5s ease-in-out infinite;
+            white-space: nowrap;
+        }
+
+        .draw-button {
+            background: linear-gradient(45deg, #ff6b9d, #ffa726);
+            border: none;
+            border-radius: 25px;
+            padding: clamp(15px, 3vw, 20px) clamp(30px, 5vw, 40px);
+            font-size: clamp(1.2rem, 3.5vw, 1.5rem);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(255, 107, 157, 0.4);
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .draw-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(255, 107, 157, 0.6);
+        }
+
+        .draw-button:active {
+            transform: translateY(0);
+        }
+
+        .button-sparkle {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            animation: sparkle 1.5s ease-in-out infinite;
+        }
+
+        .loading-animation {
+            text-align: center;
+            padding: clamp(50px, 10vw, 100px) 0;
+        }
+
+        .spinning-omikuji {
+            font-size: clamp(4rem, 10vw, 5rem);
+            animation: spin 1s linear infinite;
+            margin-bottom: 2rem;
+            display: inline-block;
+        }
+
+        .loading-text {
+            font-size: clamp(1.2rem, 3vw, 1.5rem);
+            color: #666;
+            margin-bottom: 1.25rem;
+        }
+
+        .loading-dots {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .loading-dots span {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff6b9d;
+            animation: loading-bounce 1.4s ease-in-out infinite both;
+        }
+
+        .loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+        .result-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: clamp(20px, 4vw, 30px);
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .fortune-name {
+            font-size: clamp(2.5rem, 6vw, 3rem);
+            font-weight: bold;
+            margin-bottom: 0.625rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .fortune-icon {
+            font-size: clamp(3rem, 8vw, 4rem);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .result-header.daikichi {
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            color: #b8860b;
+        }
+
+        .result-header.chukichi {
+            background: linear-gradient(135deg, #ff9500, #ffb347);
+            color: #cc5500;
+        }
+
+        .result-header.shokichi {
+            background: linear-gradient(135deg, #ff69b4, #ffb6c1);
+            color: #c71585;
+        }
+
+        .result-header.kichi {
+            background: linear-gradient(135deg, #32cd32, #90ee90);
+            color: #228b22;
+        }
+
+        .result-header.suekichi {
+            background: linear-gradient(135deg, #87ceeb, #b0e0e6);
+            color: #4682b4;
+        }
+
+        .result-header.kyo {
+            background: linear-gradient(135deg, #9370db, #dda0dd);
+            color: #663399;
+        }
+
+        .result-header.daikyo {
+            background: linear-gradient(135deg, #483d8b, #6a5acd);
+            color: #ffffff;
+        }
+
+        .advice-container {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: clamp(20px, 4vw, 30px);
+            margin-bottom: 2rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            max-height: 60vh;
+            overflow: hidden;
+        }
+
+        .advice-scroll {
+            max-height: calc(60vh - 60px);
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-right: 10px;
+        }
+
+        .advice-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .advice-scroll::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.05);
+            border-radius: 3px;
+        }
+
+        .advice-scroll::-webkit-scrollbar-thumb {
+            background: rgba(255, 107, 157, 0.3);
+            border-radius: 3px;
+        }
+
+        .advice-item {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 15px;
+            border-left: 5px solid #ff6b9d;
+            transition: all 0.3s ease;
+        }
+
+        .advice-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .advice-item h3 {
+            color: #ff6b9d;
+            margin-bottom: 0.5rem;
+            font-size: clamp(1rem, 2.5vw, 1.2rem);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .advice-item .emoji {
+            font-size: 1.3em;
+        }
+
+        .advice-item p {
+            color: #555;
+            line-height: 1.6;
+            font-size: clamp(0.875rem, 2vw, 1rem);
+        }
+
+        .retry-button {
+            width: 100%;
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+            border: none;
+            border-radius: 15px;
+            padding: clamp(12px, 2.5vw, 15px);
+            font-size: clamp(1rem, 2.5vw, 1.2rem);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(78, 205, 196, 0.4);
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .retry-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(78, 205, 196, 0.6);
+        }
+
+        .retry-button:active {
+            transform: translateY(0);
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes drift {
+            0%, 100% { transform: translateX(-50%) translateY(0px); }
+            50% { transform: translateX(-40%) translateY(-5px); }
+        }
+
+        @keyframes sparkle {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes loading-bounce {
+            0%, 80%, 100% { transform: scale(0); opacity: 0; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        @media (max-width: 768px) and (min-width: 481px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .advice-container {
+                max-height: 50vh;
+            }
+            
+            .advice-scroll {
+                max-height: calc(50vh - 40px);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .header {
+                margin-bottom: 2rem;
+            }
+            
+            .omikuji-box {
+                padding: 25px;
+            }
+            
+            .omikuji-illustration {
+                height: 80px;
+                margin-bottom: 1.5rem;
+            }
+            
+            .advice-container {
+                max-height: 55vh;
+                padding: 20px;
+            }
+            
+            .advice-scroll {
+                max-height: calc(55vh - 40px);
+                padding-right: 5px;
+            }
+            
+            .advice-item {
+                margin-bottom: 1rem;
+                padding: 0.75rem;
+            }
+        }
+
+        @media (orientation: landscape) and (max-height: 600px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header {
+                margin-bottom: 1rem;
+            }
+            
+            .omikuji-illustration {
+                height: 60px;
+                margin-bottom: 1rem;
+            }
+            
+            .advice-container {
+                max-height: 40vh;
+            }
+            
+            .advice-scroll {
+                max-height: calc(40vh - 40px);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation: none !important;
+                transition: none !important;
+            }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+            }
+            
+            .omikuji-box,
+            .advice-container {
+                background: rgba(45, 55, 72, 0.9);
+                color: #e2e8f0;
+            }
+            
+            .subtitle,
+            .loading-text,
+            .advice-item p {
+                color: #cbd5e0;
+            }
+        }
+
+        /* Back button styling to match omikuji theme */
+        .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 9999;
+            background: linear-gradient(45deg, #ff6b9d, #ffa726);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 10px 15px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 107, 157, 0.3);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-family: inherit;
+        }
+
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 157, 0.5);
+            background: linear-gradient(45deg, #ff5a8f, #ff9f1c);
+        }
+
+        .back-button:active {
+            transform: translateY(0);
+        }
+
+        @media (max-width: 480px) {
+            .back-button {
+                top: 15px;
+                left: 15px;
+                padding: 8px 12px;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Back to Portfolio Button -->
+    <button class="back-button" onclick="window.location.href='../index.html'">
+        <span>← ポートフォリオに戻る</span>
+    </button>
+    
+    <div class="container">
+        <!-- メイン画面 -->
+        <div id="main-screen" class="screen active">
+            <div class="header">
+                <h1 class="title">🌸 かわいいおみくじ 🌸</h1>
+                <p class="subtitle">今日の運勢を占ってみよう！</p>
+            </div>
+            
+            <div class="omikuji-box">
+                <div class="omikuji-illustration">
+                    <div class="shrine">⛩️</div>
+                    <div class="clouds">☁️ ☁️</div>
+                </div>
+                
+                <button id="draw-button" class="draw-button" type="button" aria-label="おみくじを引く">
+                    <span class="button-text">おみくじを引く！</span>
+                    <div class="button-sparkle">✨</div>
+                </button>
+            </div>
+        </div>
+
+        <!-- 抽選アニメーション画面 -->
+        <div id="loading-screen" class="screen">
+            <div class="loading-animation">
+                <div class="spinning-omikuji">🎋</div>
+                <p class="loading-text">運勢を占っています...</p>
+                <div class="loading-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 結果表示画面 -->
+        <div id="result-screen" class="screen">
+            <div id="result-header" class="result-header">
+                <div id="fortune-name" class="fortune-name"></div>
+                <div id="fortune-icon" class="fortune-icon"></div>
+            </div>
+            
+            <div class="advice-container">
+                <div class="advice-scroll">
+                    <div class="advice-item">
+                        <h3><span class="emoji">🌟</span> 願望</h3>
+                        <p id="advice-wish"></p>
+                    </div>
+                    <div class="advice-item">
+                        <h3><span class="emoji">💪</span> 健康</h3>
+                        <p id="advice-health"></p>
+                    </div>
+                    <div class="advice-item">
+                        <h3><span class="emoji">💼</span> 仕事</h3>
+                        <p id="advice-work"></p>
+                    </div>
+                    <div class="advice-item">
+                        <h3><span class="emoji">💕</span> 恋愛</h3>
+                        <p id="advice-love"></p>
+                    </div>
+                    <div class="advice-item">
+                        <h3><span class="emoji">📚</span> 学問</h3>
+                        <p id="advice-study"></p>
+                    </div>
+                    <div class="advice-item">
+                        <h3><span class="emoji">💰</span> 金運</h3>
+                        <p id="advice-money"></p>
+                    </div>
+                    <div class="advice-item">
+                        <h3><span class="emoji">✈️</span> 旅行</h3>
+                        <p id="advice-travel"></p>
+                    </div>
+                    <div class="advice-item">
+                        <h3><span class="emoji">🔍</span> 失物</h3>
+                        <p id="advice-lost"></p>
+                    </div>
+                    <div class="advice-item">
+                        <h3><span class="emoji">⚖️</span> 争事</h3>
+                        <p id="advice-trouble"></p>
+                    </div>
+                </div>
+            </div>
+            
+            <button id="retry-button" class="retry-button" type="button" aria-label="もう一度引く">
+                もう一度引く 🔄
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // おみくじデータ
+        const FORTUNE_CONFIG = {
+            daikichi: { weight: 5, name: '大吉', icon: '🌟', class: 'daikichi' },
+            chukichi: { weight: 20, name: '中吉', icon: '⭐', class: 'chukichi' },
+            shokichi: { weight: 30, name: '小吉', icon: '✨', class: 'shokichi' },
+            kichi: { weight: 20, name: '吉', icon: '🍀', class: 'kichi' },
+            suekichi: { weight: 15, name: '末吉', icon: '🌸', class: 'suekichi' },
+            kyo: { weight: 8, name: '凶', icon: '🌙', class: 'kyo' },
+            daikyo: { weight: 2, name: '大凶', icon: '⚡', class: 'daikyo' }
+        };
+
+        // 完全版アドバイスデータ（各運勢×各項目×20パターン）
+        const ADVICE_DATA = {
+            daikichi: {
+                wish: [
+                    "今こそチャレンジの時。夢に向かって一歩踏み出しましょう。あなたの思いはきっと実現します。",
+                    "願いが叶う最高のタイミングです。自信を持って行動してください。",
+                    "心の奥底にある願いも現実になりそうです。積極的に動きましょう。",
+                    "大きな夢も小さな願いも、今なら叶う可能性が高いです。",
+                    "願望実現に向けて、周囲のサポートも得られるでしょう。",
+                    "長年の夢が現実味を帯びてきます。諦めずに続けてください。",
+                    "新しい目標を立てるのにも最適な時期です。",
+                    "願いを口に出すことで、さらに実現が近づきます。",
+                    "思いもよらない形で願いが叶うかもしれません。",
+                    "願望達成のための道筋が見えてくるでしょう。",
+                    "心から望んでいることは必ず実現します。",
+                    "願いを叶えるための力が最大限に高まっています。",
+                    "周囲の人々があなたの願いを応援してくれるでしょう。",
+                    "想像以上の結果が得られる可能性があります。",
+                    "願いが叶うだけでなく、さらなる幸運も訪れそうです。",
+                    "今日立てた目標は必ず達成できるでしょう。",
+                    "願望実現のためのチャンスが次々と現れます。",
+                    "心の準備ができているので、願いは自然と叶います。",
+                    "大胆な願いほど実現しやすい時期です。",
+                    "願いを叶える力があなたの中に満ちています。"
+                ],
+                health: [
+                    "体調も気分も絶好調。無理は禁物ですが、活動的な一日を過ごすのに最適です。",
+                    "健康運が最高潮に達しています。新しい運動を始めるのも良いでしょう。",
+                    "心身ともに充実した状態です。エネルギーに満ち溢れています。",
+                    "体調管理が上手くいき、病気知らずの日々が続きそうです。",
+                    "健康面での心配事も解決に向かうでしょう。",
+                    "体力・気力ともに充実し、何事にも積極的に取り組めます。",
+                    "健康診断の結果も良好になりそうです。",
+                    "新しい健康法を試すのに最適な時期です。",
+                    "心の健康も身体の健康も最高の状態です。",
+                    "免疫力が高まり、風邪などにもかかりにくいでしょう。",
+                    "健康に関する良いニュースが届きそうです。",
+                    "体調不良があっても、すぐに回復するでしょう。",
+                    "健康的な生活習慣が自然と身につきます。",
+                    "医療関係者との相性も良く、適切な治療が受けられます。",
+                    "健康面での投資が大きな効果を生むでしょう。",
+                    "ストレスフリーな状態で過ごせそうです。",
+                    "健康に関する新しい発見や気づきがありそうです。",
+                    "身体の調子が良く、何をしても楽しく感じられます。",
+                    "健康運の波に乗って、理想の体調を手に入れましょう。",
+                    "心身のバランスが完璧に取れている状態です。"
+                ],
+                work: [
+                    "努力が実を結び、大きな成果につながるチャンス到来。積極的に新しい仕事に取り組むと吉。",
+                    "仕事運が絶好調です。重要なプロジェクトを任されるかもしれません。",
+                    "職場での評価が急上昇し、昇進や昇格の可能性があります。",
+                    "新しいビジネスチャンスが舞い込んできそうです。",
+                    "同僚や上司との関係も良好で、チームワークが抜群です。",
+                    "創造性が高まり、革新的なアイデアが浮かびそうです。",
+                    "転職を考えている方には絶好のタイミングです。",
+                    "仕事の効率が上がり、短時間で大きな成果を上げられます。",
+                    "リーダーシップを発揮する機会に恵まれるでしょう。",
+                    "仕事を通じて新しい人脈が広がりそうです。",
+                    "専門スキルを活かせる場面が増えるでしょう。",
+                    "仕事に対するモチベーションが最高潮に達します。",
+                    "重要な契約や取引が成功する可能性が高いです。",
+                    "職場環境の改善にも貢献できそうです。",
+                    "仕事での成功が私生活にも良い影響を与えます。",
+                    "新しい分野への挑戦も成功しやすい時期です。",
+                    "仕事の成果が周囲に認められ、信頼を得られます。",
+                    "副業や兼業も順調に進展しそうです。",
+                    "仕事を通じて社会貢献できる機会に恵まれます。",
+                    "キャリアアップのための学習も効果的に進むでしょう。"
+                ],
+                love: [
+                    "良い出会いの兆し。素直に自分の気持ちを伝えましょう。今が運命の分かれ道。",
+                    "恋愛運が最高潮です。理想の相手との出会いが期待できます。",
+                    "既にパートナーがいる方は、関係がさらに深まりそうです。",
+                    "告白やプロポーズには最適なタイミングです。",
+                    "恋愛に関する悩みも自然と解決するでしょう。",
+                    "魅力が最大限に輝き、多くの人から注目されます。",
+                    "運命的な出会いが待っているかもしれません。",
+                    "恋愛関係での誤解も解けて、絆が深まります。",
+                    "パートナーとの将来について具体的な話が進みそうです。",
+                    "恋愛面での積極性が良い結果を生むでしょう。",
+                    "片思いが実る可能性が非常に高いです。",
+                    "恋愛に関する直感が冴えて、正しい判断ができます。",
+                    "ロマンチックな出来事が次々と起こりそうです。",
+                    "恋愛関係での新しいステージに進めるでしょう。",
+                    "相手の気持ちも自分に向いていることが分かります。",
+                    "恋愛における障害も乗り越えられそうです。",
+                    "愛情表現が相手にしっかりと伝わります。",
+                    "恋愛運の波に乗って、幸せな関係を築けます。",
+                    "結婚や同棲などの話も具体的に進展しそうです。",
+                    "恋愛を通じて人として大きく成長できるでしょう。"
+                ],
+                study: [
+                    "好奇心が実を結ぶ時期。新たな学びにチャレンジし、知識やスキルを深めましょう。",
+                    "学習効果が最大限に発揮される時期です。難しい内容もスムーズに理解できます。",
+                    "試験や資格取得に挑戦するには絶好のタイミングです。",
+                    "新しい分野の勉強を始めるのに最適な時期です。",
+                    "学習に集中できる環境が整い、効率的に進められます。",
+                    "記憶力や理解力が向上し、学習成果が目に見えて現れます。",
+                    "学習仲間や良い指導者との出会いがありそうです。",
+                    "創造性が高まり、独創的な発想ができるようになります。",
+                    "学んだことを実践で活かす機会に恵まれるでしょう。",
+                    "語学学習や技術習得が順調に進みます。",
+                    "学習に対するモチベーションが最高潮に達します。",
+                    "過去に挫折した学習も再挑戦すると成功しそうです。",
+                    "学習成果が周囲に認められ、評価を得られます。",
+                    "知識を深めることで新しい可能性が開けます。",
+                    "学習を通じて人生の方向性が見えてくるでしょう。",
+                    "効果的な学習方法を発見できそうです。",
+                    "学習内容が日常生活にも良い影響を与えます。",
+                    "知的好奇心が刺激され、学ぶ楽しさを実感できます。",
+                    "学習を通じて新しい人脈や交友関係が広がります。",
+                    "将来のキャリアに直結する学習成果が得られるでしょう。"
+                ],
+                money: [
+                    "収入増の可能性。計画的に財布のひもを緩めるとよいでしょう。投資や副業にも目を向けて。",
+                    "金運が絶好調です。臨時収入や昇給の可能性があります。",
+                    "投資や資産運用で良い結果が期待できます。",
+                    "節約効果が現れて、貯蓄が順調に増えそうです。",
+                    "お金に関する良いニュースが舞い込んできます。",
+                    "副業や兼業での収入が安定してきそうです。",
+                    "金銭管理能力が向上し、無駄遣いが減ります。",
+                    "お得な情報や割引サービスに出会えるでしょう。",
+                    "金融商品の選択眼が冴えて、良い投資先が見つかります。",
+                    "お金を使うタイミングも使わないタイミングも的確です。",
+                    "収入源が多様化して、安定した収入を得られます。",
+                    "金運アップのための行動が効果を発揮します。",
+                    "お金に関する知識が増えて、賢い選択ができます。",
+                    "予想外の収入源が見つかるかもしれません。",
+                    "金銭的な心配事も解決に向かうでしょう。",
+                    "お金の価値を最大限に活用できる時期です。",
+                    "財布の中身が自然と増えていきそうです。",
+                    "金運の波に乗って、経済的な余裕が生まれます。",
+                    "お金を通じて新しい可能性が開けるでしょう。",
+                    "将来の経済的安定に向けた基盤が築けます。"
+                ],
+                travel: [
+                    "旅先で幸運な出会いや発見あり。思い切って遠出するとよき思い出ができます。",
+                    "旅行運が最高です。どこに行っても素晴らしい体験ができるでしょう。",
+                    "旅先で人生を変える出会いがあるかもしれません。",
+                    "観光地での特別な体験や発見が待っています。",
+                    "旅行中に新しい趣味や興味を見つけそうです。",
+                    "現地の人々との交流が心を豊かにしてくれます。",
+                    "旅行先での写真や思い出が一生の宝物になります。",
+                    "交通手段も宿泊先も、すべてが順調に進みます。",
+                    "旅行を通じて新しい価値観や視点を得られます。",
+                    "美味しい料理や美しい景色に出会えるでしょう。",
+                    "旅先でのショッピングも大満足の結果になります。",
+                    "予想以上に充実した旅行になりそうです。",
+                    "旅行仲間との絆も深まり、楽しい時間を過ごせます。",
+                    "旅先での偶然の出来事が幸運をもたらします。",
+                    "文化や歴史に触れて、知識が豊かになります。",
+                    "旅行先での体験が今後の人生に良い影響を与えます。",
+                    "リフレッシュ効果抜群の旅行になるでしょう。",
+                    "旅行中に重要なひらめきやアイデアが浮かびそうです。",
+                    "旅先での出会いが将来のビジネスチャンスにつながります。",
+                    "心身ともにリセットされて、新しいエネルギーを得られます。"
+                ],
+                lost: [
+                    "無くした物も無事に見つかりそう。焦らず丁寧に探してください。",
+                    "失物運が良好です。思わぬ場所から見つかるかもしれません。",
+                    "なくしたものが意外な形で戻ってくるでしょう。",
+                    "探し物は近いうちに必ず見つかります。",
+                    "失くしたと思っていたものが、実は別の場所にあることが判明します。",
+                    "他の人が見つけて届けてくれる可能性があります。",
+                    "失物を探している過程で、別の良いことが起こりそうです。",
+                    "記憶を辿ると、置き場所を思い出せるでしょう。",
+                    "失くしたものよりも価値のあるものが見つかるかもしれません。",
+                    "家族や友人が探し物を見つけてくれそうです。",
+                    "失物が見つかることで、新しい発見もありそうです。",
+                    "探し物をしている間に、部屋の整理整頓も進みます。",
+                    "失くしたものを通じて、大切な思い出がよみがえります。",
+                    "探し物が見つかるタイミングが絶妙です。",
+                    "失物の発見が、他の良い出来事のきっかけになります。",
+                    "なくしたものが、より良い状態で戻ってきます。",
+                    "失物を探すことで、新しい整理方法を発見できます。",
+                    "探し物が見つかることで、心の重荷も軽くなります。",
+                    "失くしたと思っていたものが、実は大切に保管されていました。",
+                    "失物の発見が、幸運の始まりとなるでしょう。"
+                ],
+                trouble: [
+                    "揉め事やトラブルは自然と解決へ。過剰に気にせず、冷静に対処してください。",
+                    "トラブル解決運が最高です。どんな問題も良い方向に向かいます。",
+                    "争いごとが平和的に解決し、関係者全員が納得できる結果になります。",
+                    "トラブルを通じて、より強い絆が生まれるでしょう。",
+                    "問題解決のための適切なアドバイスが得られます。",
+                    "争いごとが意外な形で解決し、新しい可能性が開けます。",
+                    "トラブルの原因が明確になり、根本的な解決ができます。",
+                    "第三者の仲裁により、円満に問題が解決します。",
+                    "争いごとを通じて、相手の気持ちも理解できるようになります。",
+                    "トラブル解決の過程で、新しいスキルを身につけられます。",
+                    "問題が解決することで、より良い環境が整います。",
+                    "争いごとの経験が、将来の糧となるでしょう。",
+                    "トラブル解決により、信頼関係がより深まります。",
+                    "問題解決能力が向上し、今後同様のトラブルを避けられます。",
+                    "争いごとが解決することで、心の平安を取り戻せます。",
+                    "トラブルの解決が、新しいチャンスをもたらします。",
+                    "問題解決の過程で、重要な気づきを得られるでしょう。",
+                    "争いごとが解決し、より良い人間関係を築けます。",
+                    "トラブル解決により、ストレスから解放されます。",
+                    "問題が解決することで、前向きな気持ちを取り戻せるでしょう。"
+                ]
+            },
+            chukichi: {
+                wish: [
+                    "現実的に目標を設定し、コツコツ努力を続けてください。願いは思ったより早く叶うでしょう。",
+                    "願いが叶うまでもう少し時間がかかりますが、着実に近づいています。",
+                    "小さな願いから順番に叶えていくと良いでしょう。",
+                    "願望実現のための準備を整える時期です。",
+                    "周囲の協力を得ながら、願いに向かって進みましょう。",
+                    "今は種まきの時期。収穫は必ずやってきます。",
+                    "願いを具体的にイメージすることで、実現が近づきます。",
+                    "一歩ずつ着実に進めば、願いは叶います。",
+                    "焦らず、自分のペースで願いに向かって進んでください。",
+                    "願いを叶えるための良いアイデアが浮かびそうです。",
+                    "協力者が現れて、願望実現が加速するでしょう。",
+                    "小さな成功体験が、大きな願いへの自信につながります。",
+                    "願いに向かって努力する姿が、周囲を動かします。",
+                    "今の努力は、将来大きな実を結ぶでしょう。",
+                    "願いを叶えるための道筋が少しずつ見えてきます。",
+                    "諦めずに続けることで、願いは必ず叶います。",
+                    "願望実現のためのヒントが身近にありそうです。",
+                    "今は準備期間。しっかりと基盤を固めましょう。",
+                    "願いに向かって進む勇気が湧いてきます。",
+                    "小さな一歩が、大きな願いへの第一歩となります。"
+                ],
+                health: [
+                    "体調に大きな変動はないが、無理は禁物。休息とバランスの良い食事を心がけて。",
+                    "健康状態は安定していますが、予防を心がけましょう。",
+                    "適度な運動を続けることで、より良い体調を維持できます。",
+                    "睡眠の質を向上させることが健康のカギです。",
+                    "ストレス管理に注意を払い、リラックスする時間を作りましょう。",
+                    "規則正しい生活リズムが健康を支えます。",
+                    "体調の小さな変化にも気を配ることが大切です。",
+                    "健康的な習慣を一つずつ身につけていきましょう。",
+                    "心と体のバランスを意識して過ごしてください。",
+                    "疲れを感じたら、早めに休息を取りましょう。",
+                    "免疫力を高める生活習慣を心がけてください。",
+                    "健康診断を受けて、現状を把握することも大切です。",
+                    "季節の変わり目は特に体調管理に注意しましょう。",
+                    "水分補給をこまめに行い、体調を整えてください。",
+                    "軽い運動から始めて、徐々に体力をつけていきましょう。",
+                    "健康に関する情報を集めて、実践してみてください。",
+                    "体調が良い日は、積極的に活動しましょう。",
+                    "健康的な食事を心がけることで、体調が安定します。",
+                    "心身のリフレッシュ時間を大切にしてください。",
+                    "無理のない範囲で、健康づくりに取り組みましょう。"
+                ],
+                work: [
+                    "地道な努力が実る時期。焦らずに自分のペースで進めてください。",
+                    "同僚や上司とのコミュニケーションを大切にすると良い結果に。",
+                    "今の仕事を丁寧にこなすことで、次のチャンスが見えてきます。",
+                    "スキルアップのための学習が、将来の成功につながります。",
+                    "チームワークを重視することで、仕事が順調に進みます。",
+                    "小さな改善の積み重ねが、大きな成果を生みます。",
+                    "仕事の優先順位を明確にして、効率的に進めましょう。",
+                    "新しい提案やアイデアを積極的に出してみてください。",
+                    "仕事での信頼関係が、今後の財産となります。",
+                    "着実な成果が認められ、評価が上がるでしょう。",
+                    "仕事の幅を少しずつ広げていく良い時期です。",
+                    "困難な仕事も、周囲と協力すれば乗り越えられます。",
+                    "仕事を通じて、新しいスキルが身につきそうです。",
+                    "今の努力が、将来のキャリアアップにつながります。",
+                    "仕事のやりがいを再発見できる出来事がありそうです。",
+                    "職場での人間関係が、仕事の成功を支えます。",
+                    "新しいプロジェクトに参加するチャンスが訪れそうです。",
+                    "仕事の成果が少しずつ形になってきています。",
+                    "今は基礎を固める時期。将来の飛躍に備えましょう。",
+                    "仕事への取り組み方を見直すことで、効率が上がります。"
+                ],
+                love: [
+                    "進展はゆっくりですが、誠実な態度が相手に伝わるでしょう。",
+                    "急がずに丁寧な関係を築いていくことが大切です。",
+                    "相手の気持ちを考えながら、少しずつ距離を縮めていきましょう。",
+                    "友情から愛情へと発展する可能性があります。",
+                    "恋愛に関する良いアドバイスが得られそうです。",
+                    "相手との共通点を見つけることで、関係が深まります。",
+                    "素直な気持ちを少しずつ表現していきましょう。",
+                    "恋愛運は安定期。焦らず自然体で過ごしてください。",
+                    "相手の良いところを見つけて、褒めてあげましょう。",
+                    "デートの計画を丁寧に立てることで、良い時間が過ごせます。",
+                    "恋愛において、今は聞き上手になることが大切です。",
+                    "相手との信頼関係が、恋愛の基盤となります。",
+                    "小さなサプライズが、関係を良い方向に導きます。",
+                    "恋愛に関する悩みは、信頼できる人に相談しましょう。",
+                    "相手のペースに合わせることで、関係が順調に進みます。",
+                    "恋愛において、今は待つことも大切な時期です。",
+                    "共通の趣味を通じて、相手との距離が縮まります。",
+                    "恋愛運は徐々に上昇中。良い変化が期待できます。",
+                    "相手への思いやりが、愛情を育てます。",
+                    "恋愛において、今は基礎を築く大切な時期です。"
+                ],
+                study: [
+                    "今の努力が少しずつ実を結びます。油断せずにコツコツ学びを続けてください。",
+                    "基礎をしっかり固めることで、応用力が身につきます。",
+                    "学習計画を立てて、着実に進めていきましょう。",
+                    "分からないことは、恥ずかしがらずに質問してください。",
+                    "復習を重視することで、知識が定着します。",
+                    "学習仲間と切磋琢磨することで、成長が加速します。",
+                    "新しい学習方法を試してみると良いでしょう。",
+                    "学習の成果が少しずつ現れてきています。",
+                    "集中力を高める工夫をすることで、効率が上がります。",
+                    "学習環境を整えることで、勉強がはかどります。",
+                    "苦手分野も避けずに、少しずつ克服していきましょう。",
+                    "学習の目標を明確にすることで、モチベーションが保てます。",
+                    "休憩を適度に取りながら、無理なく学習を続けてください。",
+                    "学んだことを実践で活かす機会を作りましょう。",
+                    "学習記録をつけることで、進歩が実感できます。",
+                    "興味のある分野から始めて、徐々に範囲を広げていきましょう。",
+                    "学習に関する良い情報や教材に出会えそうです。",
+                    "今の学習が、将来の大きな財産となります。",
+                    "学習習慣が身についてきて、勉強が楽しくなってきます。",
+                    "着実な進歩が、大きな成果につながります。"
+                ],
+                money: [
+                    "お金の出入りは安定。衝動買いや無駄遣いに注意し、節約を心がけて。",
+                    "大きな出費は控えめにして、貯蓄を増やす時期です。",
+                    "収入は安定していますが、将来に備えて計画的に。",
+                    "お金の使い方を見直すことで、余裕が生まれます。",
+                    "小さな節約の積み重ねが、大きな貯蓄につながります。",
+                    "金銭管理の習慣が身についてきています。",
+                    "必要なものと欲しいものを区別して、賢く買い物をしましょう。",
+                    "収入を増やすための副業を検討するのも良いでしょう。",
+                    "お金に関する知識を増やすことで、賢い選択ができます。",
+                    "貯蓄目標を立てることで、モチベーションが上がります。",
+                    "無理のない範囲で、投資の勉強を始めてみましょう。",
+                    "家計簿をつけることで、お金の流れが把握できます。",
+                    "特売日や割引を活用して、賢く節約しましょう。",
+                    "金運は安定期。大きな変動はありませんが、着実に貯まります。",
+                    "お金の価値を大切にする意識が高まっています。",
+                    "将来の目標に向けて、計画的に貯蓄を進めましょう。",
+                    "金銭感覚が研ぎ澄まされ、無駄遣いが減ります。",
+                    "収入と支出のバランスが取れている良い状態です。",
+                    "お金に関する良いアドバイスが得られそうです。",
+                    "堅実な金銭管理が、将来の安心につながります。"
+                ],
+                travel: [
+                    "近場の小旅行で気分転換を。大きな移動は控えめに。",
+                    "日帰り旅行や近場の温泉などがおすすめです。",
+                    "旅行の計画は慎重に。下調べをしっかりとしましょう。",
+                    "身近な場所で新しい発見がありそうです。",
+                    "旅行よりも、地元の魅力を再発見する時期です。",
+                    "小さな冒険が、大きな満足感をもたらします。",
+                    "旅行の予算を決めて、無理のない範囲で楽しみましょう。",
+                    "友人や家族との小旅行が、良い思い出になります。",
+                    "旅先での出会いよりも、同行者との絆が深まります。",
+                    "ゆったりとしたペースで、旅を楽しんでください。",
+                    "旅行の準備を丁寧にすることで、トラブルを避けられます。",
+                    "近場でも十分にリフレッシュできる場所が見つかります。",
+                    "旅行中は無理をせず、体調を優先してください。",
+                    "写真をたくさん撮って、思い出を残しましょう。",
+                    "旅行先の文化や歴史を学ぶことで、充実した時間が過ごせます。",
+                    "計画的な旅行が、満足度の高い結果をもたらします。",
+                    "旅行を通じて、新しい趣味や興味が見つかるかもしれません。",
+                    "安全を第一に考えて、楽しい旅行にしましょう。",
+                    "旅行の経験が、日常生活に良い影響を与えます。",
+                    "小さな旅でも、大きな気分転換になります。"
+                ],
+                lost: [
+                    "しばらく探しても見つからない場合は、諦めずに再度探すと見つかるかも。",
+                    "失くしたものは意外と身近な場所にあるかもしれません。",
+                    "家族や友人に協力してもらうと見つかりやすいでしょう。",
+                    "記憶を整理して、最後に使った場所を思い出してみましょう。",
+                    "探し物は、掃除をしている時に見つかることがあります。",
+                    "諦めかけた頃に、ひょっこり出てくることがあります。",
+                    "失くしたものの代わりを用意することも検討しましょう。",
+                    "探し物をきっかけに、整理整頓ができます。",
+                    "冷静になって、もう一度じっくり探してみてください。",
+                    "失くしたものから学んで、今後の管理方法を改善しましょう。",
+                    "探し物が見つからなくても、新しい発見があるかもしれません。",
+                    "時間を置いてから探すと、新しい視点で見つかることがあります。",
+                    "失物に執着しすぎず、前向きに考えることも大切です。",
+                    "探し物をしている間に、他の大切なものが見つかるかもしれません。",
+                    "失くしたものの価値を改めて認識する機会になります。",
+                    "探し方を変えてみると、意外な場所で見つかるかもしれません。",
+                    "失物の経験が、今後の注意力向上につながります。",
+                    "焦らず、落ち着いて探すことが見つかるコツです。",
+                    "失くしたものが戻ってこなくても、新しいものとの出会いがあります。",
+                    "探し物をする過程で、忘れていた大切なものを発見できます。"
+                ],
+                trouble: [
+                    "小さなトラブルはあっても大きな問題には発展しにくい。冷静に対応すれば問題ありません。",
+                    "話し合いで解決できることが多いでしょう。",
+                    "第三者の意見を聞くことで、良い解決策が見つかります。",
+                    "トラブルを避けるための予防策を考えましょう。",
+                    "相手の立場に立って考えることで、解決の糸口が見えます。",
+                    "感情的にならず、事実を整理して対処しましょう。",
+                    "小さな誤解が大きくなる前に、早めに解消してください。",
+                    "トラブルから学ぶことで、今後の対人関係が改善します。",
+                    "冷静な判断力が、問題解決の鍵となります。",
+                    "時には譲歩することも、解決への近道です。",
+                    "トラブルを通じて、相手との理解が深まることもあります。",
+                    "問題解決のプロセスが、成長の機会となります。",
+                    "周囲のサポートを受けながら、問題に対処しましょう。",
+                    "トラブルは一時的なもの。長期的な視点を持ってください。",
+                    "コミュニケーションを大切にすることで、多くの問題は防げます。",
+                    "問題解決能力が向上している時期です。",
+                    "トラブルへの対処方法を学ぶ良い機会となります。",
+                    "冷静さを保つことで、最善の解決策が見つかります。",
+                    "問題を乗り越えることで、より強い絆が生まれます。",
+                    "トラブルは成長のチャンス。前向きに捉えましょう。"
+                ]
+            },
+            shokichi: {
+                wish: [
+                    "焦る必要はありません。願いは叶うまで時間がかかることもありますが、諦めずに続けましょう。",
+                    "小さな目標から達成していくことで、大きな願いに近づけます。",
+                    "今は準備期間と考えて、着実に進んでいきましょう。",
+                    "願いを実現するための基礎を固める時期です。",
+                    "周囲の人々の支援を大切にしながら進みましょう。",
+                    "願望達成への道のりは長いですが、一歩ずつ前進しています。",
+                    "今できることから始めて、徐々に範囲を広げていきましょう。",
+                    "願いに向かって努力する過程も大切な経験です。",
+                    "小さな成功を積み重ねることで、自信がつきます。",
+                    "願いを明確にすることで、実現への道筋が見えてきます。",
+                    "焦らず、マイペースで願いに向かって進んでください。",
+                    "今の努力は無駄ではありません。必ず実を結びます。",
+                    "願いを叶えるための新しいアプローチを試してみましょう。",
+                    "時には休憩も必要。無理をせず進んでください。",
+                    "願望実現のためのヒントが日常の中にあります。",
+                    "小さな願いから叶えていくことで、勢いがつきます。",
+                    "今は種をまく時期。収穫は後からやってきます。",
+                    "願いに向かう姿勢が、周囲に良い影響を与えます。",
+                    "諦めない心が、願いを実現する最大の力です。",
+                    "願いを叶えるための協力者が現れるでしょう。"
+                ],
+                health: [
+                    "体調に大きな問題はありませんが、油断は禁物。睡眠と栄養をしっかりとり、無理をしないように。",
+                    "疲れを感じたら早めに休息を取ることが大切です。",
+                    "規則正しい生活を心がけることで、体調を維持できます。",
+                    "ストレスを溜めないよう、適度な運動を心がけましょう。",
+                    "季節の変わり目は特に体調管理に注意してください。",
+                    "バランスの良い食事が健康の基本です。",
+                    "心身のリラックスタイムを大切にしてください。",
+                    "健康に関する情報を集めて、実践してみましょう。",
+                    "体調の変化に敏感になることで、早期対処ができます。",
+                    "適度な運動習慣を身につけることが大切です。",
+                    "水分補給をこまめに行い、体調を整えましょう。",
+                    "睡眠の質を高めることで、日中の活力が増します。",
+                    "健康診断を定期的に受けることをお勧めします。",
+                    "心の健康も大切。趣味の時間を確保しましょう。",
+                    "無理のない範囲で、健康づくりに取り組んでください。",
+                    "体調が良い日は、積極的に活動しましょう。",
+                    "健康的な習慣を一つずつ増やしていきましょう。",
+                    "疲労回復のための工夫をすることが大切です。",
+                    "健康は日々の積み重ね。継続が大切です。",
+                    "体調管理の意識が高まり、健康状態が安定します。"
+                ],
+                work: [
+                    "目立った成果はないものの、着実に仕事は進んでいます。今は小さな積み重ねが大切な時期。",
+                    "地道な作業も丁寧にこなすことで、信頼を得られます。",
+                    "新しいスキルを身につける良い機会です。",
+                    "仕事の基礎を固めることで、将来の飛躍につながります。",
+                    "同僚との協力関係を大切にしてください。",
+                    "仕事の効率を上げる工夫をしてみましょう。",
+                    "小さな改善提案も積極的に行ってください。",
+                    "今の経験が、将来必ず役に立ちます。",
+                    "仕事に対する姿勢が評価される時期です。",
+                    "困難な仕事も、一つずつ解決していけば大丈夫です。",
+                    "仕事の優先順位を明確にして進めましょう。",
+                    "職場でのコミュニケーションを大切にしてください。",
+                    "新しい仕事の方法を学ぶチャンスです。",
+                    "今は実力を蓄える時期と考えましょう。",
+                    "仕事での小さな成功体験を大切にしてください。",
+                    "上司や先輩からのアドバイスを素直に受け入れましょう。",
+                    "仕事の幅を少しずつ広げていく時期です。",
+                    "ミスを恐れず、チャレンジする姿勢が大切です。",
+                    "仕事を通じて、人間的にも成長できます。",
+                    "今の努力は、必ず将来の糧となります。"
+                ],
+                love: [
+                    "進展はゆっくりですが、丁寧なコミュニケーションがカギ。相手の気持ちを大切にしながら、焦らずに。",
+                    "友達から始めることで、良い関係が築けるでしょう。",
+                    "相手のペースに合わせることが大切です。",
+                    "恋愛において、今は観察する時期かもしれません。",
+                    "自分磨きをすることで、魅力が増します。",
+                    "相手の良いところを見つけて、認めてあげましょう。",
+                    "恋愛に関する悩みは、時間が解決してくれます。",
+                    "素直な気持ちを少しずつ表現していきましょう。",
+                    "共通の話題を見つけることで、距離が縮まります。",
+                    "恋愛運は穏やかですが、着実に前進しています。",
+                    "相手との信頼関係を築くことを優先しましょう。",
+                    "小さな思いやりが、大きな愛情に育ちます。",
+                    "恋愛において、今は待つことも大切です。",
+                    "相手の気持ちを理解しようとする姿勢が重要です。",
+                    "恋愛に焦りは禁物。自然な流れを大切に。",
+                    "デートは無理をせず、お互いが楽しめる内容に。",
+                    "恋愛において、友情も大切な要素です。",
+                    "相手との共通点を大切にしながら、違いも認めましょう。",
+                    "恋愛運は安定期。大きな変化はありませんが、着実に進展します。",
+                    "今は恋愛の基礎を築く大切な時期です。"
+                ],
+                study: [
+                    "結果が出るまでにはもう少し時間がかかりそうです。諦めずに基礎を固めて。",
+                    "復習を重視することで、確実に力がつきます。",
+                    "わからないことは恥ずかしがらずに質問しましょう。",
+                    "学習のペースは人それぞれ。自分のペースを大切に。",
+                    "基礎をしっかり理解することで、応用力がつきます。",
+                    "学習環境を整えることで、集中力が上がります。",
+                    "小さな目標を設定して、達成感を味わいましょう。",
+                    "学習仲間と情報交換することで、新しい発見があります。",
+                    "苦手分野も避けずに、少しずつ取り組みましょう。",
+                    "学習記録をつけることで、進歩が実感できます。",
+                    "休憩を適切に取りながら、無理なく学習を続けてください。",
+                    "興味のある分野から始めて、徐々に範囲を広げましょう。",
+                    "学習方法を工夫することで、効率が上がります。",
+                    "今の学習は、将来必ず役に立ちます。",
+                    "理解できないことがあっても、焦らないでください。",
+                    "学習の成果は、後から必ず現れます。",
+                    "毎日少しずつでも、継続することが大切です。",
+                    "学ぶ楽しさを見つけることで、モチベーションが保てます。",
+                    "基礎固めの時期。焦らず着実に進みましょう。",
+                    "学習習慣が身についてきて、勉強が楽になってきます。"
+                ],
+                money: [
+                    "大きな収入や支出はありませんが、無駄遣いに注意。貯蓄や節約に努めてください。",
+                    "小さな節約の積み重ねが、将来の安心につながります。",
+                    "お金の使い方を見直す良い機会です。",
+                    "必要なものと欲しいものを区別して買い物をしましょう。",
+                    "金銭管理の基本を身につける時期です。",
+                    "収支のバランスを意識して生活しましょう。",
+                    "貯蓄目標を立てて、少しずつ貯めていきましょう。",
+                    "お金に関する知識を増やすことが大切です。",
+                    "衝動買いを避けて、計画的な買い物を心がけて。",
+                    "金運は安定していますが、大きな変化はありません。",
+                    "家計簿をつけることで、お金の流れが把握できます。",
+                    "割引やポイントを上手に活用しましょう。",
+                    "将来のために、今から備えることが大切です。",
+                    "お金の価値を理解して、大切に使いましょう。",
+                    "収入を増やす方法も検討してみてください。",
+                    "無理のない範囲で、節約生活を楽しみましょう。",
+                    "金銭感覚を磨くことで、賢い選択ができます。",
+                    "今は守りの時期。大きな投資は控えめに。",
+                    "お金に関する良い習慣が身についてきています。",
+                    "堅実な金銭管理が、将来の豊かさにつながります。"
+                ],
+                travel: [
+                    "遠出は控えめに。近場でのリフレッシュが吉。",
+                    "身近な場所で新しい発見があるかもしれません。",
+                    "旅行よりも日常を充実させることを優先しましょう。",
+                    "計画的な旅行準備が、楽しい旅の秘訣です。",
+                    "無理のない旅程で、ゆったりと過ごしましょう。",
+                    "旅行の思い出を大切に記録してください。",
+                    "安全を第一に考えて、慎重に行動しましょう。",
+                    "旅行費用は予算内に収めることが大切です。",
+                    "近場の日帰り旅行でも十分リフレッシュできます。",
+                    "旅行先の下調べをしっかりすることで、充実した時間が過ごせます。",
+                    "同行者との相談を大切にして、みんなが楽しめる旅に。",
+                    "旅行中は無理をせず、体調を優先してください。",
+                    "小さな冒険でも、大きな満足感が得られます。",
+                    "旅行を通じて、新しい視点を得ることができます。",
+                    "地元の魅力を再発見する良い機会です。",
+                    "旅行の計画を立てること自体も楽しみの一つです。",
+                    "思い出に残る写真をたくさん撮りましょう。",
+                    "旅行先での出会いを大切にしてください。",
+                    "無理のない範囲で、新しい体験にチャレンジしましょう。",
+                    "旅行から帰った後の日常も大切にしてください。"
+                ],
+                lost: [
+                    "なくした物はすぐには出てきませんが、時間を置いて探すと見つかることも。",
+                    "記憶を辿って、最後に使った場所を思い出してみましょう。",
+                    "諦めかけた頃に見つかることがあります。",
+                    "探し物をきっかけに、整理整頓ができます。",
+                    "失くしたものの代替品を考えることも必要かもしれません。",
+                    "冷静になって、もう一度じっくり探してみてください。",
+                    "家族や友人に聞いてみると、手がかりが得られるかも。",
+                    "失物から学んで、今後の管理方法を改善しましょう。",
+                    "探し方を変えてみると、意外な場所で見つかるかもしれません。",
+                    "時間を置いてから探すと、新しい視点で見つかることがあります。",
+                    "失くしたものに執着しすぎず、前向きに考えましょう。",
+                    "探し物をしている間に、他の大切なものが見つかるかもしれません。",
+                    "失物の経験が、注意力向上のきっかけになります。",
+                    "焦らず、落ち着いて探すことが大切です。",
+                    "失くしたものが戻ってこなくても、新しい出会いがあります。",
+                    "探し物をする過程で、忘れていたものを発見できます。",
+                    "失物に関する夢やひらめきに注意してみてください。",
+                    "整理整頓を心がけることで、失物を防げます。",
+                    "失くしたものの価値を改めて認識する機会です。",
+                    "探し物が見つからなくても、気持ちを切り替えることが大切です。"
+                ],
+                trouble: [
+                    "小さなトラブルは起きやすいですが、大きな問題にはなりません。冷静に対処してください。",
+                    "感情的にならずに、事実を整理することが大切です。",
+                    "時間が解決してくれることもあります。",
+                    "相手の立場に立って考えることで、解決策が見えてきます。",
+                    "トラブルを避けるための予防策を考えましょう。",
+                    "小さな誤解は早めに解消することが大切です。",
+                    "第三者の意見を聞くことで、客観的な判断ができます。",
+                    "トラブルから学ぶことで、成長できます。",
+                    "冷静な対応が、問題を最小限に抑えます。",
+                    "コミュニケーション不足が原因かもしれません。話し合いを大切に。",
+                    "トラブルは一時的なもの。長い目で見ましょう。",
+                    "問題解決のプロセスを大切にしてください。",
+                    "感情をコントロールすることで、良い解決策が見つかります。",
+                    "トラブルを通じて、人間関係の大切さを学べます。",
+                    "今は忍耐の時期。時間が解決してくれます。",
+                    "問題を細分化して、一つずつ解決していきましょう。",
+                    "トラブルへの対処能力が向上しています。",
+                    "冷静さを保つことが、最善の解決につながります。",
+                    "問題を乗り越えることで、より強くなれます。",
+                    "トラブルは成長のチャンス。前向きに捉えましょう。"
+                ]
+            },
+            kichi: {
+                wish: [
+                    "願いは着実に近づいています。今のペースで進んでいけば良いでしょう。",
+                    "目標に向かって順調に進んでいます。自信を持って。",
+                    "周囲の協力も得られやすい時期です。",
+                    "願望実現のための良いアイデアが浮かびそうです。",
+                    "小さな成功が大きな願いへの自信につながります。",
+                    "今の努力が実を結ぶ時期が近づいています。",
+                    "願いを具体的に計画することで、実現が早まります。",
+                    "ポジティブな姿勢が願いを引き寄せます。",
+                    "願いに向かって着実に前進しています。",
+                    "協力者が現れて、願望実現が加速するでしょう。",
+                    "願いを叶えるためのチャンスを逃さないでください。",
+                    "今の調子を維持すれば、願いは必ず叶います。",
+                    "願望達成への道筋がはっきりしてきました。",
+                    "努力が認められ、願いに近づいています。",
+                    "願いを叶える力が着実についてきています。",
+                    "周囲の応援が願望実現を後押しします。",
+                    "願いに向かって進む勇気が湧いてきます。",
+                    "今は願いを叶える絶好のタイミングです。",
+                    "小さな願いから大きな願いへ、着実に進んでいます。",
+                    "願望実現のための環境が整ってきています。"
+                ],
+                health: [
+                    "健康状態は良好です。今の生活習慣を維持しましょう。",
+                    "体調管理がうまくいっています。この調子で。",
+                    "心身ともにバランスの取れた状態です。",
+                    "適度な運動が健康維持に効果を発揮しています。",
+                    "健康に対する意識が高まり、良い結果が出ています。",
+                    "規則正しい生活が健康を支えています。",
+                    "ストレス管理も上手くできています。",
+                    "健康的な食事が体調の良さにつながっています。",
+                    "睡眠の質も良く、日中の活力につながっています。",
+                    "健康診断の結果も良好でしょう。",
+                    "免疫力が高まり、病気になりにくい状態です。",
+                    "心の健康も保たれ、前向きな気持ちで過ごせます。",
+                    "健康への投資が良い結果をもたらしています。",
+                    "体調の変化に敏感で、早めの対処ができています。",
+                    "健康的な習慣が自然と身についています。",
+                    "運動と休息のバランスが取れています。",
+                    "健康に関する良い情報を活用できています。",
+                    "体力も気力も充実している状態です。",
+                    "健康維持のための努力が実を結んでいます。",
+                    "心身の調和が取れた理想的な状態です。"
+                ],
+                work: [
+                    "仕事は順調に進んでいます。今の調子を維持してください。",
+                    "努力が認められる時期です。自信を持って取り組みましょう。",
+                    "新しいチャンスも巡ってきそうです。",
+                    "職場での評価が上がっています。",
+                    "仕事の効率が良く、成果も出やすい時期です。",
+                    "チームワークも良好で、仕事が楽しく感じられます。",
+                    "スキルアップの成果が現れてきています。",
+                    "新しいプロジェクトに参加するチャンスがありそうです。",
+                    "仕事での成功体験が自信につながります。",
+                    "上司や同僚との関係も良好です。",
+                    "仕事の幅が広がり、やりがいを感じられます。",
+                    "キャリアアップのチャンスが近づいています。",
+                    "仕事での創造性が発揮できる時期です。",
+                    "努力が実を結び、目に見える成果が出ます。",
+                    "仕事を通じて新しい人脈が広がります。",
+                    "職場環境も良く、働きやすい状態です。",
+                    "仕事への取り組み方が評価されています。",
+                    "新しい責任を任される可能性があります。",
+                    "仕事での満足度が高い時期です。",
+                    "今の仕事が将来の大きな財産となります。"
+                ],
+                love: [
+                    "恋愛運は安定しています。相手との関係を大切に育てていきましょう。",
+                    "素直な気持ちを伝えることで、良い関係が築けます。",
+                    "相手を思いやる気持ちが幸せを呼びます。",
+                    "恋愛において良い変化が起こりそうです。",
+                    "パートナーとの絆が深まる時期です。",
+                    "新しい出会いのチャンスもありそうです。",
+                    "恋愛に対して前向きな気持ちになれます。",
+                    "相手との共通点が増えて、関係が良好になります。",
+                    "恋愛での小さな幸せを大切にしましょう。",
+                    "告白やプロポーズのタイミングとしても良い時期です。",
+                    "恋愛運が上昇中。積極的に行動してみましょう。",
+                    "相手の気持ちも自分に向いています。",
+                    "恋愛において自信を持って行動できます。",
+                    "二人の将来について話し合う良い機会です。",
+                    "恋愛での悩みも解決に向かいます。",
+                    "相手との信頼関係がより強固になります。",
+                    "恋愛を楽しむ余裕が生まれています。",
+                    "ロマンチックな出来事が起こりそうです。",
+                    "恋愛において良いサプライズがあるかもしれません。",
+                    "愛情表現が自然にできる時期です。"
+                ],
+                study: [
+                    "学習は順調に進んでいます。この調子で続けていきましょう。",
+                    "理解力が高まっている時期です。難しい内容にも挑戦を。",
+                    "努力の成果が少しずつ現れてきています。",
+                    "学習に対するモチベーションが高い状態です。",
+                    "新しい学習方法が効果を発揮しています。",
+                    "学習環境も整い、集中して取り組めます。",
+                    "知識が着実に身についています。",
+                    "学習仲間との切磋琢磨が良い刺激になっています。",
+                    "試験や資格取得のチャンスです。",
+                    "学んだことを実践で活かせる機会が増えています。",
+                    "学習の楽しさを実感できる時期です。",
+                    "効率的な学習ができています。",
+                    "苦手分野も克服できそうです。",
+                    "学習成果が周囲に認められます。",
+                    "新しい分野への興味が湧いてきます。",
+                    "学習習慣がしっかり身についています。",
+                    "知的好奇心が満たされる時期です。",
+                    "学習を通じて自信がついてきています。",
+                    "将来に役立つ知識が増えています。",
+                    "学習への投資が良い結果をもたらします。"
+                ],
+                money: [
+                    "金運は安定しています。計画的な使い方を心がけましょう。",
+                    "収支のバランスが取れています。この調子で。",
+                    "将来への投資を考える良い時期です。",
+                    "お金に関する良い判断ができています。",
+                    "貯蓄も順調に増えているでしょう。",
+                    "金銭管理能力が向上しています。",
+                    "収入アップのチャンスがありそうです。",
+                    "お金の使い方に余裕が生まれています。",
+                    "投資や資産運用を始めるのも良いでしょう。",
+                    "金運の流れが良い方向に向いています。",
+                    "臨時収入の可能性もあります。",
+                    "お金に関する知識が実践で活きています。",
+                    "節約と使うべき時の判断が的確です。",
+                    "金銭的な余裕が心の余裕につながっています。",
+                    "お金の価値を正しく理解できています。",
+                    "将来の経済的安定に向けて順調に進んでいます。",
+                    "金運アップの兆しが見えています。",
+                    "お金に関する良いアドバイスが得られそうです。",
+                    "収入源が安定し、将来への不安が減っています。",
+                    "賢いお金の使い方ができる時期です。"
+                ],
+                travel: [
+                    "旅行運は良好です。計画を立てて楽しい旅を。",
+                    "新しい場所での発見が期待できます。",
+                    "リフレッシュできる良い旅になるでしょう。",
+                    "旅先での出会いが良い刺激になります。",
+                    "思い出に残る素晴らしい旅行ができそうです。",
+                    "旅行の準備も楽しく進められます。",
+                    "安全で快適な旅が期待できます。",
+                    "旅先での体験が人生を豊かにします。",
+                    "同行者との絆も深まる旅になります。",
+                    "予算内で満足度の高い旅行ができます。",
+                    "旅行を通じて新しい趣味が見つかるかもしれません。",
+                    "現地の文化に触れる良い機会です。",
+                    "写真映えする素敵な場所に出会えます。",
+                    "旅行の計画通りに事が運びます。",
+                    "心身ともにリフレッシュできる旅です。",
+                    "旅先での食事も楽しめるでしょう。",
+                    "新しい発見と感動がある旅になります。",
+                    "旅行後も長く思い出に残る体験ができます。",
+                    "次の旅行の計画も立てたくなるような良い旅です。",
+                    "旅を通じて視野が広がります。"
+                ],
+                lost: [
+                    "失くしたものは見つかる可能性が高いです。落ち着いて探しましょう。",
+                    "意外な場所から出てくるかもしれません。",
+                    "周囲の人に聞いてみると手がかりが得られそうです。",
+                    "記憶を整理すると、置き場所を思い出せるでしょう。",
+                    "探し物は身近な場所にある可能性が高いです。",
+                    "諦めずに探せば必ず見つかります。",
+                    "失くしたものが良い状態で戻ってきます。",
+                    "探し物をきっかけに、整理整頓が進みます。",
+                    "家族や友人が見つけてくれるかもしれません。",
+                    "失物が見つかることで、安心感が得られます。",
+                    "探し方を工夫すると、早く見つかります。",
+                    "失くしたものから大切な教訓を得られます。",
+                    "探し物が見つかるタイミングが良いです。",
+                    "失物の発見が他の良いことにつながります。",
+                    "冷静に探すことで、効率的に見つかります。",
+                    "失くしたものの価値を再認識できます。",
+                    "探し物をする過程で、他の大切なものも見つかります。",
+                    "失物に関する良い知らせがありそうです。",
+                    "整理整頓の習慣が身につくきっかけになります。",
+                    "失くしたものが見つかり、ほっとできます。"
+                ],
+                trouble: [
+                    "トラブルは少なく、あっても軽微なものです。",
+                    "問題が起きても、すぐに解決できるでしょう。",
+                    "周囲との関係も良好で、協力が得られます。",
+                    "トラブルを未然に防ぐ力がついています。",
+                    "冷静な判断で問題を解決できます。",
+                    "コミュニケーションが円滑で、誤解が生じにくいです。",
+                    "小さな問題も早めに対処できています。",
+                    "トラブル解決能力が向上しています。",
+                    "問題が起きても前向きに対処できます。",
+                    "周囲の理解と協力が得られやすい時期です。",
+                    "トラブルから学ぶことで成長できます。",
+                    "問題解決のための良いアイデアが浮かびます。",
+                    "争いごとを避ける賢明な判断ができます。",
+                    "トラブルが少なく、平穏な日々が続きます。",
+                    "問題が起きても、建設的な解決ができます。",
+                    "人間関係のトラブルも円満に解決します。",
+                    "冷静さを保って問題に対処できます。",
+                    "トラブルを通じて、より良い関係が築けます。",
+                    "問題解決の経験が自信につながります。",
+                    "争いごとのない穏やかな時期です。"
+                ]
+            },
+            suekichi: {
+                wish: [
+                    "願いの実現にはもう少し時間と努力が必要です。焦らずに。",
+                    "小さな一歩から始めることが大切です。",
+                    "周囲の意見も参考にしながら進めていきましょう。",
+                    "願いを明確にすることで、道筋が見えてきます。",
+                    "今は準備を整える時期と考えましょう。",
+                    "願望実現のための基礎固めが必要です。",
+                    "諦めずに続けることで、願いに近づけます。",
+                    "小さな成功を積み重ねていきましょう。",
+                    "願いに向かって、着実に進んでいます。",
+                    "協力者を見つけることで、実現が早まります。",
+                    "願いを叶えるための新しい方法を探してみましょう。",
+                    "今の努力は決して無駄にはなりません。",
+                    "願望達成には忍耐が必要な時期です。",
+                    "目標を細分化して、一つずつクリアしていきましょう。",
+                    "願いに向かう過程も大切な経験です。",
+                    "時には休憩も必要。無理をしないでください。",
+                    "願いを叶えるためのヒントが身近にあります。",
+                    "今は種をまく時期。収穫は後日必ず来ます。",
+                    "願いに対する情熱を保ち続けてください。",
+                    "小さな願いから叶えて、自信をつけましょう。"
+                ],
+                health: [
+                    "体調管理に注意が必要です。無理をせず、休息を大切に。",
+                    "ストレスを溜めないよう、リラックスする時間を作りましょう。",
+                    "早寝早起きを心がけると良いでしょう。",
+                    "バランスの良い食事が健康維持の鍵です。",
+                    "軽い運動から始めて、体力をつけていきましょう。",
+                    "体調の変化に注意し、早めの対処を心がけて。",
+                    "季節の変わり目は特に健康管理に気をつけましょう。",
+                    "十分な睡眠時間を確保することが大切です。",
+                    "心身のバランスを意識して生活しましょう。",
+                    "健康診断を受けて、現状を把握することをお勧めします。",
+                    "ストレス解消法を見つけることが重要です。",
+                    "水分補給をこまめに行ってください。",
+                    "無理のない範囲で体を動かしましょう。",
+                    "健康に関する情報を集めて、実践してみてください。",
+                    "疲れを感じたら、すぐに休息を取りましょう。",
+                    "規則正しい生活リズムを心がけてください。",
+                    "体調が優れない時は、無理をしないことが大切です。",
+                    "健康的な習慣を少しずつ取り入れていきましょう。",
+                    "心の健康も大切。趣味の時間を確保してください。",
+                    "体調管理の意識を高めることで、健康を維持できます。"
+                ],
+                work: [
+                    "仕事は慎重に進める必要があります。確認を怠らずに。",
+                    "ミスを防ぐため、丁寧な作業を心がけましょう。",
+                    "上司や同僚との相談を大切にしてください。",
+                    "今は実力を蓄える時期と考えましょう。",
+                    "小さな成果でも、しっかりと積み重ねていきましょう。",
+                    "仕事の優先順位を明確にして進めてください。",
+                    "新しいことへの挑戦は、準備を整えてから。",
+                    "仕事でのコミュニケーションを大切にしましょう。",
+                    "ミスから学ぶことで、成長できます。",
+                    "今の経験が将来必ず役に立ちます。",
+                    "仕事のペースを調整して、無理をしないように。",
+                    "基本に忠実に、着実に仕事を進めましょう。",
+                    "困った時は、早めに相談することが大切です。",
+                    "仕事の効率を上げる工夫をしてみてください。",
+                    "今は守りの時期。大きなリスクは避けましょう。",
+                    "仕事での信頼関係を大切に育ててください。",
+                    "スキルアップのための学習時間を確保しましょう。",
+                    "仕事の成果は後から必ず現れます。",
+                    "チームワークを重視して仕事を進めてください。",
+                    "今の努力が将来の成功の基盤となります。"
+                ],
+                love: [
+                    "恋愛は慎重に進めることが大切です。相手の気持ちを確認しながら。",
+                    "急がず、ゆっくりと関係を深めていきましょう。",
+                    "友人のアドバイスも参考になるでしょう。",
+                    "相手を理解しようとする姿勢が大切です。",
+                    "恋愛において、今は観察の時期かもしれません。",
+                    "自分の気持ちを整理する時間も必要です。",
+                    "相手のペースに合わせることで、良い関係が築けます。",
+                    "恋愛に焦りは禁物。自然な流れを大切に。",
+                    "小さな思いやりの積み重ねが大切です。",
+                    "恋愛運は徐々に上昇していきます。",
+                    "相手との共通点を見つけて、話題を広げましょう。",
+                    "恋愛において、今は基礎を築く時期です。",
+                    "素直な気持ちを少しずつ表現していきましょう。",
+                    "デートは無理をせず、お互いが楽しめる内容に。",
+                    "恋愛での小さな幸せを大切にしてください。",
+                    "相手の良いところを認めて、伝えてあげましょう。",
+                    "恋愛に関する悩みは、時間が解決してくれます。",
+                    "今は自分磨きに集中するのも良いでしょう。",
+                    "恋愛において、誠実さが最も大切です。",
+                    "相手との信頼関係を少しずつ築いていきましょう。"
+                ],
+                study: [
+                    "学習には根気が必要な時期です。基礎を大切に。",
+                    "わからないところは、そのままにせず解決しましょう。",
+                    "計画的に進めることで、着実に力がつきます。",
+                    "学習方法を見直してみると良いかもしれません。",
+                    "復習を重視して、知識を定着させましょう。",
+                    "学習環境を整えることから始めてください。",
+                    "小さな目標を設定して、達成感を味わいましょう。",
+                    "学習仲間と協力することで、モチベーションが保てます。",
+                    "苦手分野も避けずに、少しずつ取り組んでください。",
+                    "今の学習は将来必ず役に立ちます。",
+                    "集中力を高める工夫をしてみましょう。",
+                    "学習記録をつけて、進歩を確認してください。",
+                    "無理のないペースで、継続することが大切です。",
+                    "基礎固めの時期。焦らず着実に進みましょう。",
+                    "学習に対する姿勢を見直す良い機会です。",
+                    "興味のある分野から始めて、徐々に広げていきましょう。",
+                    "学習の成果は後から必ず現れます。",
+                    "休憩を適切に取りながら、効率的に学習しましょう。",
+                    "理解できないことがあっても、諦めないでください。",
+                    "学ぶ楽しさを見つけることで、継続できます。"
+                ],
+                money: [
+                    "金運は控えめです。無駄遣いを避け、節約を心がけて。",
+                    "大きな買い物は慎重に検討しましょう。",
+                    "貯蓄を始めるには良い時期です。",
+                    "収支のバランスを意識して生活してください。",
+                    "お金の使い方を見直す良い機会です。",
+                    "必要なものと欲しいものを区別しましょう。",
+                    "小さな節約の積み重ねが大切です。",
+                    "金銭管理の基本を身につけてください。",
+                    "衝動買いは避けて、計画的な買い物を。",
+                    "将来のために、今から備えることが大切です。",
+                    "お金に関する知識を増やしましょう。",
+                    "家計簿をつけて、お金の流れを把握してください。",
+                    "割引やポイントを上手に活用しましょう。",
+                    "収入を増やす方法も検討してみてください。",
+                    "金運は徐々に上昇していきます。",
+                    "無理のない範囲で節約生活を楽しみましょう。",
+                    "お金の価値を理解して、大切に使ってください。",
+                    "今は守りの時期。大きな投資は控えめに。",
+                    "金銭感覚を磨くことで、賢い選択ができます。",
+                    "堅実な金銭管理が将来の安定につながります。"
+                ],
+                travel: [
+                    "旅行は計画を綿密に立てることが大切です。",
+                    "予期せぬトラブルに備えて、準備をしっかりと。",
+                    "無理のない行程で楽しみましょう。",
+                    "旅行費用は予算内に収めることを心がけて。",
+                    "安全を第一に考えて行動してください。",
+                    "近場の旅行から始めるのが良いでしょう。",
+                    "旅行保険への加入も検討してください。",
+                    "同行者との相談を大切にしましょう。",
+                    "旅先での体調管理に気をつけてください。",
+                    "下調べをしっかりすることで、充実した旅になります。",
+                    "無理な日程は避けて、ゆとりを持って。",
+                    "旅行中のトラブルに備えて、連絡先を確認しておきましょう。",
+                    "思い出に残る写真をたくさん撮ってください。",
+                    "現地の文化やマナーを事前に調べておきましょう。",
+                    "旅行から学ぶことも多いはずです。",
+                    "小さな冒険でも、大きな満足感が得られます。",
+                    "旅行の計画段階も楽しんでください。",
+                    "安全で快適な宿泊先を選びましょう。",
+                    "旅行後の疲れも考慮して、日程を組んでください。",
+                    "次の旅行に向けて、今から準備を始めましょう。"
+                ],
+                lost: [
+                    "失くしたものを見つけるには時間がかかりそうです。",
+                    "記憶を整理して、順番に探していきましょう。",
+                    "見つからない場合は、新しいものを検討することも。",
+                    "探し物をきっかけに、整理整頓をしましょう。",
+                    "家族や友人に協力を求めてみてください。",
+                    "冷静になって、もう一度探してみましょう。",
+                    "失くしたものから学んで、管理方法を改善してください。",
+                    "時間を置いてから探すと、見つかることがあります。",
+                    "探し方を変えてみると良いかもしれません。",
+                    "失物に執着しすぎず、前向きに考えましょう。",
+                    "探し物をしている間に、他のものが見つかるかも。",
+                    "失くしたものの代替品を考えることも必要です。",
+                    "焦らず、落ち着いて探すことが大切です。",
+                    "失物の経験を今後に活かしてください。",
+                    "整理整頓の習慣をつけることで、失物を防げます。",
+                    "探し物が見つからなくても、気持ちを切り替えて。",
+                    "失くしたものの価値を改めて認識しましょう。",
+                    "新しいものとの出会いのチャンスかもしれません。",
+                    "失物から得た教訓を大切にしてください。",
+                    "今後は物の管理をより慎重に行いましょう。"
+                ],
+                trouble: [
+                    "小さなトラブルに注意が必要です。早めの対処を。",
+                    "問題を先送りにせず、その都度解決しましょう。",
+                    "冷静な判断が求められる時期です。",
+                    "相手の立場に立って考えることが大切です。",
+                    "感情的にならず、事実を整理して対処してください。",
+                    "トラブルを避けるための予防策を考えましょう。",
+                    "コミュニケーション不足が原因かもしれません。",
+                    "第三者の意見を聞くことも有効です。",
+                    "小さな誤解は早めに解消してください。",
+                    "トラブルから学ぶことで、成長できます。",
+                    "問題解決のプロセスを大切にしましょう。",
+                    "時には譲歩することも必要です。",
+                    "トラブルは一時的なもの。長い目で見てください。",
+                    "周囲のサポートを受けながら対処しましょう。",
+                    "冷静さを保つことが、最善の解決につながります。",
+                    "問題を細分化して、一つずつ解決していきましょう。",
+                    "トラブルへの対処能力を高める機会です。",
+                    "感情をコントロールすることが重要です。",
+                    "問題を乗り越えることで、より強くなれます。",
+                    "トラブルは成長のチャンス。前向きに捉えましょう。"
+                ]
+            },
+            kyo: {
+                wish: [
+                    "今は焦らず待つ時期。思い通りにならないこともありますが、あせらず状況の変化を待ちましょう。",
+                    "願いの実現には時間がかかります。今は準備期間と考えて。",
+                    "目標を見直し、現実的な計画を立て直しましょう。",
+                    "大きな願いは一旦保留にし、小さな目標から始めてください。",
+                    "願望達成への道は険しいですが、諦めないでください。",
+                    "今は力を蓄える時期。焦らず着実に準備を。",
+                    "願いに執着しすぎず、柔軟に考えることも大切です。",
+                    "周囲の状況をよく観察してから行動しましょう。",
+                    "願いを叶えるための新しい方法を模索してください。",
+                    "今は我慢の時。必ず良い時期が来ます。",
+                    "願望実現のためには、根本的な見直しが必要かもしれません。",
+                    "小さな一歩でも前進することが大切です。",
+                    "願いに向かう情熱を失わないでください。",
+                    "今の困難は、将来の成功のための試練です。",
+                    "願いを叶えるための協力者を探しましょう。",
+                    "時には方向転換も必要かもしれません。",
+                    "願望達成には、今まで以上の努力が必要です。",
+                    "困難な時期ですが、必ず乗り越えられます。",
+                    "願いを諦めず、別のアプローチを考えてみてください。",
+                    "今は種をまく時期。収穫はずっと先になります。"
+                ],
+                health: [
+                    "体調に気をつけて。不安があれば早めに医師に相談を。無理はしないでください。",
+                    "休息を十分に取り、体力の回復に努めましょう。",
+                    "ストレス管理が特に重要な時期です。",
+                    "健康診断を受けて、早期発見・早期治療を心がけて。",
+                    "無理は禁物。体調を最優先に考えてください。",
+                    "規則正しい生活リズムを保つことが大切です。",
+                    "免疫力を高める生活習慣を心がけましょう。",
+                    "心身のバランスが崩れやすい時期です。注意を。",
+                    "疲れを感じたら、すぐに休息を取ってください。",
+                    "健康に関する不安は、専門家に相談しましょう。",
+                    "予防医学の観点から、生活習慣を見直してください。",
+                    "ストレス解消法を見つけることが急務です。",
+                    "体調の小さな変化も見逃さないようにしましょう。",
+                    "無理な運動は避け、軽い運動から始めてください。",
+                    "栄養バランスの取れた食事を心がけましょう。",
+                    "睡眠の質を高めることに注力してください。",
+                    "心の健康にも配慮が必要な時期です。",
+                    "体調不良を感じたら、早めに対処しましょう。",
+                    "健康は何よりの財産。大切にしてください。",
+                    "今は健康回復に専念する時期かもしれません。"
+                ],
+                work: [
+                    "トラブルや失敗が起きやすい時期。確認や準備を怠らず、慎重に対応してください。",
+                    "新しいことは避け、現状維持に努めましょう。",
+                    "ミスを防ぐため、ダブルチェックを心がけて。",
+                    "仕事での人間関係に注意が必要です。",
+                    "重要な決定は、もう少し待った方が良いでしょう。",
+                    "基本に忠実に、慎重に仕事を進めてください。",
+                    "今は守りの時期。攻めの姿勢は控えめに。",
+                    "上司や同僚との相談を密にしてください。",
+                    "仕事の負担が大きい場合は、調整を申し出ましょう。",
+                    "ミスから学ぶことで、将来の成功につながります。",
+                    "仕事のペースを落として、質を重視してください。",
+                    "困難な状況でも、冷静さを保つことが大切です。",
+                    "今は実力を蓄える時期と割り切りましょう。",
+                    "仕事での挫折も、成長の糧となります。",
+                    "チームワークを大切にして、孤立しないように。",
+                    "仕事の優先順位を明確にして、効率的に進めましょう。",
+                    "今の苦労は、将来必ず報われます。",
+                    "仕事でのストレスを適切に管理してください。",
+                    "小さな成功でも、しっかりと評価しましょう。",
+                    "今は耐える時期。必ず好転します。"
+                ],
+                love: [
+                    "深入りは避けて。相手との関係も少し距離を置き、冷静に判断を。",
+                    "今は自分自身を見つめ直す時期です。",
+                    "新しい出会いよりも、自己成長に集中しましょう。",
+                    "恋愛関係でのトラブルに注意が必要です。",
+                    "相手の本心を見極めることが大切です。",
+                    "急激な進展は避け、慎重に関係を築いてください。",
+                    "恋愛において、今は守りの姿勢が大切です。",
+                    "過去の恋愛から学ぶことがあるかもしれません。",
+                    "一人の時間を大切にすることも必要です。",
+                    "恋愛に依存しすぎないよう注意してください。",
+                    "相手との価値観の違いを冷静に見つめましょう。",
+                    "恋愛での決断は、もう少し待った方が良いでしょう。",
+                    "自分の気持ちを整理する時間が必要です。",
+                    "恋愛よりも、他のことに目を向ける時期かもしれません。",
+                    "相手に期待しすぎないことが大切です。",
+                    "恋愛での失敗も、人生の貴重な経験です。",
+                    "今は恋愛運が低迷していますが、必ず回復します。",
+                    "自分を大切にすることから始めましょう。",
+                    "恋愛に関する悩みは、信頼できる人に相談を。",
+                    "今は恋愛よりも、自分磨きに専念する時期です。"
+                ],
+                study: [
+                    "今の努力が結果に結びつきにくい時期。諦めず、次回に向けて力を蓄えてください。",
+                    "基礎に戻って、じっくりと学び直しましょう。",
+                    "焦らず、自分のペースで進めることが大切です。",
+                    "学習方法を根本的に見直す必要があるかもしれません。",
+                    "苦手分野の克服に時間をかけてください。",
+                    "学習環境を改善することから始めましょう。",
+                    "今は結果よりも、過程を大切にする時期です。",
+                    "理解できないことは、恥ずかしがらずに質問を。",
+                    "学習の目標を現実的なものに設定し直しましょう。",
+                    "挫折感を感じても、諦めないでください。",
+                    "学習仲間との協力が、モチベーション維持に役立ちます。",
+                    "今の苦労は、将来の成功の礎となります。",
+                    "小さな進歩でも、しっかりと認識しましょう。",
+                    "学習に対する姿勢を見直す良い機会です。",
+                    "基礎固めに徹することで、後の飛躍につながります。",
+                    "学習の成果が出なくても、努力は無駄になりません。",
+                    "休憩を適切に取りながら、無理なく続けてください。",
+                    "学ぶことの意味を改めて考えてみましょう。",
+                    "今は充電期間。焦らず力を蓄えてください。",
+                    "困難な時期ですが、必ず乗り越えられます。"
+                ],
+                money: [
+                    "お金のやりくりが難しい時期。無理な買い物や投資は控え、堅実に。",
+                    "収入が減る可能性もあるので、節約を心がけて。",
+                    "借金やローンは避けるべき時期です。",
+                    "必要最小限の支出に抑えることが大切です。",
+                    "金銭トラブルに巻き込まれないよう注意してください。",
+                    "今は守りの時期。新しい投資は避けましょう。",
+                    "家計の見直しを徹底的に行ってください。",
+                    "収入源を複数持つことを検討しましょう。",
+                    "お金に関する不安は、専門家に相談を。",
+                    "今の節約が、将来の安定につながります。",
+                    "衝動買いは絶対に避けてください。",
+                    "金銭管理を家族と共有することも大切です。",
+                    "お金の価値を改めて認識する時期です。",
+                    "小さな節約でも、積み重ねれば大きな効果があります。",
+                    "金運が低迷していますが、必ず回復します。",
+                    "今は耐える時期。無理な出費は控えて。",
+                    "お金に関する知識を増やして、賢く対処しましょう。",
+                    "経済的な困難も、工夫次第で乗り越えられます。",
+                    "今の経験が、将来の金銭感覚を磨く貴重な機会となります。",
+                    "困難な時期を乗り越えることで、お金の大切さが身に染みて分かるでしょう。"
+                ],
+                travel: [
+                    "遠出は控えるのが無難。どうしても行く場合は細心の注意を。",
+                    "トラブルに巻き込まれやすいので、慎重に行動を。",
+                    "今は旅行よりも、身近な場所で過ごすことをお勧めします。",
+                    "旅行計画は延期した方が良いかもしれません。",
+                    "移動中の事故やトラブルに注意してください。",
+                    "旅先での体調不良に備えて、薬を準備しましょう。",
+                    "交通機関の遅延や欠航の可能性があります。",
+                    "旅行保険には必ず加入してください。",
+                    "貴重品の管理には特に注意が必要です。",
+                    "旅先でのトラブルに備えて、緊急連絡先を確認しておきましょう。",
+                    "無理な日程は組まず、余裕を持った計画を。",
+                    "現地の治安情報を事前にしっかり確認してください。",
+                    "一人旅は避け、信頼できる人と一緒に行動しましょう。",
+                    "旅行中の出費が予想以上にかさむ可能性があります。",
+                    "天候不良による影響を受けやすい時期です。",
+                    "旅先での人間関係のトラブルに注意してください。",
+                    "今は近場で静かに過ごすのが最善です。",
+                    "旅行を強行すると、後悔することになるかもしれません。",
+                    "旅行運が低迷していますが、時期を待てば改善します。",
+                    "今は旅行の計画を立てるだけに留めておきましょう。"
+                ],
+                lost: [
+                    "見つからない場合は諦めることも必要です。今後の管理を見直してください。",
+                    "失くしたものに執着せず、前を向きましょう。",
+                    "この経験を教訓に、物の管理方法を改善しましょう。",
+                    "探し物に時間を使いすぎないよう注意してください。",
+                    "失くしたものは戻ってこない可能性が高いです。",
+                    "新しいものを購入することを検討してください。",
+                    "失物から学んで、同じ失敗を繰り返さないようにしましょう。",
+                    "大切なものほど、管理を徹底する必要があります。",
+                    "失くしたものへの執着が、新しいチャンスを逃す原因になります。",
+                    "今は諦めて、気持ちを切り替えることが大切です。",
+                    "失物の価値以上に、時間を無駄にしないでください。",
+                    "この機会に、持ち物を整理整頓しましょう。",
+                    "失くしたものから得た教訓を大切にしてください。",
+                    "物への執着を手放すことで、心が軽くなります。",
+                    "失物は、新しいものとの出会いのきっかけかもしれません。",
+                    "今後は紛失防止の対策を講じてください。",
+                    "失くしたものに関する夢を見ても、現実的に対処しましょう。",
+                    "時間が経てば、失くしたものへの執着も薄れます。",
+                    "この経験が、物を大切にする心を育てます。",
+                    "失物を通じて、本当に必要なものが何か考える機会です。"
+                ],
+                trouble: [
+                    "トラブルに見舞われやすい時期。感情的にならず、冷静に。",
+                    "問題が大きくなる前に、早めの対処を心がけて。",
+                    "専門家や信頼できる人に相談することも大切です。",
+                    "小さな問題も放置すると大きくなる可能性があります。",
+                    "人間関係のトラブルに特に注意が必要です。",
+                    "誤解や行き違いが生じやすい時期です。",
+                    "争いごとは避け、平和的な解決を目指しましょう。",
+                    "感情的な発言や行動は控えてください。",
+                    "トラブルの原因を冷静に分析することが大切です。",
+                    "今は守りの姿勢で、新たな問題を作らないように。",
+                    "過去のトラブルが再燃する可能性もあります。",
+                    "法的な問題に発展しないよう、慎重に行動してください。",
+                    "トラブル解決には時間がかかることを覚悟しましょう。",
+                    "一人で抱え込まず、周囲の助けを求めてください。",
+                    "問題から逃げずに、正面から向き合うことが大切です。",
+                    "トラブルを通じて、人生の教訓を学べます。",
+                    "今の苦労は、将来の糧となるでしょう。",
+                    "冷静さを保つことが、最良の解決策につながります。",
+                    "トラブルの中にも、成長のチャンスが隠れています。",
+                    "必ず解決する時が来ます。希望を持ち続けてください。"
+                ]
+            },
+            daikyo: {
+                wish: [
+                    "今は願いが叶いにくい時期ですが、必ず好転します。希望を捨てずに。",
+                    "大きな願いは一旦保留にし、小さな目標から始めましょう。",
+                    "この困難な時期を乗り越えることで、より強くなれます。",
+                    "願望達成への道は今は閉ざされていますが、新しい道が開かれます。",
+                    "今の苦労は、将来の成功のための必要な試練です。",
+                    "願いに執着しすぎず、流れに身を任せることも大切です。",
+                    "一度立ち止まって、本当に必要な願いか見直してみましょう。",
+                    "今は耐える時。必ず春は来ます。",
+                    "願いが叶わないことで、新しい可能性に気づくかもしれません。",
+                    "困難な状況でも、小さな希望の光を見つけてください。",
+                    "今の経験が、将来大きな願いを叶える力になります。",
+                    "願望実現のためには、根本的な変革が必要な時期です。",
+                    "一人で抱え込まず、信頼できる人に相談しましょう。",
+                    "願いを諦めることも、時には勇気ある決断です。",
+                    "今は充電期間。エネルギーを蓄えてください。",
+                    "困難を乗り越えた先に、本当の幸せが待っています。",
+                    "願いの形を変えることで、新しい道が見えてきます。",
+                    "今の試練は、あなたを成長させるためのものです。",
+                    "必ず良い時期が来ます。今は耐え忍ぶ時です。",
+                    "困難な時期だからこそ、本当に大切なものが見えてきます。"
+                ],
+                health: [
+                    "健康には特に注意が必要です。少しでも不調を感じたら休息を。",
+                    "無理は絶対に禁物。体を第一に考えて行動しましょう。",
+                    "医師の診断を受けることをお勧めします。",
+                    "ストレスが体調不良の原因になっている可能性があります。",
+                    "十分な睡眠と栄養を取ることを最優先にしてください。",
+                    "心身ともに疲れている時期。完全な休養が必要です。",
+                    "健康を害する前に、生活習慣を根本から見直しましょう。",
+                    "精神的な負担が身体に影響を与えています。",
+                    "今は治療や療養に専念すべき時期かもしれません。",
+                    "家族や友人のサポートを受けながら、健康回復に努めてください。",
+                    "無理をすると取り返しのつかないことになります。",
+                    "健康あっての人生。今は体を大切にすることだけを考えて。",
+                    "定期的な健康チェックを欠かさないでください。",
+                    "心の健康も含めて、総合的なケアが必要です。",
+                    "今の不調は、生活を見直すためのサインです。",
+                    "健康を犠牲にしてまで頑張る必要はありません。",
+                    "回復には時間がかかりますが、必ず良くなります。",
+                    "専門家の助けを借りることを恥ずかしがらないでください。",
+                    "健康第一。他のことは後回しにしても構いません。",
+                    "今の苦しみは永遠ではありません。必ず回復します。"
+                ],
+                work: [
+                    "仕事では大きな困難に直面するかもしれません。でも必ず乗り越えられます。",
+                    "今は耐える時期。無理な挑戦は避けましょう。",
+                    "基本に忠実に、慎重に仕事を進めてください。",
+                    "大きな失敗を避けるため、確認作業を徹底してください。",
+                    "職場での人間関係にも注意が必要な時期です。",
+                    "今の仕事が合っていない可能性も考えてみましょう。",
+                    "上司や同僚に助けを求めることを躊躇しないでください。",
+                    "仕事のストレスが限界に近づいているかもしれません。",
+                    "一度立ち止まって、キャリアを見直す時期かもしれません。",
+                    "今の苦労は、将来の成功のための貴重な経験です。",
+                    "仕事での挫折も、人生の大切な学びです。",
+                    "無理をして体を壊しては元も子もありません。",
+                    "仕事は人生の全てではありません。視野を広げてみましょう。",
+                    "今は守りに徹し、リスクを最小限に抑えてください。",
+                    "困難な状況でも、誠実に仕事に取り組む姿勢が大切です。",
+                    "転職や休職も選択肢として考えてみてください。",
+                    "仕事での失敗を恐れず、学びの機会と捉えましょう。",
+                    "今の経験が、将来のリーダーシップにつながります。",
+                    "必ず状況は改善します。今は耐え忍ぶ時です。",
+                    "仕事よりも、まず自分自身を大切にしてください。"
+                ],
+                love: [
+                    "恋愛は今は控えめに。自分を大切にする時期です。",
+                    "相手との関係に問題がある場合は、一度距離を置くことも。",
+                    "今は恋愛よりも、自己成長に集中すべき時期です。",
+                    "恋愛でのトラブルや失望に注意が必要です。",
+                    "相手に依存しすぎないよう、自立心を持ってください。",
+                    "恋愛関係での決断は、もう少し待った方が良いでしょう。",
+                    "今の恋愛が本当に自分にとって良いものか考えてみましょう。",
+                    "一人の時間を大切にし、自分を見つめ直してください。",
+                    "恋愛での傷は時間が癒してくれます。",
+                    "新しい出会いを求めるよりも、今は自分磨きの時期です。",
+                    "恋愛に振り回されず、冷静な判断を心がけてください。",
+                    "相手の本当の姿を見極めることが大切です。",
+                    "恋愛での失敗も、成長のための貴重な経験です。",
+                    "今は恋愛運が低迷していますが、必ず回復します。",
+                    "自分を愛することから始めましょう。",
+                    "恋愛に関する重要な決断は避けてください。",
+                    "今の苦しみは、将来の幸せな恋愛のための準備期間です。",
+                    "恋愛よりも、友情や家族との絆を大切にしましょう。",
+                    "一人でいることの価値を見出す時期です。",
+                    "恋愛での困難も、必ず乗り越えられます。"
+                ],
+                study: [
+                    "学習は困難を感じるかもしれませんが、諦めないでください。",
+                    "今の苦労は将来の糧となります。コツコツと続けましょう。",
+                    "基礎からやり直すことで、新しい発見があるでしょう。",
+                    "学習方法を根本的に見直す必要があるかもしれません。",
+                    "理解できないことがあっても、自分を責めないでください。",
+                    "学習のペースを落として、確実に理解することを優先しましょう。",
+                    "今は結果を求めず、過程を大切にする時期です。",
+                    "学習での挫折も、人生の大切な経験です。",
+                    "一人で悩まず、教師や仲間に助けを求めてください。",
+                    "学習環境を変えることで、新しい可能性が開けるかもしれません。",
+                    "今の困難は、将来の大きな成長につながります。",
+                    "学習に対するプレッシャーを手放してみましょう。",
+                    "小さな進歩でも、それを認めて自分を褒めてください。",
+                    "学習の目的を見失わないことが大切です。",
+                    "今は充電期間。焦らず基礎を固めてください。",
+                    "学習での失敗を恐れず、チャレンジし続けてください。",
+                    "理解が遅くても、着実に進んでいることを信じてください。",
+                    "学習は人生の一部。全てではありません。",
+                    "今の苦労が、将来の専門性につながります。",
+                    "必ず理解できる時が来ます。諦めないでください。"
+                ],
+                money: [
+                    "金銭面では特に注意が必要です。支出を最小限に抑えて。",
+                    "今は守りの時期。新しい投資は避けましょう。",
+                    "家計の見直しをして、無駄を省くことが大切です。",
+                    "収入が激減する可能性もあります。備えをしっかりと。",
+                    "借金は絶対に避けてください。",
+                    "金銭的な援助を求めることも検討してください。",
+                    "今の困窮は一時的なもの。必ず改善します。",
+                    "お金よりも大切なものがあることを思い出してください。",
+                    "最低限の生活ができれば十分と考えましょう。",
+                    "金銭的な困難も、人生の貴重な経験です。",
+                    "今は節約の極意を学ぶ絶好の機会です。",
+                    "お金に振り回されず、心の豊かさを大切に。",
+                    "経済的な困難を乗り越えることで、真の強さが身につきます。",
+                    "必要最小限の生活の中に、本当の幸せを見つけられるかもしれません。",
+                    "金銭的な援助を申し出てくれる人の好意は素直に受けましょう。",
+                    "今の経験が、将来の堅実な金銭管理につながります。",
+                    "お金がなくても、工夫次第で豊かに暮らせます。",
+                    "経済的な困難は永遠ではありません。希望を持ってください。",
+                    "今は耐える時。必ず経済状況は好転します。",
+                    "お金の大切さと同時に、お金だけが全てではないことも学べます。"
+                ],
+                travel: [
+                    "旅行は延期することをお勧めします。今は動かない方が賢明。",
+                    "どうしても必要な移動以外は控えましょう。",
+                    "家で過ごす時間を充実させることに集中を。",
+                    "旅行中の事故やトラブルのリスクが非常に高い時期です。",
+                    "今は旅行の計画を立てるだけに留めてください。",
+                    "移動は最小限に抑え、安全を最優先に考えてください。",
+                    "旅行運が最低の時期。無理は禁物です。",
+                    "今は心の旅をする時期かもしれません。",
+                    "旅行に使う予定だったお金は、将来のために貯めておきましょう。",
+                    "身近な場所で新しい発見をすることに目を向けてください。",
+                    "旅行ができない今だからこそ、地元の良さを再発見できます。",
+                    "バーチャル旅行で気分転換を図るのも良いでしょう。",
+                    "今は旅行よりも、心身の健康を優先すべき時期です。",
+                    "旅行の延期は、より良い旅のための準備期間と考えましょう。",
+                    "移動に伴うリスクを避けることが、最善の選択です。",
+                    "今は家族や友人との時間を大切にしてください。",
+                    "旅行ができない分、読書や映画で世界を旅しましょう。",
+                    "今の我慢が、将来の素晴らしい旅行につながります。",
+                    "旅行運は必ず回復します。今は待つ時です。",
+                    "安全第一。無理な旅行は後悔のもとです。"
+                ],
+                lost: [
+                    "失くしたものは戻ってこない可能性が高いです。気持ちを切り替えて。",
+                    "物への執着を手放し、新しいスタートを切りましょう。",
+                    "この経験から学び、今後に活かしてください。",
+                    "失くしたものよりも、今あるものに感謝しましょう。",
+                    "物質的な損失は、精神的な成長の機会です。",
+                    "失物にこだわらず、前を向いて進んでください。",
+                    "大切なものを失うことで、本当に大切なものが見えてきます。",
+                    "失くしたものは、もう必要なかったのかもしれません。",
+                    "この経験を通じて、物への執着から解放されましょう。",
+                    "新しいものとの出会いのために、古いものが去ったのです。",
+                    "失物を探す時間を、もっと建設的なことに使いましょう。",
+                    "物を失っても、経験と知恵は残ります。",
+                    "今後は物の管理により注意を払うようになるでしょう。",
+                    "失くしたものへの未練を断ち切ることが大切です。",
+                    "物質的な損失も、人生の一部として受け入れましょう。",
+                    "失物から得た教訓は、一生の財産となります。",
+                    "物を大切にする心が、この経験から生まれます。",
+                    "失くしたものに感謝して、手放しましょう。",
+                    "新しい始まりのために、古いものが去る必要があったのです。",
+                    "物への執着を手放すことで、心が自由になります。"
+                ],
+                trouble: [
+                    "大きなトラブルに注意。でも必ず解決策はあります。一人で抱え込まないで。",
+                    "問題は深刻かもしれませんが、冷静に対処すれば乗り越えられます。",
+                    "信頼できる人に相談し、サポートを求めることが大切です。",
+                    "トラブルの渦中にいる時は、感情的にならないよう注意してください。",
+                    "法的な助言が必要な場合は、専門家に相談しましょう。",
+                    "今の困難は、将来の強さにつながります。",
+                    "問題から逃げずに、正面から向き合う勇気を持ってください。",
+                    "トラブルの原因を冷静に分析し、再発防止に努めましょう。",
+                    "一つずつ問題を解決していけば、必ず道は開けます。",
+                    "今は試練の時。でも必ず乗り越えられます。",
+                    "トラブルを通じて、真の友人が誰か分かるでしょう。",
+                    "困難な状況でも、希望を失わないでください。",
+                    "問題解決のプロセスが、あなたを成長させます。",
+                    "今の苦しみは永遠ではありません。必ず終わりが来ます。",
+                    "トラブルに巻き込まれても、誠実さを失わないでください。",
+                    "困難を乗り越えた経験が、将来の財産となります。",
+                    "助けを求めることは、弱さではなく強さの表れです。",
+                    "トラブルの中にも、学びと成長の機会があります。",
+                    "必ず解決する時が来ます。今は耐え忍んでください。",
+                    "この困難を乗り越えた時、あなたは今よりもずっと強くなっています。"
+                ]
+            }
+        };
+
+        // メインアプリケーションクラス
+        class OmikujiApp {
+            constructor() {
+                this.currentScreen = 'main';
+                this.isAnimating = false;
+                this.initializeElements();
+                this.bindEvents();
+            }
+
+            initializeElements() {
+                this.screens = {
+                    main: document.getElementById('main-screen'),
+                    loading: document.getElementById('loading-screen'),
+                    result: document.getElementById('result-screen')
+                };
+                
+                this.buttons = {
+                    draw: document.getElementById('draw-button'),
+                    retry: document.getElementById('retry-button')
+                };
+                
+                this.resultElements = {
+                    fortuneName: document.getElementById('fortune-name'),
+                    fortuneIcon: document.getElementById('fortune-icon'),
+                    header: document.getElementById('result-header')
+                };
+                
+                this.adviceElements = {
+                    wish: document.getElementById('advice-wish'),
+                    health: document.getElementById('advice-health'),
+                    work: document.getElementById('advice-work'),
+                    love: document.getElementById('advice-love'),
+                    study: document.getElementById('advice-study'),
+                    money: document.getElementById('advice-money'),
+                    travel: document.getElementById('advice-travel'),
+                    lost: document.getElementById('advice-lost'),
+                    trouble: document.getElementById('advice-trouble')
+                };
+            }
+
+            bindEvents() {
+                this.buttons.draw.addEventListener('click', () => this.drawOmikuji());
+                this.buttons.retry.addEventListener('click', () => this.resetToMain());
+                
+                if ('ontouchstart' in window) {
+                    this.buttons.draw.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        this.drawOmikuji();
+                    });
+                    
+                    this.buttons.retry.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        this.resetToMain();
+                    });
+                }
+                
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        if (this.currentScreen === 'main' && !this.isAnimating) {
+                            this.drawOmikuji();
+                        } else if (this.currentScreen === 'result' && !this.isAnimating) {
+                            this.resetToMain();
+                        }
+                    }
+                });
+            }
+
+            showScreen(screenName) {
+                Object.keys(this.screens).forEach(key => {
+                    if (key === screenName) {
+                        this.screens[key].classList.add('active');
+                    } else {
+                        this.screens[key].classList.remove('active');
+                    }
+                });
+                this.currentScreen = screenName;
+            }
+
+            drawOmikuji() {
+                if (this.isAnimating) return;
+                
+                this.isAnimating = true;
+                
+                if ('vibrate' in navigator) {
+                    navigator.vibrate(50);
+                }
+                
+                this.showScreen('loading');
+                
+                setTimeout(() => {
+                    const fortune = this.selectFortune();
+                    const advice = this.generateAdvice(fortune);
+                    this.displayResult(fortune, advice);
+                    this.showScreen('result');
+                    this.isAnimating = false;
+                }, 2500);
+            }
+
+            selectFortune() {
+                const totalWeight = Object.values(FORTUNE_CONFIG).reduce((sum, config) => sum + config.weight, 0);
+                let random = Math.random() * totalWeight;
+                
+                for (const [key, config] of Object.entries(FORTUNE_CONFIG)) {
+                    random -= config.weight;
+                    if (random <= 0) {
+                        return key;
+                    }
+                }
+                
+                return 'chukichi';
+            }
+
+            generateAdvice(fortune) {
+                const advice = {};
+                const fortuneData = ADVICE_DATA[fortune];
+                
+                Object.keys(this.adviceElements).forEach(category => {
+                    if (fortuneData[category] && fortuneData[category].length > 0) {
+                        const randomIndex = Math.floor(Math.random() * fortuneData[category].length);
+                        advice[category] = fortuneData[category][randomIndex];
+                    } else {
+                        advice[category] = "運勢に従って行動しましょう。";
+                    }
+                });
+                
+                return advice;
+            }
+
+            displayResult(fortune, advice) {
+                const config = FORTUNE_CONFIG[fortune];
+                
+                this.resultElements.fortuneName.textContent = config.name;
+                this.resultElements.fortuneIcon.textContent = config.icon;
+                this.resultElements.header.className = `result-header ${config.class}`;
+                
+                Object.keys(this.adviceElements).forEach(category => {
+                    this.adviceElements[category].textContent = advice[category];
+                });
+                
+                const scrollContainer = document.querySelector('.advice-scroll');
+                if (scrollContainer) {
+                    scrollContainer.scrollTop = 0;
+                }
+                
+                this.animateResult();
+            }
+
+            animateResult() {
+                const adviceItems = document.querySelectorAll('.advice-item');
+                adviceItems.forEach((item, index) => {
+                    item.style.opacity = '0';
+                    item.style.transform = 'translateY(20px)';
+                    
+                    setTimeout(() => {
+                        item.style.transition = 'all 0.5s ease';
+                        item.style.opacity = '1';
+                        item.style.transform = 'translateY(0)';
+                    }, index * 100);
+                });
+            }
+
+            resetToMain() {
+                if (this.isAnimating) return;
+                
+                this.isAnimating = true;
+                
+                const adviceItems = document.querySelectorAll('.advice-item');
+                adviceItems.forEach(item => {
+                    item.style.opacity = '';
+                    item.style.transform = '';
+                    item.style.transition = '';
+                });
+                
+                setTimeout(() => {
+                    this.showScreen('main');
+                    this.isAnimating = false;
+                }, 100);
+            }
+        }
+
+        // アプリケーションの初期化
+        document.addEventListener('DOMContentLoaded', () => {
+            new OmikujiApp();
+        });
+    </script>
+</body>
+</html>
