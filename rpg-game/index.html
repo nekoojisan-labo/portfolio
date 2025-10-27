@@ -815,6 +815,7 @@
         const keys = {};
         document.addEventListener('keydown', (e) => {
             if (battleSystem && battleSystem.inBattle) {
+                e.preventDefault(); // デフォルト動作を防ぐ
                 handleBattleInput(e.key);
             } else if (menuOpen) {
                 handleMenuInput(e.key);
@@ -1684,18 +1685,30 @@
 
         // Battle System Functions
         function handleBattleInput(key) {
+            if (!battleSystem || !battleSystem.inBattle || !battleSystem.waitingForCommand) {
+                console.log('Battle input blocked:', { inBattle: battleSystem?.inBattle, waiting: battleSystem?.waitingForCommand });
+                return;
+            }
+            
             const commands = document.querySelectorAll('.command-item');
             const numCommands = commands.length;
             
-            if (key === 'ArrowUp') {
+            console.log('Battle input received:', key, 'Current selection:', battleSystem.selectedCommand);
+            
+            if (key === 'ArrowUp' || key === 'w' || key === 'W') {
                 battleSystem.selectedCommand = (battleSystem.selectedCommand - 1 + numCommands) % numCommands;
-                battleSystem.updateCommandSelection();
-            } else if (key === 'ArrowDown') {
+                battleSystem.setupBattleCommands();
+            } else if (key === 'ArrowDown' || key === 's' || key === 'S') {
                 battleSystem.selectedCommand = (battleSystem.selectedCommand + 1) % numCommands;
-                battleSystem.updateCommandSelection();
+                battleSystem.setupBattleCommands();
             } else if (key === 'Enter' || key === ' ') {
                 const selectedCmd = commands[battleSystem.selectedCommand];
-                executeBattleCommand(selectedCmd.dataset.command);
+                if (selectedCmd) {
+                    console.log('Executing command from keyboard:', selectedCmd.dataset.command);
+                    executeBattleCommand(selectedCmd.dataset.command);
+                } else {
+                    console.error('No command selected or command element not found');
+                }
             }
         }
 
