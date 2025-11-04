@@ -42,20 +42,16 @@
 
         .ui-overlay {
             position: absolute;
-            bottom: 10px;
-            left: 10px;
-            right: 10px;
-            background: rgba(0, 0, 0, 0.8);
-            border: 2px solid #0f3460;
-            border-radius: 5px;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 150px;
+            background: rgba(0, 0, 0, 0.95);
+            border-top: 3px solid #0f3460;
             padding: 10px;
             font-size: 14px;
             color: #ffffff;
-            pointer-events: none; /* UIを通過してクリックできるように */
-        }
-        
-        .ui-overlay * {
-            pointer-events: auto; /* UIの子要素は通常通りクリック可能 */
+            pointer-events: auto;
         }
 
         .status-bar {
@@ -1014,7 +1010,7 @@
                 player.facing = 'up';
             }
             if (keys['ArrowDown'] || keys['s']) {
-                newY = Math.min(canvas.height - 5, player.y + speed);
+                newY = Math.min(430, player.y + speed); // UI領域(450px以降)に入らないように制限
                 player.facing = 'down';
             }
             if (keys['ArrowLeft'] || keys['a']) {
@@ -1054,11 +1050,11 @@
                     } else if (transition.nextMap) {
                         mapSystem.transitionToMap(transition.nextMap);
                         updateMapInfo();
-                        // プレイヤー位置調整
+                        // プレイヤー位置調整（MAPエリア内に制限）
                         if (transition.exit.x <= 30) player.x = canvas.width - 50;
                         else if (transition.exit.x >= 750) player.x = 50;
-                        if (transition.exit.y <= 20) player.y = canvas.height - 50;
-                        else if (transition.exit.y >= 570) player.y = 50;
+                        if (transition.exit.y <= 20) player.y = 400; // 上から来た→下部に配置（UI領域の直前）
+                        else if (transition.exit.y >= 400) player.y = 30; // 下から来た→上部に配置
                     }
                 }
                 

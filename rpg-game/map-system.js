@@ -43,8 +43,8 @@ class MapSystem {
                 { x: 0, y: 200, width: 30, height: 200, to: 'subway_entrance', label: '地下鉄へ' },
                 { x: 770, y: 200, width: 30, height: 200, to: 'tokyo_gov', label: '都庁へ' },
                 { x: 300, y: 0, width: 200, height: 20, to: 'shrine_path', label: '神社への道' },
-                { x: 450, y: 480, width: 200, height: 120, to: 'black_market', label: '闇市へ' },
-                { x: 100, y: 480, width: 250, height: 120, to: 'shopping_district', label: '商業街へ' }
+                { x: 450, y: 410, width: 200, height: 30, to: 'black_market', label: '闇市へ' },
+                { x: 100, y: 410, width: 250, height: 30, to: 'shopping_district', label: '商業街へ' }
             ],
             npcs: [
                 { x: 300, y: 200, emoji: '👤', name: '感情を失った市民', dialogue: '...。' },
@@ -61,9 +61,9 @@ class MapSystem {
             area: 'subway',
             buildings: [
                 { x: 100, y: 100, width: 600, height: 50, color: '#1a1a1a' },
-                { x: 100, y: 450, width: 600, height: 50, color: '#1a1a1a' },
-                { x: 200, y: 200, width: 60, height: 200, color: '#333333' },
-                { x: 540, y: 200, width: 60, height: 200, color: '#333333' }
+                { x: 100, y: 380, width: 600, height: 50, color: '#1a1a1a' },
+                { x: 200, y: 200, width: 60, height: 180, color: '#333333' },
+                { x: 540, y: 200, width: 60, height: 180, color: '#333333' }
             ],
             exits: [
                 { x: 770, y: 200, width: 30, height: 200, to: 'shinjuku_city', label: '地上へ' },
@@ -85,11 +85,11 @@ class MapSystem {
                 { x: 150, y: 150, width: 100, height: 100, color: '#2a4a2a', type: 'tree' },
                 { x: 550, y: 150, width: 100, height: 100, color: '#2a4a2a', type: 'tree' },
                 { x: 350, y: 250, width: 100, height: 150, color: '#3a5a3a', type: 'pond' },
-                { x: 150, y: 400, width: 100, height: 100, color: '#2a4a2a', type: 'tree' },
-                { x: 550, y: 400, width: 100, height: 100, color: '#2a4a2a', type: 'tree' }
+                { x: 150, y: 320, width: 100, height: 80, color: '#2a4a2a', type: 'tree' },
+                { x: 550, y: 320, width: 100, height: 80, color: '#2a4a2a', type: 'tree' }
             ],
             exits: [
-                { x: 350, y: 480, width: 100, height: 120, to: 'shinjuku_city', label: '都市へ' }
+                { x: 350, y: 410, width: 100, height: 30, to: 'shinjuku_city', label: '都市へ' }
             ],
             npcs: [
                 { x: 400, y: 300, emoji: '🧑‍🔧', name: 'リク', dialogue: '本物の植物を見たことがなかったんだ...これも作り物だけど、美しいね。' }
@@ -110,10 +110,10 @@ class MapSystem {
                 { x: 470, y: 100, width: 80, height: 60, color: '#2a1a2a', type: 'stall' },
                 { x: 570, y: 100, width: 80, height: 60, color: '#2a1a2a', type: 'stall' },
                 { x: 670, y: 100, width: 80, height: 60, color: '#2a1a2a', type: 'stall' },
-                { x: 50, y: 440, width: 80, height: 60, color: '#2a1a2a', type: 'stall' },
-                { x: 150, y: 440, width: 80, height: 60, color: '#2a1a2a', type: 'stall' },
-                { x: 570, y: 440, width: 80, height: 60, color: '#2a1a2a', type: 'stall' },
-                { x: 670, y: 440, width: 80, height: 60, color: '#2a1a2a', type: 'stall' }
+                { x: 50, y: 350, width: 80, height: 60, color: '#2a1a2a', type: 'stall' },
+                { x: 150, y: 350, width: 80, height: 60, color: '#2a1a2a', type: 'stall' },
+                { x: 570, y: 350, width: 80, height: 60, color: '#2a1a2a', type: 'stall' },
+                { x: 670, y: 350, width: 80, height: 60, color: '#2a1a2a', type: 'stall' }
             ],
             exits: [
                 { x: 350, y: 0, width: 100, height: 10, to: 'shinjuku_city', label: '地上へ' }
@@ -138,13 +138,13 @@ class MapSystem {
                 { x: 300, y: 400, width: 200, height: 100, color: '#5a4a3a', type: 'shrine' }
             ],
             exits: [
-                { x: 350, y: 480, width: 100, height: 120, to: 'shinjuku_city', label: '都市へ' },
+                { x: 350, y: 410, width: 100, height: 30, to: 'shinjuku_city', label: '都市へ' },
                 { x: 350, y: 0, width: 100, height: 10, to: 'inner_shrine', label: '本殿へ' }
             ],
             npcs: [
                 { x: 400, y: 250, emoji: '👴', name: '老神主', dialogue: '神々の力は、まだこの地に眠っている...選ばれし者よ。' }
             ],
-            savePoint: { x: 400, y: 450, emoji: '⛩️', name: 'セーブポイント' }
+            savePoint: { x: 400, y: 380, emoji: '⛩️', name: 'セーブポイント' }
         };
         
         // 都庁エリア
@@ -156,7 +156,7 @@ class MapSystem {
             area: 'city',
             buildings: [
                 { x: 200, y: 100, width: 400, height: 50, color: '#2a2a4a', type: 'wall' },
-                { x: 200, y: 450, width: 400, height: 50, color: '#2a2a4a', type: 'wall' },
+                { x: 200, y: 380, width: 400, height: 50, color: '#2a2a4a', type: 'wall' },
                 { x: 350, y: 200, width: 100, height: 100, color: '#3a3a5a', type: 'elevator' }
             ],
             exits: [
@@ -179,7 +179,7 @@ class MapSystem {
             buildings: [
                 // 壁や障害物
                 { x: 0, y: 0, width: 800, height: 50, color: '#1f1f1f', type: 'wall' },
-                { x: 0, y: 550, width: 800, height: 50, color: '#1f1f1f', type: 'wall' },
+                { x: 0, y: 380, width: 800, height: 50, color: '#1f1f1f', type: 'wall' },
                 { x: 0, y: 0, width: 50, height: 600, color: '#1f1f1f', type: 'wall' },
                 { x: 750, y: 0, width: 50, height: 600, color: '#1f1f1f', type: 'wall' },
                 
@@ -191,12 +191,12 @@ class MapSystem {
                 { x: 380, y: 280, width: 40, height: 40, color: '#2f2f2f', type: 'pillar' },
                 
                 // 宝箱
-                { x: 100, y: 500, width: 30, height: 30, color: '#8B4513', type: 'treasure' },
+                { x: 100, y: 350, width: 30, height: 30, color: '#8B4513', type: 'treasure' },
                 { x: 670, y: 100, width: 30, height: 30, color: '#8B4513', type: 'treasure' }
             ],
             exits: [
                 { x: 790, y: 275, width: 10, height: 50, to: 'subway_entrance', label: '地下鉄へ' },
-                { x: 375, y: 480, width: 50, height: 120, to: 'deep_tunnel_2', label: '更なる深部へ' }
+                { x: 375, y: 410, width: 50, height: 30, to: 'deep_tunnel_2', label: '更なる深部へ' }
             ],
             npcs: [
                 { x: 300, y: 200, emoji: '👹', name: 'シャドウエンティティ', dialogue: 'この領域は...我々のものだ。', hostile: true, level: 3 },
@@ -204,7 +204,7 @@ class MapSystem {
                 { x: 150, y: 400, emoji: '⚡', name: 'グリッチスピリット', dialogue: 'エラー...エラー...削除シマス...', hostile: true, level: 2 }
             ],
             treasures: [
-                { x: 100, y: 500, item: 'ヒールポーション', opened: false },
+                { x: 100, y: 350, item: 'ヒールポーション', opened: false },
                 { x: 670, y: 100, item: 'エナジーコア', opened: false }
             ]
         };
@@ -218,15 +218,15 @@ class MapSystem {
             area: 'dungeon',
             buildings: [
                 { x: 0, y: 0, width: 800, height: 50, color: '#1a1a2f', type: 'wall' },
-                { x: 0, y: 550, width: 800, height: 50, color: '#1a1a2f', type: 'wall' },
+                { x: 0, y: 380, width: 800, height: 50, color: '#1a1a2f', type: 'wall' },
                 { x: 0, y: 0, width: 50, height: 600, color: '#1a1a2f', type: 'wall' },
                 { x: 750, y: 0, width: 50, height: 600, color: '#1a1a2f', type: 'wall' },
                 
                 // 複雑な迷路構造
                 { x: 150, y: 100, width: 200, height: 40, color: '#2a2a3f', type: 'wall' },
                 { x: 450, y: 100, width: 200, height: 40, color: '#2a2a3f', type: 'wall' },
-                { x: 150, y: 460, width: 200, height: 40, color: '#2a2a3f', type: 'wall' },
-                { x: 450, y: 460, width: 200, height: 40, color: '#2a2a3f', type: 'wall' },
+                { x: 150, y: 340, width: 200, height: 40, color: '#2a2a3f', type: 'wall' },
+                { x: 450, y: 340, width: 200, height: 40, color: '#2a2a3f', type: 'wall' },
                 { x: 350, y: 200, width: 100, height: 200, color: '#2a2a3f', type: 'wall' },
                 
                 // ボス部屋
@@ -234,7 +234,7 @@ class MapSystem {
             ],
             exits: [
                 { x: 375, y: 0, width: 50, height: 10, to: 'deep_tunnel', label: '上の階へ' },
-                { x: 375, y: 480, width: 50, height: 120, to: 'ancient_chamber', label: '古代の部屋へ', locked: true, requirement: 'boss_key' }
+                { x: 375, y: 410, width: 50, height: 30, to: 'ancient_chamber', label: '古代の部屋へ', locked: true, requirement: 'boss_key' }
             ],
             npcs: [
                 { x: 200, y: 300, emoji: '💀', name: 'ネクロマンサー', dialogue: '死者の軍団よ、目覚めよ！', hostile: true, level: 5 },
@@ -256,9 +256,9 @@ class MapSystem {
                 { x: 350, y: 100, width: 120, height: 80, color: '#2a2a4a', type: 'item_shop' },
                 { x: 500, y: 100, width: 120, height: 80, color: '#4a4a2a', type: 'magic_shop' },
                 
-                { x: 50, y: 420, width: 120, height: 80, color: '#3a3a4a', type: 'inn' },
-                { x: 200, y: 420, width: 120, height: 80, color: '#4a3a3a', type: 'bank' },
-                { x: 500, y: 420, width: 120, height: 80, color: '#3a4a3a', type: 'guild' },
+                { x: 50, y: 300, width: 120, height: 80, color: '#3a3a4a', type: 'inn' },
+                { x: 200, y: 300, width: 120, height: 80, color: '#4a3a3a', type: 'bank' },
+                { x: 500, y: 300, width: 120, height: 80, color: '#3a4a3a', type: 'guild' },
                 
                 // 中央広場
                 { x: 300, y: 250, width: 200, height: 150, color: '#1e3e5e', type: 'plaza' }
@@ -273,9 +273,9 @@ class MapSystem {
                 { x: 410, y: 160, emoji: '🧪', name: 'アイテム商人ユウキ', dialogue: 'ポーション、回復アイテム何でもあります！', shop: true, shopType: 'items' },
                 { x: 560, y: 160, emoji: '🔮', name: '魔法商人ミコト', dialogue: '古の魔法アイテムを求めるなら...', shop: true, shopType: 'magic' },
                 
-                { x: 110, y: 480, emoji: '🏠', name: '宿屋の主人', dialogue: 'お疲れ様！ゆっくり休んでいってくださいな。', shop: true, shopType: 'inn' },
-                { x: 260, y: 480, emoji: '💰', name: '銀行員', dialogue: 'お金の預入・引出しをどうぞ。', shop: true, shopType: 'bank' },
-                { x: 560, y: 480, emoji: '⚔️', name: 'ギルドマスター', dialogue: 'クエストの受注・報告はこちらで。', shop: true, shopType: 'guild' },
+                { x: 110, y: 360, emoji: '🏠', name: '宿屋の主人', dialogue: 'お疲れ様！ゆっくり休んでいってくださいな。', shop: true, shopType: 'inn' },
+                { x: 260, y: 360, emoji: '💰', name: '銀行員', dialogue: 'お金の預入・引出しをどうぞ。', shop: true, shopType: 'bank' },
+                { x: 560, y: 360, emoji: '⚔️', name: 'ギルドマスター', dialogue: 'クエストの受注・報告はこちらで。', shop: true, shopType: 'guild' },
                 
                 { x: 400, y: 325, emoji: '👥', name: '街の住民', dialogue: 'この街は平和でいいところよ。でも最近、地下で変な音が...' }
             ]
@@ -294,8 +294,8 @@ class MapSystem {
                 { x: 500, y: 100, width: 100, height: 80, color: '#3e3e4e', type: 'house' },
                 { x: 100, y: 300, width: 100, height: 80, color: '#4e4e3e', type: 'house' },
                 { x: 500, y: 300, width: 100, height: 80, color: '#3e5e3e', type: 'house' },
-                { x: 250, y: 450, width: 100, height: 80, color: '#5e3e3e', type: 'house' },
-                { x: 400, y: 450, width: 100, height: 80, color: '#3e3e5e', type: 'house' }
+                { x: 250, y: 200, width: 100, height: 80, color: '#5e3e3e', type: 'house' },
+                { x: 400, y: 200, width: 100, height: 80, color: '#3e3e5e', type: 'house' }
             ],
             exits: [
                 { x: 0, y: 275, width: 10, height: 50, to: 'shopping_district', label: '商業街へ' }
@@ -304,7 +304,7 @@ class MapSystem {
                 { x: 150, y: 150, emoji: '👨‍👩‍👧‍👦', name: '家族', dialogue: '平和な毎日に感謝しています。' },
                 { x: 300, y: 200, emoji: '🐱', name: 'ミケ', dialogue: 'にゃーん（人懐っこい猫のようだ）' },
                 { x: 550, y: 350, emoji: '👵', name: 'おばあさん', dialogue: '昔はもっと賑やかな街だったのよ...'},
-                { x: 450, y: 500, emoji: '📮', name: '郵便ポスト', dialogue: '手紙を出しますか？（まだ実装されていません）' }
+                { x: 450, y: 380, emoji: '📮', name: '郵便ポスト', dialogue: '手紙を出しますか？（まだ実装されていません）' }
             ],
             savePoint: { x: 325, y: 250, emoji: '💤', name: '公園のベンチ' }
         };
