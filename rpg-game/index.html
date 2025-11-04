@@ -1053,8 +1053,8 @@
                         // プレイヤー位置調整（MAPエリア内に制限）
                         if (transition.exit.x <= 30) player.x = canvas.width - 50;
                         else if (transition.exit.x >= 750) player.x = 50;
-                        if (transition.exit.y <= 20) player.y = 400; // 上から来た→下部に配置（UI領域の直前）
-                        else if (transition.exit.y >= 400) player.y = 30; // 下から来た→上部に配置
+                        if (transition.exit.y <= 20) player.y = 380; // 上から来た→下部に配置（出口エリア付近）
+                        else if (transition.exit.y >= 380) player.y = 30; // 下から来た→上部に配置
                     }
                 }
                 
