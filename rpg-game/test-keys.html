@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>キー入力テスト - RPG Game</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a2e;
+            color: #ffffff;
+            padding: 20px;
+        }
+        .test-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #00ffff;
+            border-radius: 10px;
+            padding: 20px;
+        }
+        h1 {
+            color: #00ffff;
+            text-align: center;
+        }
+        .test-item {
+            margin: 15px 0;
+            padding: 10px;
+            background: rgba(0, 255, 255, 0.1);
+            border-radius: 5px;
+        }
+        .test-item h3 {
+            margin: 0 0 10px 0;
+            color: #ffff00;
+        }
+        .key-display {
+            display: inline-block;
+            background: #0f3460;
+            padding: 5px 10px;
+            border-radius: 3px;
+            margin: 5px;
+            font-weight: bold;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 3px;
+            margin-left: 10px;
+        }
+        .status.success {
+            background: #00ff00;
+            color: #000;
+        }
+        .status.pending {
+            background: #ffff00;
+            color: #000;
+        }
+        #keyLog {
+            margin-top: 20px;
+            padding: 10px;
+            background: #000;
+            border: 1px solid #00ffff;
+            border-radius: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🎮 RPG Game キー入力テスト</h1>
+        
+        <div class="test-item">
+            <h3>移動キー</h3>
+            <span class="key-display">↑ ↓ ← →</span>
+            <span class="status pending" id="moveStatus">テスト待ち</span>
+        </div>
+        
+        <div class="test-item">
+            <h3>アクション</h3>
+            <span class="key-display">SPACE</span>
+            <span class="status pending" id="actionStatus">テスト待ち</span>
+        </div>
+        
+        <div class="test-item">
+            <h3>メニュー</h3>
+            <span class="key-display">X</span>
+            <span class="status pending" id="menuStatus">テスト待ち</span>
+        </div>
+        
+        <div class="test-item">
+            <h3>神威（カムイ）</h3>
+            <span class="key-display">Z</span>
+            <span class="status pending" id="kamuiStatus">テスト待ち</span>
+        </div>
+        
+        <div class="test-item">
+            <h3>セーブ</h3>
+            <span class="key-display">S</span>
+            <span class="status pending" id="saveStatus">テスト待ち</span>
+        </div>
+        
+        <div id="keyLog">
+            <strong>キーログ:</strong><br>
+            <span id="logContent">キーを押すとここに表示されます...</span>
+        </div>
+        
+        <div style="margin-top: 20px; text-align: center;">
+            <a href="index.html" style="color: #00ffff;">← ゲームに戻る</a>
+        </div>
+    </div>
+    
+    <script>
+        const logs = [];
+        const maxLogs = 20;
+        
+        const keyMap = {
+            'ArrowUp': '↑ (移動)',
+            'ArrowDown': '↓ (移動)',
+            'ArrowLeft': '← (移動)',
+            'ArrowRight': '→ (移動)',
+            ' ': 'SPACE (アクション)',
+            'x': 'X (メニュー)',
+            'X': 'X (メニュー)',
+            'z': 'Z (神威)',
+            'Z': 'Z (神威)',
+            's': 'S (セーブ)',
+            'S': 'S (セーブ)'
+        };
+        
+        document.addEventListener('keydown', (e) => {
+            const keyName = keyMap[e.key] || e.key;
+            const timestamp = new Date().toLocaleTimeString();
+            
+            logs.unshift(`[${timestamp}] ${keyName}`);
+            if (logs.length > maxLogs) logs.pop();
+            
+            document.getElementById('logContent').innerHTML = logs.join('<br>');
+            
+            // ステータス更新
+            if (e.key.includes('Arrow')) {
+                updateStatus('moveStatus');
+            }
+            if (e.key === ' ') {
+                updateStatus('actionStatus');
+            }
+            if (e.key === 'x' || e.key === 'X') {
+                updateStatus('menuStatus');
+            }
+            if (e.key === 'z' || e.key === 'Z') {
+                updateStatus('kamuiStatus');
+            }
+            if (e.key === 's' || e.key === 'S') {
+                updateStatus('saveStatus');
+            }
+        });
+        
+        function updateStatus(id) {
+            const element = document.getElementById(id);
+            element.textContent = '✓ 動作確認';
+            element.classList.remove('pending');
+            element.classList.add('success');
+        }
+    </script>
+</body>
+</html>
