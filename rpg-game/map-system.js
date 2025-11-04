@@ -116,7 +116,8 @@ class MapSystem {
                 { x: 670, y: 350, width: 80, height: 60, color: '#2a1a2a', type: 'stall' }
             ],
             exits: [
-                { x: 350, y: 0, width: 100, height: 10, to: 'shinjuku_city', label: '地上へ' }
+                { x: 350, y: 0, width: 100, height: 10, to: 'shinjuku_city', label: '地上へ' },
+                { x: 450, y: 395, width: 200, height: 35, to: 'shinjuku_city', label: '地上へ戻る' }
             ],
             npcs: [
                 { x: 200, y: 300, emoji: '🧑‍💻', name: 'ヤミ', dialogue: 'ここならアークの監視も届かない。必要な物資があれば言ってくれ。' },
@@ -196,6 +197,7 @@ class MapSystem {
             ],
             exits: [
                 { x: 790, y: 275, width: 10, height: 50, to: 'subway_entrance', label: '地下鉄へ' },
+                { x: 0, y: 275, width: 10, height: 50, to: 'subway_entrance', label: '地下鉄へ戻る' },
                 { x: 375, y: 395, width: 50, height: 35, to: 'deep_tunnel_2', label: '更なる深部へ' }
             ],
             npcs: [
@@ -265,7 +267,8 @@ class MapSystem {
             ],
             exits: [
                 { x: 0, y: 275, width: 10, height: 50, to: 'shinjuku_city', label: '新宿へ' },
-                { x: 790, y: 275, width: 10, height: 50, to: 'residential_area', label: '住宅街へ' }
+                { x: 790, y: 275, width: 10, height: 50, to: 'residential_area', label: '住宅街へ' },
+                { x: 100, y: 395, width: 250, height: 35, to: 'shinjuku_city', label: '新宿へ戻る' }
             ],
             npcs: [
                 { x: 110, y: 160, emoji: '🗡️', name: '武器商人リョウ', dialogue: 'いらっしゃい！最新の神器武器を取り揃えてるよ！', shop: true, shopType: 'weapons' },
@@ -298,7 +301,8 @@ class MapSystem {
                 { x: 400, y: 200, width: 100, height: 80, color: '#3e3e5e', type: 'house' }
             ],
             exits: [
-                { x: 0, y: 275, width: 10, height: 50, to: 'shopping_district', label: '商業街へ' }
+                { x: 0, y: 275, width: 10, height: 50, to: 'shopping_district', label: '商業街へ' },
+                { x: 790, y: 275, width: 10, height: 50, to: 'shopping_district', label: '商業街へ戻る' }
             ],
             npcs: [
                 { x: 150, y: 150, emoji: '👨‍👩‍👧‍👦', name: '家族', dialogue: '平和な毎日に感謝しています。' },
