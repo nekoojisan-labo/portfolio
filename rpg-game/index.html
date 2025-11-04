@@ -364,6 +364,122 @@
             50% { opacity: 0.5; }
         }
         
+        /* Menu System */
+        .menu-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            z-index: 600;
+        }
+        
+        .menu-overlay.active {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .menu-container {
+            background: linear-gradient(135deg, #1a1a2e, #0a0a0a);
+            border: 3px solid #00ffff;
+            border-radius: 10px;
+            padding: 30px;
+            min-width: 400px;
+            max-width: 500px;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+        }
+        
+        .menu-title {
+            font-size: 24px;
+            color: #00ffff;
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+        
+        .menu-stats {
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid #0f3460;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .menu-stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            font-size: 14px;
+        }
+        
+        .menu-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .menu-option {
+            background: rgba(0, 255, 255, 0.1);
+            border: 2px solid #00ffff;
+            border-radius: 5px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            font-size: 16px;
+        }
+        
+        .menu-option:hover {
+            background: rgba(0, 255, 255, 0.3);
+            transform: translateX(5px);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+        }
+        
+        .menu-option.selected {
+            background: rgba(0, 255, 255, 0.3);
+            border-color: #ffff00;
+        }
+        
+        .menu-close {
+            margin-top: 15px;
+            text-align: center;
+            font-size: 12px;
+            color: #aaa;
+        }
+        
+        /* Kamui Effect */
+        .kamui-effect {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            color: #00ffff;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+            animation: kamuiPulse 1s ease-out forwards;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        
+        @keyframes kamuiPulse {
+            0% {
+                transform: translate(-50%, -50%) scale(0.5);
+                opacity: 1;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.5);
+                opacity: 0.8;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(2);
+                opacity: 0;
+            }
+        }
+        
         /* Back to Portfolio Button */
         .back-button {
             position: absolute;
@@ -433,6 +549,55 @@
             </div>
             <div class="message-box" id="messageBox">
                 近未来の新宿、AIシステム『アーク』によって管理された街を歩いている...
+            </div>
+        </div>
+
+        <!-- Menu Screen -->
+        <div class="menu-overlay" id="menuOverlay">
+            <div class="menu-container">
+                <div class="menu-title">メニュー</div>
+                <div class="menu-stats">
+                    <div class="menu-stat-row">
+                        <span>名前:</span>
+                        <span>カイト</span>
+                    </div>
+                    <div class="menu-stat-row">
+                        <span>レベル:</span>
+                        <span id="menuLevel">1</span>
+                    </div>
+                    <div class="menu-stat-row">
+                        <span>HP:</span>
+                        <span><span id="menuHP">100</span>/<span id="menuMaxHP">100</span></span>
+                    </div>
+                    <div class="menu-stat-row">
+                        <span>MP:</span>
+                        <span><span id="menuMP">50</span>/<span id="menuMaxMP">50</span></span>
+                    </div>
+                    <div class="menu-stat-row">
+                        <span>攻撃力:</span>
+                        <span id="menuAttack">15</span>
+                    </div>
+                    <div class="menu-stat-row">
+                        <span>防御力:</span>
+                        <span id="menuDefense">5</span>
+                    </div>
+                    <div class="menu-stat-row">
+                        <span>経験値:</span>
+                        <span id="menuExp">0</span>
+                    </div>
+                    <div class="menu-stat-row">
+                        <span>ゴールド:</span>
+                        <span id="menuGold">0</span>
+                    </div>
+                </div>
+                <div class="menu-options">
+                    <div class="menu-option" onclick="closeMenu()">ステータス確認</div>
+                    <div class="menu-option" onclick="alert('アイテム機能は開発中です')">アイテム</div>
+                    <div class="menu-option" onclick="alert('装備機能は開発中です')">装備</div>
+                    <div class="menu-option" onclick="alert('神威機能は開発中です')">神威</div>
+                    <div class="menu-option" onclick="closeMenu()">閉じる</div>
+                </div>
+                <div class="menu-close">Xキーまたは閉じるボタンでメニューを閉じます</div>
             </div>
         </div>
 
@@ -530,14 +695,29 @@
 
         // Input handling
         const keys = {};
+        let menuOpen = false;
+        
         document.addEventListener('keydown', (e) => {
+            // メニューが開いている場合
+            const menuOverlay = document.getElementById('menuOverlay');
+            if (menuOverlay && menuOverlay.classList.contains('active')) {
+                if (e.key === 'x' || e.key === 'X' || e.key === 'Escape') {
+                    closeMenu();
+                }
+                return; // メニュー表示中は他の入力を無視
+            }
+            
+            // 戦闘中
             if (battleSystem && battleSystem.inBattle) {
                 handleBattleInput(e.key);
             } else {
                 keys[e.key] = true;
             }
         });
-        document.addEventListener('keyup', (e) => keys[e.key] = false);
+        
+        document.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
 
         function startGame() {
             document.getElementById('titleScreen').style.display = 'none';
@@ -591,6 +771,10 @@
         }
 
         function updatePlayer() {
+            // メニューが開いているかチェック
+            const menuOverlay = document.getElementById('menuOverlay');
+            if (menuOverlay && menuOverlay.classList.contains('active')) return;
+            
             if (!gameStarted || battleSystem.inBattle) return;
             
             // デバッグ情報表示
@@ -689,6 +873,18 @@
                 checkInteractions();
             }
             
+            // メニュー表示（Xキー）
+            if (keys['x'] || keys['X']) {
+                keys['x'] = keys['X'] = false;
+                openMenu();
+            }
+            
+            // 神威発動（Zキー）- フィールドでのMP回復など
+            if (keys['z'] || keys['Z']) {
+                keys['z'] = keys['Z'] = false;
+                useKamuiField();
+            }
+            
             // セーブポイント
             if ((keys['s'] || keys['S']) && checkSavePoint()) {
                 keys['s'] = keys['S'] = false;
@@ -761,6 +957,63 @@
             }
             return false;
         }
+
+        // メニューシステム
+        function openMenu() {
+            const menuOverlay = document.getElementById('menuOverlay');
+            if (menuOverlay) {
+                menuOverlay.classList.add('active');
+                updateMenuStats();
+                console.log('Menu opened');
+            }
+        }
+
+        function closeMenu() {
+            const menuOverlay = document.getElementById('menuOverlay');
+            if (menuOverlay) {
+                menuOverlay.classList.remove('active');
+                console.log('Menu closed');
+            }
+        }
+
+        function updateMenuStats() {
+            document.getElementById('menuLevel').textContent = player.level;
+            document.getElementById('menuHP').textContent = Math.max(0, player.hp);
+            document.getElementById('menuMaxHP').textContent = player.maxHp;
+            document.getElementById('menuMP').textContent = player.mp;
+            document.getElementById('menuMaxMP').textContent = player.maxMp;
+            document.getElementById('menuAttack').textContent = player.attack || 15;
+            document.getElementById('menuDefense').textContent = player.defense || 5;
+            document.getElementById('menuExp').textContent = player.exp || 0;
+            document.getElementById('menuGold').textContent = player.gold || 0;
+        }
+
+        // 神威（フィールド）- MP回復
+        function useKamuiField() {
+            if (player.mp < player.maxMp) {
+                const mpRecover = Math.min(10, player.maxMp - player.mp);
+                player.mp += mpRecover;
+                showMessage(`スサノオの加護を受けた！\nMPが ${mpRecover} 回復した！`);
+                updateUI();
+                
+                // エフェクト表示
+                showKamuiEffect();
+            } else {
+                showMessage('MPは既に最大です');
+            }
+        }
+
+        function showKamuiEffect() {
+            const effect = document.createElement('div');
+            effect.className = 'kamui-effect';
+            effect.textContent = '⚡ カムイ ⚡';
+            document.querySelector('.game-container').appendChild(effect);
+            setTimeout(() => effect.remove(), 1000);
+        }
+
+        // グローバルに公開
+        window.openMenu = openMenu;
+        window.closeMenu = closeMenu;
 
         // Battle System Functions
         function handleBattleInput(key) {
