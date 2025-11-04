@@ -37,7 +37,7 @@ class MapSystem {
                 { x: 200, y: 100, width: 120, height: 60, color: '#16213e' },
                 { x: 500, y: 200, width: 80, height: 100, color: '#16213e' },
                 { x: 600, y: 50, width: 150, height: 90, color: '#16213e' },
-                { x: 100, y: 400, width: 200, height: 100, color: '#16213e' }
+                { x: 100, y: 280, width: 200, height: 80, color: '#16213e' }
             ],
             exits: [
                 { x: 0, y: 200, width: 30, height: 200, to: 'subway_entrance', label: '地下鉄へ' },
