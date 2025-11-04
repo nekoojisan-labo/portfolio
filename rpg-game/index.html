@@ -51,6 +51,11 @@
             padding: 10px;
             font-size: 14px;
             color: #ffffff;
+            pointer-events: none; /* UIを通過してクリックできるように */
+        }
+        
+        .ui-overlay * {
+            pointer-events: auto; /* UIの子要素は通常通りクリック可能 */
         }
 
         .status-bar {

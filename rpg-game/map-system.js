@@ -43,8 +43,8 @@ class MapSystem {
                 { x: 0, y: 200, width: 30, height: 200, to: 'subway_entrance', label: '地下鉄へ' },
                 { x: 770, y: 200, width: 30, height: 200, to: 'tokyo_gov', label: '都庁へ' },
                 { x: 300, y: 0, width: 200, height: 20, to: 'shrine_path', label: '神社への道' },
-                { x: 300, y: 580, width: 200, height: 20, to: 'black_market', label: '闇市へ' },
-                { x: 100, y: 580, width: 200, height: 20, to: 'shopping_district', label: '商業街へ' }
+                { x: 450, y: 480, width: 200, height: 120, to: 'black_market', label: '闇市へ' },
+                { x: 100, y: 480, width: 250, height: 120, to: 'shopping_district', label: '商業街へ' }
             ],
             npcs: [
                 { x: 300, y: 200, emoji: '👤', name: '感情を失った市民', dialogue: '...。' },
@@ -89,7 +89,7 @@ class MapSystem {
                 { x: 550, y: 400, width: 100, height: 100, color: '#2a4a2a', type: 'tree' }
             ],
             exits: [
-                { x: 350, y: 590, width: 100, height: 10, to: 'shinjuku_city', label: '都市へ' }
+                { x: 350, y: 480, width: 100, height: 120, to: 'shinjuku_city', label: '都市へ' }
             ],
             npcs: [
                 { x: 400, y: 300, emoji: '🧑‍🔧', name: 'リク', dialogue: '本物の植物を見たことがなかったんだ...これも作り物だけど、美しいね。' }
@@ -138,7 +138,7 @@ class MapSystem {
                 { x: 300, y: 400, width: 200, height: 100, color: '#5a4a3a', type: 'shrine' }
             ],
             exits: [
-                { x: 350, y: 590, width: 100, height: 10, to: 'shinjuku_city', label: '都市へ' },
+                { x: 350, y: 480, width: 100, height: 120, to: 'shinjuku_city', label: '都市へ' },
                 { x: 350, y: 0, width: 100, height: 10, to: 'inner_shrine', label: '本殿へ' }
             ],
             npcs: [
@@ -196,7 +196,7 @@ class MapSystem {
             ],
             exits: [
                 { x: 790, y: 275, width: 10, height: 50, to: 'subway_entrance', label: '地下鉄へ' },
-                { x: 375, y: 590, width: 50, height: 10, to: 'deep_tunnel_2', label: '更なる深部へ' }
+                { x: 375, y: 480, width: 50, height: 120, to: 'deep_tunnel_2', label: '更なる深部へ' }
             ],
             npcs: [
                 { x: 300, y: 200, emoji: '👹', name: 'シャドウエンティティ', dialogue: 'この領域は...我々のものだ。', hostile: true, level: 3 },
@@ -234,7 +234,7 @@ class MapSystem {
             ],
             exits: [
                 { x: 375, y: 0, width: 50, height: 10, to: 'deep_tunnel', label: '上の階へ' },
-                { x: 375, y: 590, width: 50, height: 10, to: 'ancient_chamber', label: '古代の部屋へ', locked: true, requirement: 'boss_key' }
+                { x: 375, y: 480, width: 50, height: 120, to: 'ancient_chamber', label: '古代の部屋へ', locked: true, requirement: 'boss_key' }
             ],
             npcs: [
                 { x: 200, y: 300, emoji: '💀', name: 'ネクロマンサー', dialogue: '死者の軍団よ、目覚めよ！', hostile: true, level: 5 },
