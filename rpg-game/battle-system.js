@@ -253,8 +253,7 @@ class BattleSystem {
     
     // プレイヤーの攻撃
     playerAttack(player) {
-        if (!this.waitingForCommand) return; // 重複実行防止
-        this.waitingForCommand = false;
+        console.log('playerAttack called, waiting:', this.waitingForCommand);
         
         const baseDamage = player.attack || 15;
         const variance = Math.floor(Math.random() * 5) - 2; // -2 to +2
@@ -280,7 +279,7 @@ class BattleSystem {
     
     // 神威（カムイ）攻撃
     playerKamui(player) {
-        if (!this.waitingForCommand) return; // 重複実行防止
+        console.log('playerKamui called, MP:', player.mp);
         
         if (player.mp < 10) {
             this.addBattleLog('MPが たりない！');
@@ -292,7 +291,6 @@ class BattleSystem {
             return;
         }
         
-        this.waitingForCommand = false;
         player.mp -= 10;
         const baseDamage = 25;
         const variance = Math.floor(Math.random() * 10);
@@ -318,7 +316,7 @@ class BattleSystem {
     
     // 敵のターン
     enemyTurn(player) {
-        if (this.waitingForCommand) return; // 重複実行防止
+        console.log('enemyTurn called');
         
         const baseDamage = this.currentEnemy.attack;
         const variance = Math.floor(Math.random() * 3);
@@ -416,8 +414,7 @@ class BattleSystem {
     
     // 防御
     playerDefend(player) {
-        if (!this.waitingForCommand) return; // 重複実行防止
-        this.waitingForCommand = false;
+        console.log('playerDefend called');
         
         this.addBattleLog('カイトは みをまもっている！');
         player.defending = true;
@@ -428,8 +425,7 @@ class BattleSystem {
     
     // 逃走処理
     tryEscape() {
-        if (!this.waitingForCommand) return; // 重複実行防止
-        this.waitingForCommand = false;
+        console.log('tryEscape called');
         
         const escapeChance = Math.random();
         
@@ -566,19 +562,12 @@ class BattleSystem {
             
             // コマンド選択を初期化
             this.selectedCommand = 0;
-            this.setupBattleCommands();
-        }
-    }
-    
-    // バトルコマンドのセットアップ
-    setupBattleCommands() {
-        const commands = document.querySelectorAll('.command-item');
-        commands.forEach((cmd, index) => {
-            cmd.classList.remove('selected');
-            if (index === this.selectedCommand) {
-                cmd.classList.add('selected');
+            
+            // グローバルのsetupBattleCommands関数を呼び出す
+            if (window.setupBattleCommands) {
+                window.setupBattleCommands();
             }
-        });
+        }
     }
 }
 

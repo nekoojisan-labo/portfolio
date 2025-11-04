@@ -764,18 +764,23 @@
 
         // Battle System Functions
         function handleBattleInput(key) {
+            if (!battleSystem.waitingForCommand) return;
+            
             const commands = document.querySelectorAll('.command-item');
             const numCommands = commands.length;
             
-            if (key === 'ArrowUp' || key === 'w') {
+            if (key === 'ArrowUp' || key === 'w' || key === 'W') {
                 battleSystem.selectedCommand = (battleSystem.selectedCommand - 1 + numCommands) % numCommands;
                 setupBattleCommands();
-            } else if (key === 'ArrowDown' || key === 's') {
+            } else if (key === 'ArrowDown' || key === 's' || key === 'S') {
                 battleSystem.selectedCommand = (battleSystem.selectedCommand + 1) % numCommands;
                 setupBattleCommands();
             } else if (key === 'Enter' || key === ' ') {
                 const selectedCmd = commands[battleSystem.selectedCommand];
-                executeBattleCommand(selectedCmd.dataset.command);
+                if (selectedCmd) {
+                    console.log('Key pressed, executing:', selectedCmd.dataset.command);
+                    executeBattleCommand(selectedCmd.dataset.command);
+                }
             }
         }
 
@@ -787,18 +792,24 @@
                     cmd.classList.add('selected');
                 }
                 
+                // クリックイベントを設定
                 cmd.onclick = () => {
-                    if (battleSystem.waitingForCommand) {
-                        battleSystem.selectedCommand = index;
-                        executeBattleCommand(cmd.dataset.command);
-                    }
+                    console.log('Command clicked:', cmd.dataset.command, 'waiting:', battleSystem.waitingForCommand);
+                    battleSystem.selectedCommand = index;
+                    setupBattleCommands(); // 選択状態を更新
+                    executeBattleCommand(cmd.dataset.command);
                 };
             });
         }
 
         function executeBattleCommand(command) {
+            console.log('Executing command:', command, 'waiting:', battleSystem.waitingForCommand);
+            
             // 連続実行を防ぐ
-            if (!battleSystem.waitingForCommand) return;
+            if (!battleSystem.waitingForCommand) {
+                console.log('Not waiting for command, ignoring');
+                return;
+            }
             battleSystem.waitingForCommand = false;
             
             const commands = document.getElementById('battleCommands');
@@ -806,22 +817,28 @@
             
             switch(command) {
                 case 'attack':
+                    console.log('Player attack!');
                     battleSystem.playerAttack(player);
                     break;
                 case 'kamui':
+                    console.log('Player kamui!');
                     battleSystem.playerKamui(player);
                     break;
                 case 'defend':
+                    console.log('Player defend!');
                     battleSystem.playerDefend(player);
                     break;
                 case 'item':
+                    console.log('Player item!');
                     battleSystem.addBattleLog('どうぐを もっていない！');
                     setTimeout(() => {
                         battleSystem.waitingForCommand = true;
                         commands.style.display = 'block';
+                        setupBattleCommands();
                     }, 1500);
                     break;
                 case 'escape':
+                    console.log('Player escape!');
                     battleSystem.tryEscape();
                     break;
             }
@@ -878,6 +895,7 @@
 
         // グローバル関数として公開
         window.updateUI = updateUI;
+        window.setupBattleCommands = setupBattleCommands;
 
         function gameLoop() {
             if (!battleSystem.inBattle) {
