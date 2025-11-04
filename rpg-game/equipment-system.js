@@ -308,6 +308,9 @@ class EquipmentSystem {
             return false;
         }
         
+        console.log(`Adding equipment: ${equipmentId} x${quantity}`);
+        console.log('Current inventory before add:', this.inventory);
+        
         if (!this.inventory[equipmentId]) {
             this.inventory[equipmentId] = {
                 ...equipment,
@@ -317,6 +320,8 @@ class EquipmentSystem {
         
         this.inventory[equipmentId].quantity += quantity;
         console.log(`Added ${quantity}x ${equipment.name}`);
+        console.log('Current inventory after add:', this.inventory);
+        console.log('Total equipment count:', Object.keys(this.inventory).length);
         return true;
     }
     
@@ -465,11 +470,20 @@ class EquipmentSystem {
     
     // 装備インベントリを取得
     getEquipmentInventory() {
-        return Object.values(this.inventory).sort((a, b) => {
+        console.log('getEquipmentInventory called');
+        console.log('Raw inventory:', this.inventory);
+        const inventoryArray = Object.values(this.inventory);
+        console.log('Inventory array length:', inventoryArray.length);
+        console.log('Inventory array:', inventoryArray);
+        
+        const sorted = inventoryArray.sort((a, b) => {
             // スロット順にソート
             const slotOrder = ['weapon', 'head', 'body', 'hands', 'accessory'];
             return slotOrder.indexOf(a.slot) - slotOrder.indexOf(b.slot);
         });
+        
+        console.log('Sorted inventory:', sorted);
+        return sorted;
     }
     
     // 装備を持っているかチェック

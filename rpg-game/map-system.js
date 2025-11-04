@@ -886,10 +886,11 @@ class ShopSystem {
         // 装備の購入
         if (shopItem.equipmentId && window.equipmentSystem) {
             player.gold -= itemDetails.price;
-            window.equipmentSystem.addEquipment(shopItem.equipmentId, 1);
+            const addResult = window.equipmentSystem.addEquipment(shopItem.equipmentId, 1);
             success = true;
             message = `${itemDetails.name}を購入しました！\n${itemDetails.price}ゴールドを支払った。`;
-            console.log('Equipment purchased:', shopItem.equipmentId);
+            console.log('Equipment purchased:', shopItem.equipmentId, 'Add result:', addResult);
+            console.log('Current equipment inventory:', window.equipmentSystem.inventory);
         }
         // アイテムの購入
         else if (shopItem.itemId && window.itemSystem) {

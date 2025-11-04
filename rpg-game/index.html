@@ -900,6 +900,10 @@
                 maxMp: player.maxMp
             });
             
+            // グローバルに公開
+            window.itemSystem = itemSystem;
+            window.equipmentSystem = equipmentSystem;
+            
             gameStarted = true;
             updateMapInfo();
             gameLoop();
@@ -1588,6 +1592,11 @@
         }
         
         function updateEquipmentDisplay() {
+            console.log('updateEquipmentDisplay called');
+            console.log('equipmentSystem:', equipmentSystem);
+            console.log('equipmentSystem.inventory:', equipmentSystem ? equipmentSystem.inventory : 'N/A');
+            console.log('equipmentSystem.equipped:', equipmentSystem ? equipmentSystem.equipped : 'N/A');
+            
             // 装備中のアイテムを表示
             const equipped = equipmentSystem.getEquippedItems();
             
@@ -1707,8 +1716,6 @@
         // グローバル関数として公開
         window.updateUI = updateUI;
         window.setupBattleCommands = setupBattleCommands;
-        window.itemSystem = itemSystem;
-        window.equipmentSystem = equipmentSystem;
 
         function gameLoop() {
             if (!battleSystem.inBattle) {
