@@ -385,12 +385,26 @@ class BattleSystem {
             if (player.exp >= expNeeded) {
                 setTimeout(() => {
                     player.level++;
-                    player.maxHp += 20;
+                    
+                    // 基本ステータスを上昇
+                    player.baseMaxHp = (player.baseMaxHp || 100) + 20;
+                    player.baseMaxMp = (player.baseMaxMp || 50) + 10;
+                    player.baseAttack = (player.baseAttack || 10) + 3;
+                    player.baseDefense = (player.baseDefense || 5) + 2;
+                    
+                    // 装備込みのステータスを再計算
+                    if (window.equipmentSystem) {
+                        window.equipmentSystem.recalculatePlayerStats(player);
+                    } else {
+                        player.maxHp = player.baseMaxHp;
+                        player.maxMp = player.baseMaxMp;
+                        player.attack = player.baseAttack;
+                        player.defense = player.baseDefense;
+                    }
+                    
+                    // HP/MPを全回復
                     player.hp = player.maxHp;
-                    player.maxMp += 10;
                     player.mp = player.maxMp;
-                    player.attack = (player.attack || 15) + 3;
-                    player.defense = (player.defense || 5) + 2;
                     
                     this.addBattleLog(`レベルアップ！`);
                     this.addBattleLog(`レベル ${player.level} になった！`);

@@ -806,8 +806,10 @@
             level: 1,
             exp: 0,
             gold: 1000,
-            attack: 15,
-            defense: 5,
+            baseAttack: 10,      // 基本攻撃力
+            baseDefense: 5,      // 基本防御力
+            attack: 10,          // 現在の攻撃力（基本 + 装備）
+            defense: 5,          // 現在の防御力（基本 + 装備）
             facing: 'down',
             stepCount: 0
         };
@@ -874,6 +876,12 @@
             itemSystem.addItem('energy_core', 2);
             itemSystem.addItem('elixir', 1);
             
+            // 基本ステータスを設定
+            player.baseAttack = 10;
+            player.baseDefense = 5;
+            player.baseMaxHp = 100;
+            player.baseMaxMp = 50;
+            
             // デバッグ用: 初期装備を追加
             equipmentSystem.addEquipment('wooden_sword', 1);
             equipmentSystem.addEquipment('cloth_armor', 1);
@@ -884,6 +892,13 @@
             // 初期装備を装備
             equipmentSystem.equipItem('wooden_sword', player);
             equipmentSystem.equipItem('cloth_armor', player);
+            
+            console.log('Initial player stats after equipping:', {
+                attack: player.attack,
+                defense: player.defense,
+                maxHp: player.maxHp,
+                maxMp: player.maxMp
+            });
             
             gameStarted = true;
             updateMapInfo();
@@ -1659,7 +1674,25 @@
         }
         
         function equipFromMenu(equipmentId) {
+            console.log('equipFromMenu called with:', equipmentId);
+            console.log('Player stats before:', { 
+                attack: player.attack, 
+                defense: player.defense,
+                maxHp: player.maxHp,
+                maxMp: player.maxMp 
+            });
+            console.log('Equipment inventory:', equipmentSystem.inventory);
+            console.log('Currently equipped:', equipmentSystem.equipped);
+            
             const result = equipmentSystem.equipItem(equipmentId, player);
+            
+            console.log('Equip result:', result);
+            console.log('Player stats after:', { 
+                attack: player.attack, 
+                defense: player.defense,
+                maxHp: player.maxHp,
+                maxMp: player.maxMp 
+            });
             
             if (result.success) {
                 showMessage(result.message);

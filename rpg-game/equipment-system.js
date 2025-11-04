@@ -324,6 +324,7 @@ class EquipmentSystem {
     equipItem(equipmentId, player) {
         const equipment = this.equipmentDatabase[equipmentId];
         if (!equipment) {
+            console.error('Equipment not found:', equipmentId);
             return { success: false, message: '装備が見つからない' };
         }
         
@@ -337,15 +338,22 @@ class EquipmentSystem {
         
         // インベントリにあるかチェック
         if (!this.inventory[equipmentId] || this.inventory[equipmentId].quantity <= 0) {
+            console.error('Equipment not in inventory:', equipmentId, this.inventory);
             return { success: false, message: 'この装備を持っていない' };
         }
         
         const slot = equipment.slot;
-        const oldEquipment = this.equipped[slot];
+        const oldEquipmentId = this.equipped[slot];
         
-        // 古い装備を外す
-        if (oldEquipment) {
-            this.unequipItem(slot, player, false);
+        console.log(`Equipping ${equipment.name} to slot ${slot}`);
+        
+        // 古い装備を外してインベントリに戻す
+        if (oldEquipmentId) {
+            console.log(`Unequipping old equipment from slot ${slot}:`, oldEquipmentId);
+            const oldEquipment = this.equipmentDatabase[oldEquipmentId];
+            if (oldEquipment) {
+                this.addEquipment(oldEquipmentId, 1);
+            }
         }
         
         // 新しい装備を装備
@@ -357,8 +365,8 @@ class EquipmentSystem {
             delete this.inventory[equipmentId];
         }
         
-        // ステータスを適用
-        this.applyEquipmentStats(equipment, player, true);
+        // ステータスを再計算
+        this.recalculatePlayerStats(player);
         
         return { 
             success: true, 
@@ -376,8 +384,7 @@ class EquipmentSystem {
         
         const equipment = this.equipmentDatabase[equipmentId];
         
-        // ステータスを解除
-        this.applyEquipmentStats(equipment, player, false);
+        console.log(`Unequipping ${equipment.name} from slot ${slot}`);
         
         // 装備を外す
         this.equipped[slot] = null;
@@ -386,6 +393,9 @@ class EquipmentSystem {
         if (returnToInventory) {
             this.addEquipment(equipmentId, 1);
         }
+        
+        // ステータスを再計算
+        this.recalculatePlayerStats(player);
         
         return { 
             success: true, 
@@ -397,6 +407,20 @@ class EquipmentSystem {
     // 装備のステータスを適用/解除
     applyEquipmentStats(equipment, player, apply = true) {
         const multiplier = apply ? 1 : -1;
+        
+        console.log(`Applying equipment stats: ${equipment.name}, apply=${apply}`);
+        console.log('Equipment bonuses:', {
+            attack: equipment.attack,
+            defense: equipment.defense,
+            hp: equipment.hp,
+            mp: equipment.mp
+        });
+        console.log('Player stats before:', {
+            attack: player.attack,
+            defense: player.defense,
+            maxHp: player.maxHp,
+            maxMp: player.maxMp
+        });
         
         if (equipment.attack) {
             player.attack = (player.attack || 0) + (equipment.attack * multiplier);
@@ -417,7 +441,7 @@ class EquipmentSystem {
             }
         }
         
-        console.log('Equipment stats applied:', {
+        console.log('Player stats after:', {
             attack: player.attack,
             defense: player.defense,
             maxHp: player.maxHp,
@@ -518,6 +542,46 @@ class EquipmentSystem {
         }
         
         return stats;
+    }
+    
+    // プレイヤーのステータスを再計算
+    recalculatePlayerStats(player) {
+        // 基本ステータスを保存（初回のみ）
+        if (player.baseAttack === undefined) {
+            player.baseAttack = player.attack || 10;
+        }
+        if (player.baseDefense === undefined) {
+            player.baseDefense = player.defense || 5;
+        }
+        if (player.baseMaxHp === undefined) {
+            player.baseMaxHp = 100;
+        }
+        if (player.baseMaxMp === undefined) {
+            player.baseMaxMp = 50;
+        }
+        
+        // 装備ボーナスを計算
+        const equipStats = this.getTotalStats();
+        
+        // 現在のHPとMPの割合を保存
+        const hpRatio = player.hp / player.maxHp;
+        const mpRatio = player.mp / player.maxMp;
+        
+        // ステータスを再計算
+        player.attack = player.baseAttack + equipStats.attack;
+        player.defense = player.baseDefense + equipStats.defense;
+        player.maxHp = player.baseMaxHp + equipStats.hp;
+        player.maxMp = player.baseMaxMp + equipStats.mp;
+        
+        // HPとMPを調整（割合を維持）
+        player.hp = Math.min(Math.floor(player.maxHp * hpRatio), player.maxHp);
+        player.mp = Math.min(Math.floor(player.maxMp * mpRatio), player.maxMp);
+        
+        console.log('Stats recalculated:', {
+            base: { attack: player.baseAttack, defense: player.baseDefense },
+            equipment: equipStats,
+            total: { attack: player.attack, defense: player.defense, maxHp: player.maxHp, maxMp: player.maxMp }
+        });
     }
 }
 
