@@ -674,6 +674,50 @@
                 <div class="menu-close">↑↓で選択 / ENTERで使用 / ESCで戻る</div>
             </div>
         </div>
+        
+        <!-- Equipment Menu -->
+        <div class="menu-overlay" id="equipmentMenuOverlay">
+            <div class="menu-container" style="max-width: 600px;">
+                <div class="menu-title">装備</div>
+                
+                <!-- 現在の装備 -->
+                <div style="margin-bottom: 20px;">
+                    <div style="font-size: 18px; color: #ffff00; margin-bottom: 10px;">▼ 装備中</div>
+                    <div class="menu-stats">
+                        <div class="menu-stat-row">
+                            <span>🗡️ 武器:</span>
+                            <span id="equippedWeapon" style="color: #00ffff;">-</span>
+                        </div>
+                        <div class="menu-stat-row">
+                            <span>🪖 頭:</span>
+                            <span id="equippedHead" style="color: #00ffff;">-</span>
+                        </div>
+                        <div class="menu-stat-row">
+                            <span>🦺 体:</span>
+                            <span id="equippedBody" style="color: #00ffff;">-</span>
+                        </div>
+                        <div class="menu-stat-row">
+                            <span>🧤 手:</span>
+                            <span id="equippedHands" style="color: #00ffff;">-</span>
+                        </div>
+                        <div class="menu-stat-row">
+                            <span>💍 装飾:</span>
+                            <span id="equippedAccessory" style="color: #00ffff;">-</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 所持装備リスト -->
+                <div>
+                    <div style="font-size: 18px; color: #ffff00; margin-bottom: 10px;">▼ 所持装備</div>
+                    <div class="item-list" id="equipmentList" style="max-height: 250px;">
+                        <div class="empty-inventory">装備を持っていません</div>
+                    </div>
+                </div>
+                
+                <div class="menu-close">↑↓で選択 / ENTERで装備変更 / ESCで戻る</div>
+            </div>
+        </div>
 
         <!-- Battle Screen (サイバーパンク × ドラクエ風) -->
         <div class="battle-screen" id="battleScreen">
@@ -729,6 +773,7 @@
 
     <!-- 外部スクリプト読み込み -->
     <script src="item-system.js"></script>
+    <script src="equipment-system.js"></script>
     <script src="battle-system.js"></script>
     <script src="map-system.js"></script>
     
@@ -747,6 +792,7 @@
         let battleSystem = null;
         let mapSystem = null;
         let itemSystem = null;
+        let equipmentSystem = null;
         
         // Game state
         let gameStarted = false;
@@ -773,8 +819,17 @@
         const keys = {};
         let menuSelectedIndex = 0;
         let itemSelectedIndex = 0;
+        let equipmentSelectedIndex = 0;
         
         document.addEventListener('keydown', (e) => {
+            // 装備メニューが開いている場合
+            const equipmentMenuOverlay = document.getElementById('equipmentMenuOverlay');
+            if (equipmentMenuOverlay && equipmentMenuOverlay.classList.contains('active')) {
+                handleEquipmentMenuInput(e.key);
+                e.preventDefault();
+                return;
+            }
+            
             // アイテムメニューが開いている場合
             const itemMenuOverlay = document.getElementById('itemMenuOverlay');
             if (itemMenuOverlay && itemMenuOverlay.classList.contains('active')) {
@@ -810,6 +865,7 @@
             
             // システム初期化
             itemSystem = new ItemSystem();
+            equipmentSystem = new EquipmentSystem();
             battleSystem = new BattleSystem();
             mapSystem = new MapSystem();
             
@@ -817,6 +873,17 @@
             itemSystem.addItem('heal_potion', 3);
             itemSystem.addItem('energy_core', 2);
             itemSystem.addItem('elixir', 1);
+            
+            // デバッグ用: 初期装備を追加
+            equipmentSystem.addEquipment('wooden_sword', 1);
+            equipmentSystem.addEquipment('cloth_armor', 1);
+            equipmentSystem.addEquipment('iron_sword', 1);
+            equipmentSystem.addEquipment('leather_armor', 1);
+            equipmentSystem.addEquipment('health_ring', 1);
+            
+            // 初期装備を装備
+            equipmentSystem.equipItem('wooden_sword', player);
+            equipmentSystem.equipItem('cloth_armor', player);
             
             gameStarted = true;
             updateMapInfo();
@@ -1104,7 +1171,7 @@
                     openItemMenu();
                     break;
                 case 'equipment':
-                    showMessage('装備機能は開発中です');
+                    openEquipmentMenu();
                     break;
                 case 'kamui':
                     showMessage('神威機能は開発中です');
@@ -1121,8 +1188,12 @@
             document.getElementById('menuMaxHP').textContent = player.maxHp;
             document.getElementById('menuMP').textContent = player.mp;
             document.getElementById('menuMaxMP').textContent = player.maxMp;
+            
+            // 装備ボーナスを含めたステータス表示
+            const equipStats = equipmentSystem ? equipmentSystem.getTotalStats() : { attack: 0, defense: 0 };
             document.getElementById('menuAttack').textContent = player.attack || 15;
             document.getElementById('menuDefense').textContent = player.defense || 5;
+            
             document.getElementById('menuExp').textContent = player.exp || 0;
             document.getElementById('menuGold').textContent = player.gold || 0;
         }
@@ -1481,10 +1552,130 @@
             }
         }
         
+        // 装備メニュー
+        function openEquipmentMenu() {
+            closeMenu();
+            const equipmentMenuOverlay = document.getElementById('equipmentMenuOverlay');
+            if (equipmentMenuOverlay) {
+                equipmentMenuOverlay.classList.add('active');
+                equipmentSelectedIndex = 0;
+                updateEquipmentDisplay();
+                console.log('Equipment menu opened');
+            }
+        }
+        
+        function closeEquipmentMenu() {
+            const equipmentMenuOverlay = document.getElementById('equipmentMenuOverlay');
+            if (equipmentMenuOverlay) {
+                equipmentMenuOverlay.classList.remove('active');
+                openMenu();
+            }
+        }
+        
+        function updateEquipmentDisplay() {
+            // 装備中のアイテムを表示
+            const equipped = equipmentSystem.getEquippedItems();
+            
+            document.getElementById('equippedWeapon').textContent = 
+                equipped.weapon ? `${equipped.weapon.emoji} ${equipped.weapon.name}` : '-';
+            document.getElementById('equippedHead').textContent = 
+                equipped.head ? `${equipped.head.emoji} ${equipped.head.name}` : '-';
+            document.getElementById('equippedBody').textContent = 
+                equipped.body ? `${equipped.body.emoji} ${equipped.body.name}` : '-';
+            document.getElementById('equippedHands').textContent = 
+                equipped.hands ? `${equipped.hands.emoji} ${equipped.hands.name}` : '-';
+            document.getElementById('equippedAccessory').textContent = 
+                equipped.accessory ? `${equipped.accessory.emoji} ${equipped.accessory.name}` : '-';
+            
+            // 所持装備リストを表示
+            const equipmentList = document.getElementById('equipmentList');
+            const inventory = equipmentSystem.getEquipmentInventory();
+            
+            if (inventory.length === 0) {
+                equipmentList.innerHTML = '<div class="empty-inventory">装備を持っていません</div>';
+                return;
+            }
+            
+            equipmentList.innerHTML = '';
+            inventory.forEach((equipment, index) => {
+                const equipmentEntry = document.createElement('div');
+                equipmentEntry.className = 'item-entry';
+                if (index === equipmentSelectedIndex) {
+                    equipmentEntry.classList.add('selected');
+                }
+                
+                // レベル要件チェック
+                const canEquip = equipment.requiredLevel <= player.level;
+                const levelText = !canEquip ? ` (Lv.${equipment.requiredLevel}必要)` : '';
+                const textColor = !canEquip ? 'color: #888;' : '';
+                
+                // ステータス表示
+                let statsText = '';
+                if (equipment.attack > 0) statsText += ` 攻+${equipment.attack}`;
+                if (equipment.defense > 0) statsText += ` 防+${equipment.defense}`;
+                if (equipment.hp > 0) statsText += ` HP+${equipment.hp}`;
+                if (equipment.mp > 0) statsText += ` MP+${equipment.mp}`;
+                
+                equipmentEntry.innerHTML = `
+                    <span style="font-size: 24px; margin-right: 10px;">${equipment.emoji}</span>
+                    <div class="item-info" style="${textColor}">
+                        <div class="item-name">${equipment.name}${levelText}</div>
+                        <div class="item-description">${equipment.description}${statsText}</div>
+                    </div>
+                    <div class="item-quantity">x${equipment.quantity}</div>
+                `;
+                
+                equipmentEntry.onclick = () => {
+                    equipmentSelectedIndex = index;
+                    equipFromMenu(equipment.id);
+                };
+                
+                equipmentList.appendChild(equipmentEntry);
+            });
+        }
+        
+        function handleEquipmentMenuInput(key) {
+            const inventory = equipmentSystem.getEquipmentInventory();
+            
+            if (inventory.length === 0) {
+                if (key === 'Escape' || key === 'x' || key === 'X') {
+                    closeEquipmentMenu();
+                }
+                return;
+            }
+            
+            if (key === 'ArrowUp' || key === 'w' || key === 'W') {
+                equipmentSelectedIndex = (equipmentSelectedIndex - 1 + inventory.length) % inventory.length;
+                updateEquipmentDisplay();
+            } else if (key === 'ArrowDown' || key === 's' || key === 'S') {
+                equipmentSelectedIndex = (equipmentSelectedIndex + 1) % inventory.length;
+                updateEquipmentDisplay();
+            } else if (key === 'Enter' || key === ' ') {
+                const selectedEquipment = inventory[equipmentSelectedIndex];
+                equipFromMenu(selectedEquipment.id);
+            } else if (key === 'Escape' || key === 'x' || key === 'X') {
+                closeEquipmentMenu();
+            }
+        }
+        
+        function equipFromMenu(equipmentId) {
+            const result = equipmentSystem.equipItem(equipmentId, player);
+            
+            if (result.success) {
+                showMessage(result.message);
+                updateUI();
+                updateMenuStats();
+                updateEquipmentDisplay();
+            } else {
+                showMessage(result.message);
+            }
+        }
+        
         // グローバル関数として公開
         window.updateUI = updateUI;
         window.setupBattleCommands = setupBattleCommands;
         window.itemSystem = itemSystem;
+        window.equipmentSystem = equipmentSystem;
 
         function gameLoop() {
             if (!battleSystem.inBattle) {
