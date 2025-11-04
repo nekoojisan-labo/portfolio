@@ -607,36 +607,83 @@ class MapSystem {
 
 class ShopSystem {
     constructor() {
+        // 装備システムとアイテムシステムのデータを参照
         this.shopData = {
             weapons: [
-                { name: 'アイアンソード', price: 100, attack: 15, description: '鉄製の剣。攻撃力+15' },
-                { name: 'ミスリルブレード', price: 350, attack: 28, description: 'ミスリル製の刃。攻撃力+28' },
-                { name: '雷神の剣', price: 800, attack: 45, description: '雷の力を宿した神剣。攻撃力+45' },
-                { name: 'データカタナ', price: 1500, attack: 70, description: 'デジタル世界の最強剣。攻撃力+70' }
+                { id: 'wooden_sword', equipmentId: 'wooden_sword' },
+                { id: 'iron_sword', equipmentId: 'iron_sword' },
+                { id: 'plasma_blade', equipmentId: 'plasma_blade' },
+                { id: 'cyber_gun', equipmentId: 'cyber_gun' },
+                { id: 'kamui_katana', equipmentId: 'kamui_katana' }
             ],
             armor: [
-                { name: 'レザーアーマー', price: 80, defense: 10, description: '革製の軽装鎧。防御力+10' },
-                { name: 'チェインメイル', price: 250, defense: 20, description: '鎖帷子。防御力+20' },
-                { name: 'プレートアーマー', price: 600, defense: 35, description: '板金鎧。防御力+35' },
-                { name: '神威の鎧', price: 1200, defense: 55, description: '神の加護を受けた鎧。防御力+55' }
+                { id: 'cloth_armor', equipmentId: 'cloth_armor' },
+                { id: 'leather_armor', equipmentId: 'leather_armor' },
+                { id: 'chain_mail', equipmentId: 'chain_mail' },
+                { id: 'cloth_hat', equipmentId: 'cloth_hat' },
+                { id: 'iron_helmet', equipmentId: 'iron_helmet' },
+                { id: 'cyber_helmet', equipmentId: 'cyber_helmet' },
+                { id: 'cloth_gloves', equipmentId: 'cloth_gloves' },
+                { id: 'iron_gauntlets', equipmentId: 'iron_gauntlets' },
+                { id: 'power_gloves', equipmentId: 'power_gloves' },
+                { id: 'health_ring', equipmentId: 'health_ring' },
+                { id: 'power_ring', equipmentId: 'power_ring' },
+                { id: 'defense_ring', equipmentId: 'defense_ring' },
+                { id: 'mana_amulet', equipmentId: 'mana_amulet' },
+                { id: 'kamui_talisman', equipmentId: 'kamui_talisman' }
             ],
             items: [
-                { name: 'ヒールポーション', price: 50, type: 'heal', value: 50, description: 'HP50回復' },
-                { name: 'ハイポーション', price: 120, type: 'heal', value: 150, description: 'HP150回復' },
-                { name: 'エナジードリンク', price: 80, type: 'mp', value: 30, description: 'MP30回復' },
-                { name: 'エリクサー', price: 300, type: 'full_heal', value: 999, description: 'HP・MP全回復' },
-                { name: '煙玉', price: 30, type: 'escape', value: 1, description: '戦闘から確実に逃走' }
+                { id: 'heal_potion', itemId: 'heal_potion' },
+                { id: 'mega_heal_potion', itemId: 'mega_heal_potion' },
+                { id: 'full_heal_potion', itemId: 'full_heal_potion' },
+                { id: 'energy_core', itemId: 'energy_core' },
+                { id: 'mega_energy_core', itemId: 'mega_energy_core' },
+                { id: 'elixir', itemId: 'elixir' },
+                { id: 'attack_boost', itemId: 'attack_boost' },
+                { id: 'defense_boost', itemId: 'defense_boost' },
+                { id: 'speed_boost', itemId: 'speed_boost' },
+                { id: 'escape_rope', itemId: 'escape_rope' }
             ],
             magic: [
-                { name: 'ファイアクリスタル', price: 200, type: 'spell', spell: 'fire', description: 'ファイア呪文を覚える' },
-                { name: 'ヒールクリスタル', price: 150, type: 'spell', spell: 'heal', description: 'ヒール呪文を覚える' },
-                { name: '雷撃の護符', price: 400, type: 'accessory', effect: 'thunder', description: '雷属性攻撃付与' },
-                { name: '魔力増幅リング', price: 600, type: 'accessory', effect: 'mp_boost', description: '最大MP+20' }
+                { id: 'health_ring', equipmentId: 'health_ring' },
+                { id: 'power_ring', equipmentId: 'power_ring' },
+                { id: 'mana_amulet', equipmentId: 'mana_amulet' },
+                { id: 'kamui_talisman', equipmentId: 'kamui_talisman' }
             ]
         };
         
         this.currentShop = null;
         this.isShopOpen = false;
+    }
+    
+    // ショップアイテムの詳細情報を取得
+    getItemDetails(shopType, itemIndex) {
+        const shopItem = this.shopData[shopType][itemIndex];
+        if (!shopItem) return null;
+        
+        // 装備の場合
+        if (shopItem.equipmentId && window.equipmentSystem) {
+            const equipment = window.equipmentSystem.equipmentDatabase[shopItem.equipmentId];
+            if (equipment) {
+                return {
+                    ...equipment,
+                    isEquipment: true
+                };
+            }
+        }
+        
+        // アイテムの場合
+        if (shopItem.itemId && window.itemSystem) {
+            const item = window.itemSystem.itemDatabase[shopItem.itemId];
+            if (item) {
+                return {
+                    ...item,
+                    isItem: true
+                };
+            }
+        }
+        
+        return null;
     }
     
     // ショップを開く
@@ -718,7 +765,11 @@ class ShopSystem {
         `;
         
         const itemsContainer = shopUI.querySelector('#shopItems');
-        items.forEach((item, index) => {
+        items.forEach((shopItem, index) => {
+            // アイテムの詳細情報を取得
+            const itemDetails = this.getItemDetails(shopType, index);
+            if (!itemDetails) return;
+            
             const itemDiv = document.createElement('div');
             itemDiv.style.cssText = `
                 display: flex;
@@ -731,13 +782,23 @@ class ShopSystem {
                 cursor: pointer;
             `;
             
+            // ステータス表示
+            let statsText = '';
+            if (itemDetails.attack > 0) statsText += ` 攻+${itemDetails.attack}`;
+            if (itemDetails.defense > 0) statsText += ` 防+${itemDetails.defense}`;
+            if (itemDetails.hp > 0) statsText += ` HP+${itemDetails.hp}`;
+            if (itemDetails.mp > 0) statsText += ` MP+${itemDetails.mp}`;
+            
+            // レベル要件
+            const levelReq = itemDetails.requiredLevel ? ` (Lv.${itemDetails.requiredLevel})` : '';
+            
             itemDiv.innerHTML = `
                 <div>
-                    <strong>${item.name}</strong><br>
-                    <small style="color: #aaa;">${item.description}</small>
+                    <strong>${itemDetails.emoji || ''} ${itemDetails.name}${levelReq}</strong><br>
+                    <small style="color: #aaa;">${itemDetails.description}${statsText}</small>
                 </div>
                 <div style="text-align: right;">
-                    <div>${item.price} ギル</div>
+                    <div>${itemDetails.price} G</div>
                     <button onclick="window.gameShop.buyItem('${shopType}', ${index})"
                             style="padding: 5px 10px; background: #0f3460; color: white; border: none; border-radius: 3px; cursor: pointer; margin-top: 5px;">
                         購入
@@ -792,11 +853,69 @@ class ShopSystem {
     
     // アイテム購入
     buyItem(shopType, itemIndex) {
-        const item = this.shopData[shopType][itemIndex];
-        // ここでプレイヤーの所持金チェックとアイテム追加処理
-        // 実装は後でゲームシステムと連携
-        alert(`${item.name}を購入しました！`);
-        this.closeShop();
+        const shopItem = this.shopData[shopType][itemIndex];
+        const player = window.player;
+        
+        if (!player) {
+            alert('プレイヤーが見つかりません');
+            return;
+        }
+        
+        // アイテム詳細を取得
+        const itemDetails = this.getItemDetails(shopType, itemIndex);
+        if (!itemDetails) {
+            alert('アイテム情報が見つかりません');
+            return;
+        }
+        
+        // 所持金チェック
+        if (player.gold < itemDetails.price) {
+            alert('ゴールドが足りません！');
+            return;
+        }
+        
+        // レベル要件チェック
+        if (itemDetails.requiredLevel && player.level < itemDetails.requiredLevel) {
+            alert(`レベル${itemDetails.requiredLevel}以上で購入可能です`);
+            return;
+        }
+        
+        let success = false;
+        let message = '';
+        
+        // 装備の購入
+        if (shopItem.equipmentId && window.equipmentSystem) {
+            player.gold -= itemDetails.price;
+            window.equipmentSystem.addEquipment(shopItem.equipmentId, 1);
+            success = true;
+            message = `${itemDetails.name}を購入しました！\n${itemDetails.price}ゴールドを支払った。`;
+            console.log('Equipment purchased:', shopItem.equipmentId);
+        }
+        // アイテムの購入
+        else if (shopItem.itemId && window.itemSystem) {
+            player.gold -= itemDetails.price;
+            window.itemSystem.addItem(shopItem.itemId, 1);
+            success = true;
+            message = `${itemDetails.name}を購入しました！\n${itemDetails.price}ゴールドを支払った。`;
+            console.log('Item purchased:', shopItem.itemId);
+        }
+        else {
+            alert('購入システムに問題があります');
+            return;
+        }
+        
+        if (success) {
+            alert(message);
+            // UIを更新
+            if (window.updateUI) {
+                window.updateUI();
+            }
+            // ショップ内の所持金表示を更新
+            const moneyDisplay = document.getElementById('playerMoney');
+            if (moneyDisplay) {
+                moneyDisplay.textContent = player.gold;
+            }
+        }
     }
     
     // 宿屋に泊まる
