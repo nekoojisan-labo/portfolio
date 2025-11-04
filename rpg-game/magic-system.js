@@ -1,0 +1,282 @@
+// ==========================================
+// 魔法システム (Magic System)
+// ==========================================
+
+class MagicSystem {
+    constructor() {
+        // 魔法データベース
+        this.magicDatabase = {
+            // 攻撃魔法
+            fire_bolt: {
+                id: 'fire_bolt',
+                name: 'ファイアボルト',
+                emoji: '🔥',
+                type: 'offensive',
+                mpCost: 8,
+                power: 20,
+                description: '火炎の矢を放つ',
+                price: 500,
+                requiredLevel: 2
+            },
+            ice_lance: {
+                id: 'ice_lance',
+                name: 'アイスランス',
+                emoji: '❄️',
+                type: 'offensive',
+                mpCost: 10,
+                power: 25,
+                description: '氷の槍で敵を貫く',
+                price: 700,
+                requiredLevel: 4
+            },
+            thunder_strike: {
+                id: 'thunder_strike',
+                name: 'サンダーストライク',
+                emoji: '⚡',
+                type: 'offensive',
+                mpCost: 12,
+                power: 30,
+                description: '雷を落として攻撃',
+                price: 900,
+                requiredLevel: 6
+            },
+            explosion: {
+                id: 'explosion',
+                name: 'エクスプロージョン',
+                emoji: '💥',
+                type: 'offensive',
+                mpCost: 20,
+                power: 50,
+                description: '大爆発を起こす',
+                price: 1500,
+                requiredLevel: 10
+            },
+            
+            // 回復魔法
+            heal: {
+                id: 'heal',
+                name: 'ヒール',
+                emoji: '💚',
+                type: 'healing',
+                mpCost: 7,
+                power: 30,
+                description: 'HPを回復する',
+                price: 400,
+                requiredLevel: 1
+            },
+            mega_heal: {
+                id: 'mega_heal',
+                name: 'メガヒール',
+                emoji: '💚',
+                type: 'healing',
+                mpCost: 15,
+                power: 80,
+                description: 'HPを大幅に回復',
+                price: 800,
+                requiredLevel: 5
+            },
+            
+            // 補助魔法
+            protect: {
+                id: 'protect',
+                name: 'プロテクト',
+                emoji: '🛡️',
+                type: 'support',
+                mpCost: 10,
+                duration: 3,
+                effect: 'defense_up',
+                power: 1.5,
+                description: '防御力を上げる（3ターン）',
+                price: 600,
+                requiredLevel: 3
+            },
+            haste: {
+                id: 'haste',
+                name: 'ヘイスト',
+                emoji: '💨',
+                type: 'support',
+                mpCost: 12,
+                duration: 3,
+                effect: 'speed_up',
+                description: '素早さを上げる（3ターン）',
+                price: 700,
+                requiredLevel: 4
+            },
+            
+            // 神威魔法
+            kamui_storm: {
+                id: 'kamui_storm',
+                name: '神威・嵐',
+                emoji: '🌪️',
+                type: 'kamui',
+                mpCost: 25,
+                power: 60,
+                description: '神の嵐を呼び起こす',
+                price: 2000,
+                requiredLevel: 8
+            },
+            kamui_blessing: {
+                id: 'kamui_blessing',
+                name: '神威・祝福',
+                emoji: '✨',
+                type: 'kamui',
+                mpCost: 20,
+                duration: 5,
+                effect: 'all_up',
+                power: 1.3,
+                description: '全能力を上昇させる（5ターン）',
+                price: 2500,
+                requiredLevel: 12
+            }
+        };
+        
+        // プレイヤーの習得魔法
+        this.learnedMagic = {};
+    }
+    
+    // 魔法を習得
+    learnMagic(magicId) {
+        const magic = this.magicDatabase[magicId];
+        if (!magic) {
+            console.error('Unknown magic:', magicId);
+            return false;
+        }
+        
+        console.log(`Learning magic: ${magicId}`);
+        this.learnedMagic[magicId] = { ...magic };
+        console.log('Learned magic:', this.learnedMagic);
+        return true;
+    }
+    
+    // 魔法を使用
+    useMagic(magicId, player, target, inBattle = false) {
+        const magic = this.learnedMagic[magicId];
+        if (!magic) {
+            return { success: false, message: 'この魔法は習得していない！' };
+        }
+        
+        // MPチェック
+        if (player.mp < magic.mpCost) {
+            return { success: false, message: 'MPが足りない！' };
+        }
+        
+        // MP消費
+        player.mp -= magic.mpCost;
+        
+        let message = '';
+        let damage = 0;
+        
+        // 魔法タイプ別処理
+        switch (magic.type) {
+            case 'offensive':
+                // 攻撃魔法
+                if (!target || !inBattle) {
+                    return { success: false, message: '戦闘中にしか使えない！' };
+                }
+                damage = Math.floor(magic.power * (1 + Math.random() * 0.2));
+                target.currentHp = Math.max(0, target.currentHp - damage);
+                message = `${magic.name}！\n${target.name}に ${damage} のダメージ！`;
+                break;
+                
+            case 'healing':
+                // 回復魔法
+                const healAmount = Math.min(magic.power, player.maxHp - player.hp);
+                player.hp = Math.min(player.maxHp, player.hp + magic.power);
+                message = `${magic.name}！\nHPが ${healAmount} 回復した！`;
+                break;
+                
+            case 'support':
+                // 補助魔法
+                if (!inBattle) {
+                    return { success: false, message: '戦闘中にしか使えない！' };
+                }
+                
+                if (magic.effect === 'defense_up') {
+                    player.magicDefenseBoost = magic.power;
+                    player.magicDefenseBoostDuration = magic.duration;
+                    message = `${magic.name}！\n防御力が上がった！`;
+                } else if (magic.effect === 'speed_up') {
+                    player.magicSpeedBoost = true;
+                    player.magicSpeedBoostDuration = magic.duration;
+                    message = `${magic.name}！\n素早さが上がった！`;
+                } else if (magic.effect === 'all_up') {
+                    player.magicAllBoost = magic.power;
+                    player.magicAllBoostDuration = magic.duration;
+                    message = `${magic.name}！\n全能力が上がった！`;
+                }
+                break;
+                
+            case 'kamui':
+                // 神威魔法
+                if (!target || !inBattle) {
+                    return { success: false, message: '戦闘中にしか使えない！' };
+                }
+                damage = Math.floor(magic.power * (1.2 + Math.random() * 0.3));
+                target.currentHp = Math.max(0, target.currentHp - damage);
+                message = `${magic.name}！\n神の力が襲いかかる！\n${target.name}に ${damage} のダメージ！`;
+                break;
+        }
+        
+        // UIを更新
+        if (window.updateUI) {
+            window.updateUI();
+        }
+        
+        return {
+            success: true,
+            message: message,
+            damage: damage,
+            magic: magic
+        };
+    }
+    
+    // 習得済み魔法リストを取得
+    getLearnedMagic() {
+        return Object.values(this.learnedMagic).sort((a, b) => {
+            const typeOrder = ['offensive', 'healing', 'support', 'kamui'];
+            return typeOrder.indexOf(a.type) - typeOrder.indexOf(b.type);
+        });
+    }
+    
+    // 魔法を習得しているかチェック
+    hasLearned(magicId) {
+        return !!this.learnedMagic[magicId];
+    }
+    
+    // 魔法の購入
+    buyMagic(magicId, player) {
+        const magic = this.magicDatabase[magicId];
+        if (!magic) {
+            return { success: false, message: 'その魔法は存在しない' };
+        }
+        
+        // 既に習得済みかチェック
+        if (this.hasLearned(magicId)) {
+            return { success: false, message: 'すでに習得している魔法です' };
+        }
+        
+        // レベル要件チェック
+        if (magic.requiredLevel > player.level) {
+            return { 
+                success: false, 
+                message: `レベル${magic.requiredLevel}以上で習得可能` 
+            };
+        }
+        
+        // 所持金チェック
+        if (player.gold < magic.price) {
+            return { success: false, message: 'ゴールドが足りない！' };
+        }
+        
+        player.gold -= magic.price;
+        this.learnMagic(magicId);
+        
+        return { 
+            success: true, 
+            message: `${magic.name}を習得した！\n${magic.price}ゴールドを支払った。`
+        };
+    }
+}
+
+// グローバルにエクスポート
+window.MagicSystem = MagicSystem;

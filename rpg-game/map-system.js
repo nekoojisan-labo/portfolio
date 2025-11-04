@@ -568,6 +568,63 @@ class MapSystem {
         return map.area || 'city';
     }
     
+    // 衝突判定（建物）
+    checkBuildingCollision(x, y, playerSize = 24) {
+        const map = this.maps[this.currentMap];
+        if (!map || !map.buildings) return false;
+        
+        const playerRadius = playerSize / 2;
+        
+        for (const building of map.buildings) {
+            // 建物の矩形
+            const bLeft = building.x;
+            const bRight = building.x + building.width;
+            const bTop = building.y;
+            const bBottom = building.y + building.height;
+            
+            // プレイヤーの矩形
+            const pLeft = x - playerRadius;
+            const pRight = x + playerRadius;
+            const pTop = y - playerRadius;
+            const pBottom = y + playerRadius;
+            
+            // 矩形の衝突判定
+            if (pRight > bLeft && pLeft < bRight && pBottom > bTop && pTop < bBottom) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    // 衝突判定（NPC）
+    checkNPCCollision(x, y, playerSize = 24) {
+        const map = this.maps[this.currentMap];
+        if (!map || !map.npcs) return false;
+        
+        const playerRadius = playerSize / 2;
+        const npcRadius = 20; // NPCのサイズ
+        
+        for (const npc of map.npcs) {
+            const distance = Math.sqrt(
+                Math.pow(x - npc.x, 2) + 
+                Math.pow(y - npc.y, 2)
+            );
+            
+            if (distance < (playerRadius + npcRadius)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    // 総合衝突判定
+    checkCollision(x, y, playerSize = 24) {
+        return this.checkBuildingCollision(x, y, playerSize) || 
+               this.checkNPCCollision(x, y, playerSize);
+    }
+    
     // 宝箱チェック
     checkTreasureInteraction(playerX, playerY) {
         const map = this.maps[this.currentMap];
@@ -645,10 +702,16 @@ class ShopSystem {
                 { id: 'escape_rope', itemId: 'escape_rope' }
             ],
             magic: [
-                { id: 'health_ring', equipmentId: 'health_ring' },
-                { id: 'power_ring', equipmentId: 'power_ring' },
-                { id: 'mana_amulet', equipmentId: 'mana_amulet' },
-                { id: 'kamui_talisman', equipmentId: 'kamui_talisman' }
+                { id: 'heal', magicId: 'heal' },
+                { id: 'fire_bolt', magicId: 'fire_bolt' },
+                { id: 'protect', magicId: 'protect' },
+                { id: 'ice_lance', magicId: 'ice_lance' },
+                { id: 'haste', magicId: 'haste' },
+                { id: 'mega_heal', magicId: 'mega_heal' },
+                { id: 'thunder_strike', magicId: 'thunder_strike' },
+                { id: 'kamui_storm', magicId: 'kamui_storm' },
+                { id: 'explosion', magicId: 'explosion' },
+                { id: 'kamui_blessing', magicId: 'kamui_blessing' }
             ]
         };
         
@@ -668,6 +731,19 @@ class ShopSystem {
                 return {
                     ...equipment,
                     isEquipment: true
+                };
+            }
+        }
+        
+        // 魔法の場合
+        if (shopItem.magicId && window.magicSystem) {
+            const magic = window.magicSystem.magicDatabase[shopItem.magicId];
+            if (magic) {
+                const learned = window.magicSystem.hasLearned(shopItem.magicId);
+                return {
+                    ...magic,
+                    isMagic: true,
+                    alreadyLearned: learned
                 };
             }
         }
@@ -883,8 +959,19 @@ class ShopSystem {
         let success = false;
         let message = '';
         
+        // 魔法の購入
+        if (shopItem.magicId && window.magicSystem) {
+            const result = window.magicSystem.buyMagic(shopItem.magicId, player);
+            if (!result.success) {
+                alert(result.message);
+                return;
+            }
+            success = true;
+            message = result.message;
+            console.log('Magic purchased:', shopItem.magicId);
+        }
         // 装備の購入
-        if (shopItem.equipmentId && window.equipmentSystem) {
+        else if (shopItem.equipmentId && window.equipmentSystem) {
             player.gold -= itemDetails.price;
             const addResult = window.equipmentSystem.addEquipment(shopItem.equipmentId, 1);
             success = true;

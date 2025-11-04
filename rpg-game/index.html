@@ -774,6 +774,7 @@
     <!-- 外部スクリプト読み込み -->
     <script src="item-system.js"></script>
     <script src="equipment-system.js"></script>
+    <script src="magic-system.js"></script>
     <script src="battle-system.js"></script>
     <script src="map-system.js"></script>
     
@@ -793,6 +794,7 @@
         let mapSystem = null;
         let itemSystem = null;
         let equipmentSystem = null;
+        let magicSystem = null;
         
         // Game state
         let gameStarted = false;
@@ -824,6 +826,13 @@
         let equipmentSelectedIndex = 0;
         
         document.addEventListener('keydown', (e) => {
+            // ショップが開いている場合
+            if (window.gameShop && window.gameShop.isShopOpen) {
+                // ショップのキーボード操作は後で実装
+                e.preventDefault();
+                return;
+            }
+            
             // 装備メニューが開いている場合
             const equipmentMenuOverlay = document.getElementById('equipmentMenuOverlay');
             if (equipmentMenuOverlay && equipmentMenuOverlay.classList.contains('active')) {
@@ -868,6 +877,7 @@
             // システム初期化
             itemSystem = new ItemSystem();
             equipmentSystem = new EquipmentSystem();
+            magicSystem = new MagicSystem();
             battleSystem = new BattleSystem();
             mapSystem = new MapSystem();
             
@@ -903,6 +913,11 @@
             // グローバルに公開
             window.itemSystem = itemSystem;
             window.equipmentSystem = equipmentSystem;
+            window.magicSystem = magicSystem;
+            
+            // デバッグ用: 初期魔法を習得
+            magicSystem.learnMagic('heal');
+            magicSystem.learnMagic('fire_bolt');
             
             gameStarted = true;
             updateMapInfo();
@@ -947,6 +962,9 @@
         }
 
         function updatePlayer() {
+            // ショップが開いているかチェック
+            if (window.gameShop && window.gameShop.isShopOpen) return;
+            
             // メニューが開いているかチェック
             const menuOverlay = document.getElementById('menuOverlay');
             if (menuOverlay && menuOverlay.classList.contains('active')) return;
@@ -983,26 +1001,36 @@
             let moved = false;
             let oldX = player.x;
             let oldY = player.y;
+            let newX = player.x;
+            let newY = player.y;
             
             if (keys['ArrowUp'] || keys['w']) {
-                player.y = Math.max(5, player.y - speed);
+                newY = Math.max(5, player.y - speed);
                 player.facing = 'up';
-                moved = true;
             }
             if (keys['ArrowDown'] || keys['s']) {
-                player.y = Math.min(canvas.height - 5, player.y + speed);
+                newY = Math.min(canvas.height - 5, player.y + speed);
                 player.facing = 'down';
-                moved = true;
             }
             if (keys['ArrowLeft'] || keys['a']) {
-                player.x = Math.max(5, player.x - speed);
+                newX = Math.max(5, player.x - speed);
                 player.facing = 'left';
-                moved = true;
             }
             if (keys['ArrowRight'] || keys['d']) {
-                player.x = Math.min(canvas.width - 5, player.x + speed);
+                newX = Math.min(canvas.width - 5, player.x + speed);
                 player.facing = 'right';
-                moved = true;
+            }
+            
+            // 衝突判定
+            if (newX !== player.x || newY !== player.y) {
+                if (!mapSystem.checkCollision(newX, newY, 24)) {
+                    player.x = newX;
+                    player.y = newY;
+                    moved = true;
+                } else {
+                    // 衝突した場合は元の位置に戻す
+                    console.log('Collision detected at', newX, newY);
+                }
             }
             
             // 移動した場合
