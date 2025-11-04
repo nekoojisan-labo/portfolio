@@ -451,6 +451,69 @@
             color: #aaa;
         }
         
+        /* Item Menu Styles */
+        .item-list {
+            max-height: 300px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid #0f3460;
+            border-radius: 5px;
+            padding: 10px;
+        }
+        
+        .item-entry {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: rgba(0, 255, 255, 0.1);
+            border: 2px solid #00ffff;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .item-entry:hover {
+            background: rgba(0, 255, 255, 0.2);
+            transform: translateX(5px);
+        }
+        
+        .item-entry.selected {
+            background: rgba(0, 255, 255, 0.3);
+            border-color: #ffff00;
+        }
+        
+        .item-info {
+            flex: 1;
+        }
+        
+        .item-name {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+        
+        .item-description {
+            font-size: 12px;
+            color: #aaa;
+        }
+        
+        .item-quantity {
+            font-size: 18px;
+            color: #ffff00;
+            margin-left: 15px;
+            min-width: 40px;
+            text-align: right;
+        }
+        
+        .empty-inventory {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+            font-style: italic;
+        }
+        
         /* Kamui Effect */
         .kamui-effect {
             position: absolute;
@@ -590,14 +653,25 @@
                         <span id="menuGold">0</span>
                     </div>
                 </div>
-                <div class="menu-options">
-                    <div class="menu-option" onclick="closeMenu()">ステータス確認</div>
-                    <div class="menu-option" onclick="alert('アイテム機能は開発中です')">アイテム</div>
-                    <div class="menu-option" onclick="alert('装備機能は開発中です')">装備</div>
-                    <div class="menu-option" onclick="alert('神威機能は開発中です')">神威</div>
-                    <div class="menu-option" onclick="closeMenu()">閉じる</div>
+                <div class="menu-options" id="menuOptions">
+                    <div class="menu-option" data-menu="status">ステータス確認</div>
+                    <div class="menu-option" data-menu="items">アイテム</div>
+                    <div class="menu-option" data-menu="equipment">装備</div>
+                    <div class="menu-option" data-menu="kamui">神威</div>
+                    <div class="menu-option" data-menu="close">閉じる</div>
                 </div>
-                <div class="menu-close">Xキーまたは閉じるボタンでメニューを閉じます</div>
+                <div class="menu-close">↑↓で選択 / ENTERで決定 / Xキーで閉じる</div>
+            </div>
+        </div>
+        
+        <!-- Item Menu -->
+        <div class="menu-overlay" id="itemMenuOverlay">
+            <div class="menu-container">
+                <div class="menu-title">アイテム</div>
+                <div class="item-list" id="itemList">
+                    <div class="empty-inventory">アイテムを持っていません</div>
+                </div>
+                <div class="menu-close">↑↓で選択 / ENTERで使用 / ESCで戻る</div>
             </div>
         </div>
 
@@ -654,6 +728,7 @@
     </div>
 
     <!-- 外部スクリプト読み込み -->
+    <script src="item-system.js"></script>
     <script src="battle-system.js"></script>
     <script src="map-system.js"></script>
     
@@ -671,6 +746,7 @@
         // ゲームシステム
         let battleSystem = null;
         let mapSystem = null;
+        let itemSystem = null;
         
         // Game state
         let gameStarted = false;
@@ -695,16 +771,24 @@
 
         // Input handling
         const keys = {};
-        let menuOpen = false;
+        let menuSelectedIndex = 0;
+        let itemSelectedIndex = 0;
         
         document.addEventListener('keydown', (e) => {
+            // アイテムメニューが開いている場合
+            const itemMenuOverlay = document.getElementById('itemMenuOverlay');
+            if (itemMenuOverlay && itemMenuOverlay.classList.contains('active')) {
+                handleItemMenuInput(e.key);
+                e.preventDefault();
+                return;
+            }
+            
             // メニューが開いている場合
             const menuOverlay = document.getElementById('menuOverlay');
             if (menuOverlay && menuOverlay.classList.contains('active')) {
-                if (e.key === 'x' || e.key === 'X' || e.key === 'Escape') {
-                    closeMenu();
-                }
-                return; // メニュー表示中は他の入力を無視
+                handleMenuInput(e.key);
+                e.preventDefault();
+                return;
             }
             
             // 戦闘中
@@ -725,8 +809,14 @@
             document.getElementById('mapInfo').style.display = 'block';
             
             // システム初期化
+            itemSystem = new ItemSystem();
             battleSystem = new BattleSystem();
             mapSystem = new MapSystem();
+            
+            // デバッグ用: 初期アイテムを追加
+            itemSystem.addItem('heal_potion', 3);
+            itemSystem.addItem('energy_core', 2);
+            itemSystem.addItem('elixir', 1);
             
             gameStarted = true;
             updateMapInfo();
@@ -963,7 +1053,9 @@
             const menuOverlay = document.getElementById('menuOverlay');
             if (menuOverlay) {
                 menuOverlay.classList.add('active');
+                menuSelectedIndex = 0;
                 updateMenuStats();
+                updateMenuSelection();
                 console.log('Menu opened');
             }
         }
@@ -973,6 +1065,53 @@
             if (menuOverlay) {
                 menuOverlay.classList.remove('active');
                 console.log('Menu closed');
+            }
+        }
+        
+        function updateMenuSelection() {
+            const options = document.querySelectorAll('#menuOptions .menu-option');
+            options.forEach((opt, index) => {
+                opt.classList.remove('selected');
+                if (index === menuSelectedIndex) {
+                    opt.classList.add('selected');
+                }
+            });
+        }
+        
+        function handleMenuInput(key) {
+            const options = document.querySelectorAll('#menuOptions .menu-option');
+            
+            if (key === 'ArrowUp' || key === 'w' || key === 'W') {
+                menuSelectedIndex = (menuSelectedIndex - 1 + options.length) % options.length;
+                updateMenuSelection();
+            } else if (key === 'ArrowDown' || key === 's' || key === 'S') {
+                menuSelectedIndex = (menuSelectedIndex + 1) % options.length;
+                updateMenuSelection();
+            } else if (key === 'Enter' || key === ' ') {
+                const selectedOption = options[menuSelectedIndex];
+                executeMenuOption(selectedOption.dataset.menu);
+            } else if (key === 'x' || key === 'X' || key === 'Escape') {
+                closeMenu();
+            }
+        }
+        
+        function executeMenuOption(menuType) {
+            switch(menuType) {
+                case 'status':
+                    // ステータス確認（現在の表示を維持）
+                    break;
+                case 'items':
+                    openItemMenu();
+                    break;
+                case 'equipment':
+                    showMessage('装備機能は開発中です');
+                    break;
+                case 'kamui':
+                    showMessage('神威機能は開発中です');
+                    break;
+                case 'close':
+                    closeMenu();
+                    break;
             }
         }
 
@@ -986,6 +1125,101 @@
             document.getElementById('menuDefense').textContent = player.defense || 5;
             document.getElementById('menuExp').textContent = player.exp || 0;
             document.getElementById('menuGold').textContent = player.gold || 0;
+        }
+        
+        // アイテムメニュー
+        function openItemMenu() {
+            closeMenu();
+            const itemMenuOverlay = document.getElementById('itemMenuOverlay');
+            if (itemMenuOverlay) {
+                itemMenuOverlay.classList.add('active');
+                itemSelectedIndex = 0;
+                updateItemList();
+                console.log('Item menu opened');
+            }
+        }
+        
+        function closeItemMenu() {
+            const itemMenuOverlay = document.getElementById('itemMenuOverlay');
+            if (itemMenuOverlay) {
+                itemMenuOverlay.classList.remove('active');
+                openMenu();
+            }
+        }
+        
+        function updateItemList() {
+            const itemList = document.getElementById('itemList');
+            const inventory = itemSystem.getInventory();
+            
+            if (inventory.length === 0) {
+                itemList.innerHTML = '<div class="empty-inventory">アイテムを持っていません</div>';
+                return;
+            }
+            
+            itemList.innerHTML = '';
+            inventory.forEach((item, index) => {
+                const itemEntry = document.createElement('div');
+                itemEntry.className = 'item-entry';
+                if (index === itemSelectedIndex) {
+                    itemEntry.classList.add('selected');
+                }
+                
+                itemEntry.innerHTML = `
+                    <span style="font-size: 24px; margin-right: 10px;">${item.emoji}</span>
+                    <div class="item-info">
+                        <div class="item-name">${item.name}</div>
+                        <div class="item-description">${item.description}</div>
+                    </div>
+                    <div class="item-quantity">x${item.quantity}</div>
+                `;
+                
+                itemEntry.onclick = () => {
+                    itemSelectedIndex = index;
+                    useItemFromMenu(item.id);
+                };
+                
+                itemList.appendChild(itemEntry);
+            });
+        }
+        
+        function handleItemMenuInput(key) {
+            const inventory = itemSystem.getInventory();
+            if (inventory.length === 0) {
+                if (key === 'Escape' || key === 'x' || key === 'X') {
+                    closeItemMenu();
+                }
+                return;
+            }
+            
+            if (key === 'ArrowUp' || key === 'w' || key === 'W') {
+                itemSelectedIndex = (itemSelectedIndex - 1 + inventory.length) % inventory.length;
+                updateItemList();
+            } else if (key === 'ArrowDown' || key === 's' || key === 'S') {
+                itemSelectedIndex = (itemSelectedIndex + 1) % inventory.length;
+                updateItemList();
+            } else if (key === 'Enter' || key === ' ') {
+                const selectedItem = inventory[itemSelectedIndex];
+                useItemFromMenu(selectedItem.id);
+            } else if (key === 'Escape' || key === 'x' || key === 'X') {
+                closeItemMenu();
+            }
+        }
+        
+        function useItemFromMenu(itemId) {
+            const result = itemSystem.useItem(itemId, player, false);
+            
+            if (result.success) {
+                showMessage(result.message);
+                updateUI();
+                updateItemList(); // アイテムリストを更新
+                
+                // アイテムがなくなったらメニューを閉じる
+                if (itemSystem.getInventory().length === 0) {
+                    setTimeout(() => closeItemMenu(), 1000);
+                }
+            } else {
+                showMessage(result.message);
+            }
         }
 
         // 神威（フィールド）- MP回復
@@ -1024,17 +1258,45 @@
             
             if (key === 'ArrowUp' || key === 'w' || key === 'W') {
                 battleSystem.selectedCommand = (battleSystem.selectedCommand - 1 + numCommands) % numCommands;
-                setupBattleCommands();
+                if (showingBattleItems) {
+                    updateBattleItemSelection();
+                } else {
+                    setupBattleCommands();
+                }
             } else if (key === 'ArrowDown' || key === 's' || key === 'S') {
                 battleSystem.selectedCommand = (battleSystem.selectedCommand + 1) % numCommands;
-                setupBattleCommands();
+                if (showingBattleItems) {
+                    updateBattleItemSelection();
+                } else {
+                    setupBattleCommands();
+                }
             } else if (key === 'Enter' || key === ' ') {
                 const selectedCmd = commands[battleSystem.selectedCommand];
                 if (selectedCmd) {
-                    console.log('Key pressed, executing:', selectedCmd.dataset.command);
-                    executeBattleCommand(selectedCmd.dataset.command);
+                    if (showingBattleItems) {
+                        selectedCmd.click();
+                    } else {
+                        console.log('Key pressed, executing:', selectedCmd.dataset.command);
+                        executeBattleCommand(selectedCmd.dataset.command);
+                    }
                 }
+            } else if ((key === 'Escape' || key === 'x' || key === 'X') && showingBattleItems) {
+                // アイテムメニューからキャンセル
+                const commands = document.getElementById('battleCommands');
+                commands.style.display = 'block';
+                setupBattleCommands();
+                showingBattleItems = false;
             }
+        }
+        
+        function updateBattleItemSelection() {
+            const commands = document.querySelectorAll('.command-item');
+            commands.forEach((cmd, index) => {
+                cmd.classList.remove('selected');
+                if (index === battleSystem.selectedCommand) {
+                    cmd.classList.add('selected');
+                }
+            });
         }
 
         function setupBattleCommands() {
@@ -1083,12 +1345,7 @@
                     break;
                 case 'item':
                     console.log('Player item!');
-                    battleSystem.addBattleLog('どうぐを もっていない！');
-                    setTimeout(() => {
-                        battleSystem.waitingForCommand = true;
-                        commands.style.display = 'block';
-                        setupBattleCommands();
-                    }, 1500);
+                    showBattleItemMenu();
                     break;
                 case 'escape':
                     console.log('Player escape!');
@@ -1146,9 +1403,88 @@
             }
         }
 
+        // 戦闘中のアイテム使用
+        let battleItemSelectedIndex = 0;
+        let showingBattleItems = false;
+        
+        function showBattleItemMenu() {
+            const inventory = itemSystem.getInventory();
+            
+            // 使用可能なアイテム（回復系とバフ系）をフィルター
+            const usableItems = inventory.filter(item => 
+                item.category === 'recovery' || item.category === 'buff'
+            );
+            
+            if (usableItems.length === 0) {
+                battleSystem.addBattleLog('どうぐを もっていない！');
+                setTimeout(() => {
+                    battleSystem.waitingForCommand = true;
+                    document.getElementById('battleCommands').style.display = 'block';
+                    setupBattleCommands();
+                }, 1500);
+                return;
+            }
+            
+            // 戦闘コマンドを隠してアイテムリストを表示
+            const commands = document.getElementById('battleCommands');
+            commands.innerHTML = '<div style="font-weight: bold; margin-bottom: 10px; color: #ffff00;">アイテム を えらぶ</div>';
+            
+            usableItems.forEach((item, index) => {
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'command-item';
+                if (index === 0) itemDiv.classList.add('selected');
+                itemDiv.innerHTML = `${item.emoji} ${item.name} x${item.quantity}`;
+                itemDiv.onclick = () => useBattleItem(item.id);
+                commands.appendChild(itemDiv);
+            });
+            
+            // キャンセルオプション
+            const cancelDiv = document.createElement('div');
+            cancelDiv.className = 'command-item';
+            cancelDiv.textContent = 'もどる';
+            cancelDiv.onclick = () => {
+                commands.style.display = 'block';
+                setupBattleCommands();
+                battleSystem.waitingForCommand = true;
+                showingBattleItems = false;
+            };
+            commands.appendChild(cancelDiv);
+            
+            battleItemSelectedIndex = 0;
+            showingBattleItems = true;
+            battleSystem.waitingForCommand = true;
+        }
+        
+        function useBattleItem(itemId) {
+            showingBattleItems = false;
+            battleSystem.waitingForCommand = false;
+            
+            const result = itemSystem.useItem(itemId, player, true);
+            
+            if (result.success) {
+                battleSystem.addBattleLog(`${result.item.name}を つかった！`);
+                battleSystem.addBattleLog(result.message);
+                updateUI();
+                battleSystem.updateBattleUI();
+                
+                // アイテムを使ったらターン消費して敵のターンへ
+                setTimeout(() => {
+                    battleSystem.enemyTurn(player);
+                }, 2000);
+            } else {
+                battleSystem.addBattleLog(result.message);
+                setTimeout(() => {
+                    battleSystem.waitingForCommand = true;
+                    document.getElementById('battleCommands').style.display = 'block';
+                    setupBattleCommands();
+                }, 1500);
+            }
+        }
+        
         // グローバル関数として公開
         window.updateUI = updateUI;
         window.setupBattleCommands = setupBattleCommands;
+        window.itemSystem = itemSystem;
 
         function gameLoop() {
             if (!battleSystem.inBattle) {
