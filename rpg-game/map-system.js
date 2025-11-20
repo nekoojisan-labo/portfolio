@@ -88,7 +88,7 @@ class MapSystem {
                 { x: 550, y: 330, width: 70, height: 55, color: '#2a4a2a', type: 'tree' }
             ],
             exits: [
-                { x: 300, y: 0, width: 200, height: 20, to: 'shinjuku_city', direction: 'north' }
+                { x: 0, y: 200, width: 30, height: 200, to: 'shrine_path', direction: 'west' }
             ],
             npcs: [
                 { x: 400, y: 300, emoji: '🧑‍🔧', name: 'リク', dialogue: '本物の植物を見たことがなかったんだ...これも作り物だけど、美しいね。' }
@@ -137,7 +137,8 @@ class MapSystem {
                 { x: 320, y: 380, width: 140, height: 70, color: '#5a4a3a', type: 'shrine' }
             ],
             exits: [
-                { x: 300, y: 410, width: 200, height: 20, to: 'shinjuku_city', direction: 'south' }
+                { x: 300, y: 410, width: 200, height: 20, to: 'shinjuku_city', direction: 'south' },
+                { x: 770, y: 200, width: 30, height: 200, to: 'biodome_garden', direction: 'east' }
             ],
             npcs: [
                 { x: 400, y: 250, emoji: '👴', name: '老神主', dialogue: '神々の力は、まだこの地に眠っている...選ばれし者よ。' }
