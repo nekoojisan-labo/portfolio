@@ -788,7 +788,8 @@
     <script src="magic-system.js"></script>
     <script src="battle-system.js"></script>
     <script src="map-system.js"></script>
-    
+    <script src="bgm-system.js"></script>
+
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
@@ -909,6 +910,14 @@
             document.getElementById('openingScreen').style.display = 'flex';
             currentOpeningIndex = 0;
             showOpeningMessage();
+
+            // オープニングBGM再生
+            if (window.BGMSystem) {
+                if (!window.bgmSystem) {
+                    window.bgmSystem = new BGMSystem();
+                }
+                window.bgmSystem.play('opening', true);
+            }
         }
 
         function showOpeningMessage() {
@@ -951,6 +960,7 @@
             magicSystem = new MagicSystem();
             battleSystem = new BattleSystem();
             mapSystem = new MapSystem();
+            bgmSystem = new BGMSystem();
             
             // デバッグ用: 初期アイテムを追加
             itemSystem.addItem('heal_potion', 3);
@@ -985,6 +995,8 @@
             window.itemSystem = itemSystem;
             window.equipmentSystem = equipmentSystem;
             window.magicSystem = magicSystem;
+            window.bgmSystem = bgmSystem;
+            window.mapSystem = mapSystem;
             
             // デバッグ用: 初期魔法を習得
             magicSystem.learnMagic('heal');
@@ -993,6 +1005,12 @@
             gameStarted = true;
             updateMapInfo();
             gameLoop();
+
+            // 初期マップのBGM再生
+            const initialMap = mapSystem.maps[mapSystem.currentMap];
+            if (initialMap && initialMap.bgm) {
+                bgmSystem.play(initialMap.bgm, true);
+            }
 
             // 開始直後にアカリとの会話を表示
             setTimeout(() => {

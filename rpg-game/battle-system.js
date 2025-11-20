@@ -204,9 +204,12 @@ class BattleSystem {
         setTimeout(() => {
             this.startPlayerTurn();
         }, 1000);
-        
-        // 戦闘BGM開始（オプション）
-        // this.playBattleBGM();
+
+        // 戦闘BGM開始
+        if (window.bgmSystem) {
+            const bgmTrack = enemy.boss ? 'boss_battle' : 'battle';
+            window.bgmSystem.play(bgmTrack, true);
+        }
     }
     
     // プレイヤーターン開始
@@ -460,15 +463,23 @@ class BattleSystem {
         this.turnCount = 0;
         this.waitingForCommand = false;
         this.battleLog = [];
-        
+
         // 戦闘後は少し安全期間を設ける
         this.encounterSteps = 0;
         this.encounterThreshold = Math.floor(this.getRandomEncounterSteps('medium') * 1.5);
-        
+
         const battleScreen = document.getElementById('battleScreen');
         if (battleScreen) {
             battleScreen.classList.remove('active');
             document.getElementById('gameUI').style.display = 'block';
+        }
+
+        // フィールドBGMに戻す
+        if (window.bgmSystem && window.mapSystem) {
+            const currentMap = window.mapSystem.maps[window.mapSystem.currentMap];
+            if (currentMap && currentMap.bgm) {
+                window.bgmSystem.play(currentMap.bgm, true);
+            }
         }
         
         // UI更新

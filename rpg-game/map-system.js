@@ -32,6 +32,7 @@ class MapSystem {
             gridColor: '#0f3460',
             encounterRate: 'low',  // 街の中心部は比較的安全
             area: 'city',
+            bgm: 'shinjuku_city',  // BGM追加
             buildings: [
                 // 左上のビル（移動経路を確保するため位置調整）
                 { x: 50, y: 50, width: 80, height: 60, color: '#2a3555', borderColor: '#4a5575', type: 'building' },
@@ -71,6 +72,7 @@ class MapSystem {
             gridColor: '#2a2a2a',
             encounterRate: 'medium',  // 地下は少し危険
             area: 'subway',
+            bgm: 'subway',  // BGM追加
             buildings: [
                 // 上の壁
                 { x: 130, y: 120, width: 420, height: 35, color: '#2a2a2a', borderColor: '#4a4a4a', type: 'wall' },
@@ -97,6 +99,7 @@ class MapSystem {
             gridColor: '#1a3a1a',
             encounterRate: 'none',  // 管理された安全地帯
             area: 'garden',
+            bgm: 'biodome',  // BGM追加
             buildings: [
                 { x: 180, y: 170, width: 70, height: 70, color: '#2a4a2a', borderColor: '#4a6a4a', type: 'tree' },
                 { x: 550, y: 170, width: 70, height: 70, color: '#2a4a2a', borderColor: '#4a6a4a', type: 'tree' },
@@ -119,6 +122,7 @@ class MapSystem {
             gridColor: '#3a0a3a',
             encounterRate: 'low',  // 住民がいるので比較的安全
             area: 'market',
+            bgm: 'black_market',  // BGM追加
             buildings: [
                 { x: 70, y: 110, width: 55, height: 42, color: '#3a2a3a', borderColor: '#5a4a5a', type: 'stall' },
                 { x: 165, y: 110, width: 55, height: 42, color: '#3a2a3a', borderColor: '#5a4a5a', type: 'stall' },
@@ -155,6 +159,7 @@ class MapSystem {
             gridColor: '#2a2a1a',
             encounterRate: 'none',  // 神聖な場所、エンカウントなし
             area: 'shrine',
+            bgm: 'shrine',  // BGM追加
             buildings: [
                 { x: 370, y: 120, width: 70, height: 105, color: '#5a4a3a', borderColor: '#7a6a5a', type: 'torii' },
                 { x: 130, y: 220, width: 42, height: 140, color: '#4a3a2a', borderColor: '#6a5a4a', type: 'lantern' },
@@ -186,6 +191,7 @@ class MapSystem {
             gridColor: '#1a1a3a',
             encounterRate: 'high',  // 敵の本拠地に近い
             area: 'city',
+            bgm: 'tokyo_gov',  // BGM追加
             buildings: [
                 // 上の壁
                 { x: 230, y: 120, width: 280, height: 35, color: '#2a2a4a', borderColor: '#4a4a6a', type: 'wall' },
@@ -210,6 +216,7 @@ class MapSystem {
             gridColor: '#2f1f1f',
             encounterRate: 'very_high',  // ダンジョンは高い遭遇率
             area: 'dungeon',
+            bgm: 'dungeon',  // BGM追加
             buildings: [
                 // 壁や障害物（外周壁を薄くして移動可能領域を拡大）
                 { x: 0, y: 0, width: 800, height: 35, color: '#1f1f1f', borderColor: '#3f3f3f', type: 'wall' },
@@ -250,6 +257,7 @@ class MapSystem {
             gridColor: '#2f1f2f',
             encounterRate: 'extreme',
             area: 'dungeon',
+            bgm: 'deep_dungeon',  // BGM追加
             buildings: [
                 { x: 0, y: 0, width: 800, height: 35, color: '#1a1a2f', borderColor: '#3a3a4f', type: 'wall' },
                 { x: 0, y: 395, width: 800, height: 35, color: '#1a1a2f', borderColor: '#3a3a4f', type: 'wall' },
@@ -282,6 +290,7 @@ class MapSystem {
             gridColor: '#3a3a5e',
             encounterRate: 'none',  // ショッピング街は安全
             area: 'town',
+            bgm: 'shopping',  // BGM追加
             buildings: [
                 // ショップ建物（サイズ縮小）
                 { x: 70, y: 110, width: 84, height: 56, color: '#2a4a2a', borderColor: '#4a6a4a', type: 'weapon_shop' },
@@ -322,6 +331,7 @@ class MapSystem {
             gridColor: '#2e4e2e',
             encounterRate: 'none',
             area: 'town',
+            bgm: 'residential',  // BGM追加
             buildings: [
                 { x: 120, y: 110, width: 70, height: 56, color: '#3e4e3e', borderColor: '#5e6e5e', type: 'house' },
                 { x: 270, y: 110, width: 70, height: 56, color: '#4e3e3e', borderColor: '#6e5e5e', type: 'house' },
@@ -650,10 +660,16 @@ class MapSystem {
                 this.currentMap = mapId;
                 canvas.style.opacity = '1';
                 this.transitioning = false;
-                
+
                 // マップ名表示
                 this.showMapName();
-                
+
+                // BGM切り替え
+                const newMap = this.maps[mapId];
+                if (newMap && newMap.bgm && window.bgmSystem) {
+                    window.bgmSystem.play(newMap.bgm, true);
+                }
+
                 // デバッグ: 遷移完了
                 console.log(`Map transition completed! New map: ${this.currentMap}`);
             }, 300);
