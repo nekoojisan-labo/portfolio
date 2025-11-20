@@ -163,8 +163,8 @@ class MapSystem {
             buildings: [
                 { x: 370, y: 120, width: 70, height: 105, color: '#5a4a3a', borderColor: '#7a6a5a', type: 'torii' },
                 { x: 130, y: 220, width: 42, height: 140, color: '#4a3a2a', borderColor: '#6a5a4a', type: 'lantern' },
-                { x: 628, y: 220, width: 42, height: 140, color: '#4a3a2a', borderColor: '#6a5a4a', type: 'lantern' },
-                { x: 320, y: 380, width: 140, height: 70, color: '#6a5a4a', borderColor: '#8a7a6a', type: 'shrine' }
+                { x: 628, y: 220, width: 42, height: 140, color: '#4a3a2a', borderColor: '#6a5a4a', type: 'lantern' }
+                // 神社の建物を削除（南の出口と重なっていたため）
             ],
             exits: [
                 { x: 300, y: 410, width: 200, height: 20, to: 'shinjuku_city', direction: 'south' },

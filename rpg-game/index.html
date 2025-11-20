@@ -1156,6 +1156,9 @@
         ];
         let currentOpeningIndex = 0;
 
+        // オープニングメッセージ用のキーハンドラー
+        let openingKeyHandler = null;
+
         function startOpening() {
             document.getElementById('titleScreen').style.display = 'none';
             document.getElementById('openingScreen').style.display = 'flex';
@@ -1169,6 +1172,17 @@
                 }
                 window.bgmSystem.play('opening', true);
             }
+
+            // キーボード/コントローラー操作でメッセージを進められるようにする
+            openingKeyHandler = function(e) {
+                // Z、Space、Enterキーで次のメッセージへ
+                if (e.key === 'z' || e.key === 'Z' || e.key === ' ' || e.key === 'Enter') {
+                    e.preventDefault();
+                    nextOpeningMessage();
+                }
+            };
+            document.addEventListener('keydown', openingKeyHandler);
+            console.log('[Opening] Keyboard controls enabled (Z/Space/Enter to continue)');
         }
 
         function showOpeningMessage() {
@@ -1200,11 +1214,18 @@
         }
 
         function startGame() {
+            // オープニングのキーボードハンドラーを削除
+            if (openingKeyHandler) {
+                document.removeEventListener('keydown', openingKeyHandler);
+                openingKeyHandler = null;
+                console.log('[Opening] Keyboard controls disabled');
+            }
+
             document.getElementById('titleScreen').style.display = 'none';
             document.getElementById('openingScreen').style.display = 'none';
             document.getElementById('gameUI').style.display = 'block';
             document.getElementById('mapInfo').style.display = 'block';
-            
+
             // システム初期化
             itemSystem = new ItemSystem();
             equipmentSystem = new EquipmentSystem();
