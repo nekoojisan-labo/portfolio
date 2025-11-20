@@ -703,6 +703,9 @@ class MapSystem {
 class ShopSystem {
     constructor() {
         // 装備システムとアイテムシステムのデータを参照
+        this.selectedItemIndex = 0;
+        this.shopItems = [];
+        this.currentShopkeeper = null;
         this.shopData = {
             weapons: [
                 { id: 'wooden_sword', equipmentId: 'wooden_sword' },
@@ -803,8 +806,11 @@ class ShopSystem {
     // ショップを開く
     openShop(shopType, shopkeeper) {
         this.currentShop = shopType;
+        this.currentShopkeeper = shopkeeper;
         this.isShopOpen = true;
+        this.selectedItemIndex = 0;
         this.showShopUI(shopType, shopkeeper);
+        this.setupShopKeyboard();
     }
     
     // ショップUIを表示
@@ -867,24 +873,22 @@ class ShopSystem {
             <div style="text-align: center; margin-bottom: 20px;">
                 <h2>${shopTitle}</h2>
                 <p>"${shopkeeper.dialogue}"</p>
-                <p>所持金: <span id="playerMoney">${window.player ? window.player.gold : 1000}</span> ギル</p>
+                <p>所持金: <span id="playerMoney">${window.player ? window.player.gold : 100}</span> ギル</p>
+                <p style="font-size: 12px; color: #aaa;">↑↓: 選択 | Enter: 購入 | X: 閉じる</p>
             </div>
             <div id="shopItems"></div>
-            <div style="text-align: center; margin-top: 20px;">
-                <button onclick="window.gameShop.closeShop()" 
-                        style="padding: 10px 20px; background: #444; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                    店を出る
-                </button>
-            </div>
         `;
-        
+
+        this.shopItems = items;
         const itemsContainer = shopUI.querySelector('#shopItems');
         items.forEach((shopItem, index) => {
             // アイテムの詳細情報を取得
             const itemDetails = this.getItemDetails(shopType, index);
             if (!itemDetails) return;
-            
+
             const itemDiv = document.createElement('div');
+            itemDiv.id = `shop-item-${index}`;
+            itemDiv.className = 'shop-item';
             itemDiv.style.cssText = `
                 display: flex;
                 justify-content: space-between;
@@ -894,6 +898,7 @@ class ShopSystem {
                 background: rgba(255, 255, 255, 0.1);
                 border-radius: 5px;
                 cursor: pointer;
+                border: 2px solid transparent;
             `;
             
             // ステータス表示
@@ -912,18 +917,57 @@ class ShopSystem {
                     <small style="color: #aaa;">${itemDetails.description}${statsText}</small>
                 </div>
                 <div style="text-align: right;">
-                    <div>${itemDetails.price} G</div>
-                    <button onclick="window.gameShop.buyItem('${shopType}', ${index})"
-                            style="padding: 5px 10px; background: #0f3460; color: white; border: none; border-radius: 3px; cursor: pointer; margin-top: 5px;">
-                        購入
-                    </button>
+                    <div style="font-size: 16px; font-weight: bold;">${itemDetails.price} G</div>
                 </div>
             `;
-            
+
             itemsContainer.appendChild(itemDiv);
         });
-        
+
         document.body.appendChild(shopUI);
+
+        // 最初のアイテムを選択状態にする
+        this.updateShopSelection();
+    }
+
+    // ショップの選択を更新
+    updateShopSelection() {
+        const items = document.querySelectorAll('.shop-item');
+        items.forEach((item, index) => {
+            if (index === this.selectedItemIndex) {
+                item.style.background = 'rgba(15, 52, 96, 0.8)';
+                item.style.borderColor = '#00ffff';
+                item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            } else {
+                item.style.background = 'rgba(255, 255, 255, 0.1)';
+                item.style.borderColor = 'transparent';
+            }
+        });
+    }
+
+    // キーボード操作のセットアップ
+    setupShopKeyboard() {
+        this.shopKeyHandler = (e) => {
+            if (!this.isShopOpen) return;
+
+            if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                this.selectedItemIndex = Math.max(0, this.selectedItemIndex - 1);
+                this.updateShopSelection();
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                this.selectedItemIndex = Math.min(this.shopItems.length - 1, this.selectedItemIndex + 1);
+                this.updateShopSelection();
+            } else if (e.key === 'Enter' || e.key === 'z' || e.key === 'Z') {
+                e.preventDefault();
+                this.buyItem(this.currentShop, this.selectedItemIndex);
+            } else if (e.key === 'x' || e.key === 'X' || e.key === 'Escape') {
+                e.preventDefault();
+                this.closeShop();
+            }
+        };
+
+        document.addEventListener('keydown', this.shopKeyHandler);
     }
     
     // 宿屋UI
@@ -1056,8 +1100,14 @@ class ShopSystem {
         if (shopUI) {
             shopUI.remove();
         }
+        if (this.shopKeyHandler) {
+            document.removeEventListener('keydown', this.shopKeyHandler);
+            this.shopKeyHandler = null;
+        }
         this.isShopOpen = false;
         this.currentShop = null;
+        this.selectedItemIndex = 0;
+        this.shopItems = [];
     }
 }
 

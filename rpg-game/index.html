@@ -1136,11 +1136,24 @@
                     } else if (transition.nextMap) {
                         mapSystem.transitionToMap(transition.nextMap);
                         updateMapInfo();
-                        // プレイヤー位置調整（MAPエリア内に制限）
-                        if (transition.exit.x <= 30) player.x = canvas.width - 50;
-                        else if (transition.exit.x >= 750) player.x = 50;
-                        if (transition.exit.y <= 20) player.y = 380; // 上から来た→下部に配置（出口エリア付近）
-                        else if (transition.exit.y >= 380) player.y = 30; // 下から来た→上部に配置
+                        // プレイヤー位置調整（方向に応じて配置）
+                        if (transition.exit.direction === 'north') {
+                            // 北から入った → 南側に配置
+                            player.y = 360;
+                            player.x = 400;
+                        } else if (transition.exit.direction === 'south') {
+                            // 南から入った → 北側に配置
+                            player.y = 60;
+                            player.x = 400;
+                        } else if (transition.exit.direction === 'west') {
+                            // 西から入った → 東側に配置
+                            player.x = canvas.width - 80;
+                            player.y = 280;
+                        } else if (transition.exit.direction === 'east') {
+                            // 東から入った → 西側に配置
+                            player.x = 80;
+                            player.y = 280;
+                        }
                     }
                 }
                 
