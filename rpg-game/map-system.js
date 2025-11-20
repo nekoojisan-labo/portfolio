@@ -40,11 +40,11 @@ class MapSystem {
                 { x: 100, y: 280, width: 200, height: 80, color: '#16213e' }
             ],
             exits: [
-                { x: 0, y: 200, width: 30, height: 200, to: 'subway_entrance', label: '地下鉄へ' },
-                { x: 770, y: 200, width: 30, height: 200, to: 'tokyo_gov', label: '都庁へ' },
-                { x: 300, y: 0, width: 200, height: 20, to: 'shrine_path', label: '神社への道' },
-                { x: 450, y: 395, width: 200, height: 35, to: 'black_market', label: '闇市へ' },
-                { x: 100, y: 395, width: 250, height: 35, to: 'shopping_district', label: '商業街へ' }
+                { x: 0, y: 200, width: 30, height: 200, to: 'subway_entrance', label: '地下鉄へ', spawnX: 750, spawnY: 300 },
+                { x: 770, y: 200, width: 30, height: 200, to: 'tokyo_gov', label: '都庁へ', spawnX: 50, spawnY: 300 },
+                { x: 300, y: 0, width: 200, height: 20, to: 'shrine_path', label: '神社への道', spawnX: 400, spawnY: 350 },
+                { x: 450, y: 360, width: 200, height: 40, to: 'black_market', label: '闇市へ', spawnX: 400, spawnY: 50 },
+                { x: 100, y: 360, width: 250, height: 40, to: 'shopping_district', label: '商業街へ', spawnX: 400, spawnY: 50 }
             ],
             npcs: [
                 { x: 300, y: 200, emoji: '👤', name: '感情を失った市民', dialogue: '...。' },
@@ -66,8 +66,8 @@ class MapSystem {
                 { x: 540, y: 200, width: 60, height: 180, color: '#333333' }
             ],
             exits: [
-                { x: 770, y: 200, width: 30, height: 200, to: 'shinjuku_city', label: '地上へ' },
-                { x: 0, y: 200, width: 30, height: 200, to: 'deep_tunnel', label: '深部へ' }
+                { x: 770, y: 200, width: 30, height: 200, to: 'shinjuku_city', label: '地上へ', spawnX: 50, spawnY: 300 },
+                { x: 0, y: 200, width: 30, height: 200, to: 'deep_tunnel', label: '深部へ', spawnX: 750, spawnY: 300 }
             ],
             npcs: [
                 { x: 400, y: 300, emoji: '🤖', name: 'パトロールドローン', dialogue: 'スキャン中...異常なし。', hostile: true }
@@ -116,8 +116,7 @@ class MapSystem {
                 { x: 670, y: 350, width: 80, height: 60, color: '#2a1a2a', type: 'stall' }
             ],
             exits: [
-                { x: 350, y: 0, width: 100, height: 10, to: 'shinjuku_city', label: '地上へ' },
-                { x: 450, y: 395, width: 200, height: 35, to: 'shinjuku_city', label: '地上へ戻る' }
+                { x: 500, y: 0, width: 150, height: 10, to: 'shinjuku_city', label: '地上へ', spawnX: 550, spawnY: 350 }
             ],
             npcs: [
                 { x: 200, y: 300, emoji: '🧑‍💻', name: 'ヤミ', dialogue: 'ここならアークの監視も届かない。必要な物資があれば言ってくれ。' },
@@ -139,8 +138,8 @@ class MapSystem {
                 { x: 300, y: 400, width: 200, height: 100, color: '#5a4a3a', type: 'shrine' }
             ],
             exits: [
-                { x: 350, y: 395, width: 100, height: 35, to: 'shinjuku_city', label: '都市へ' },
-                { x: 350, y: 0, width: 100, height: 10, to: 'inner_shrine', label: '本殿へ' }
+                { x: 350, y: 360, width: 100, height: 40, to: 'shinjuku_city', label: '都市へ', spawnX: 400, spawnY: 50 },
+                { x: 350, y: 0, width: 100, height: 10, to: 'inner_shrine', label: '本殿へ', spawnX: 400, spawnY: 350 }
             ],
             npcs: [
                 { x: 400, y: 250, emoji: '👴', name: '老神主', dialogue: '神々の力は、まだこの地に眠っている...選ばれし者よ。' }
@@ -161,8 +160,8 @@ class MapSystem {
                 { x: 350, y: 200, width: 100, height: 100, color: '#3a3a5a', type: 'elevator' }
             ],
             exits: [
-                { x: 0, y: 200, width: 30, height: 200, to: 'shinjuku_city', label: '外へ' },
-                { x: 350, y: 200, width: 100, height: 100, to: 'ark_core', label: 'アーク中枢へ', locked: true, requirement: 'key_card' }
+                { x: 0, y: 200, width: 30, height: 200, to: 'shinjuku_city', label: '外へ', spawnX: 750, spawnY: 300 },
+                { x: 350, y: 200, width: 100, height: 100, to: 'ark_core', label: 'アーク中枢へ', locked: true, requirement: 'key_card', spawnX: 400, spawnY: 350 }
             ],
             npcs: [
                 { x: 300, y: 300, emoji: '🤖', name: 'セキュリティドローン', dialogue: '警告：不正アクセスを検知。', hostile: true },
@@ -196,9 +195,8 @@ class MapSystem {
                 { x: 670, y: 100, width: 30, height: 30, color: '#8B4513', type: 'treasure' }
             ],
             exits: [
-                { x: 790, y: 275, width: 10, height: 50, to: 'subway_entrance', label: '地下鉄へ' },
-                { x: 0, y: 275, width: 10, height: 50, to: 'subway_entrance', label: '地下鉄へ戻る' },
-                { x: 375, y: 395, width: 50, height: 35, to: 'deep_tunnel_2', label: '更なる深部へ' }
+                { x: 770, y: 275, width: 30, height: 50, to: 'subway_entrance', label: '地下鉄へ', spawnX: 50, spawnY: 300 },
+                { x: 375, y: 360, width: 50, height: 40, to: 'deep_tunnel_2', label: '更なる深部へ', spawnX: 400, spawnY: 50 }
             ],
             npcs: [
                 { x: 300, y: 200, emoji: '👹', name: 'シャドウエンティティ', dialogue: 'この領域は...我々のものだ。', hostile: true, level: 3 },
@@ -235,8 +233,8 @@ class MapSystem {
                 { x: 300, y: 250, width: 200, height: 100, color: '#4a1a1a', type: 'boss_area' }
             ],
             exits: [
-                { x: 375, y: 0, width: 50, height: 10, to: 'deep_tunnel', label: '上の階へ' },
-                { x: 375, y: 395, width: 50, height: 35, to: 'ancient_chamber', label: '古代の部屋へ', locked: true, requirement: 'boss_key' }
+                { x: 375, y: 0, width: 50, height: 10, to: 'deep_tunnel', label: '上の階へ', spawnX: 400, spawnY: 350 },
+                { x: 375, y: 360, width: 50, height: 40, to: 'ancient_chamber', label: '古代の部屋へ', locked: true, requirement: 'boss_key', spawnX: 400, spawnY: 50 }
             ],
             npcs: [
                 { x: 200, y: 300, emoji: '💀', name: 'ネクロマンサー', dialogue: '死者の軍団よ、目覚めよ！', hostile: true, level: 5 },
@@ -266,9 +264,8 @@ class MapSystem {
                 { x: 300, y: 250, width: 200, height: 150, color: '#1e3e5e', type: 'plaza' }
             ],
             exits: [
-                { x: 0, y: 275, width: 10, height: 50, to: 'shinjuku_city', label: '新宿へ' },
-                { x: 790, y: 275, width: 10, height: 50, to: 'residential_area', label: '住宅街へ' },
-                { x: 100, y: 395, width: 250, height: 35, to: 'shinjuku_city', label: '新宿へ戻る' }
+                { x: 150, y: 0, width: 200, height: 10, to: 'shinjuku_city', label: '新宿へ', spawnX: 225, spawnY: 350 },
+                { x: 770, y: 275, width: 30, height: 50, to: 'residential_area', label: '住宅街へ', spawnX: 50, spawnY: 300 }
             ],
             npcs: [
                 { x: 110, y: 160, emoji: '🗡️', name: '武器商人リョウ', dialogue: 'いらっしゃい！最新の神器武器を取り揃えてるよ！', shop: true, shopType: 'weapons' },
@@ -301,8 +298,7 @@ class MapSystem {
                 { x: 400, y: 200, width: 100, height: 80, color: '#3e3e5e', type: 'house' }
             ],
             exits: [
-                { x: 0, y: 275, width: 10, height: 50, to: 'shopping_district', label: '商業街へ' },
-                { x: 790, y: 275, width: 10, height: 50, to: 'shopping_district', label: '商業街へ戻る' }
+                { x: 0, y: 275, width: 30, height: 50, to: 'shopping_district', label: '商業街へ', spawnX: 750, spawnY: 300 }
             ],
             npcs: [
                 { x: 150, y: 150, emoji: '👨‍👩‍👧‍👦', name: '家族', dialogue: '平和な毎日に感謝しています。' },
@@ -426,10 +422,10 @@ class MapSystem {
             
             // 矢印表示
             ctx.font = '16px Arial';
-            if (exit.y === 0) ctx.fillText('↑', exit.x + exit.width/2, exit.y + 20);
-            else if (exit.y >= 590) ctx.fillText('↓', exit.x + exit.width/2, exit.y - 10);
-            else if (exit.x === 0) ctx.fillText('←', exit.x + 20, exit.y + exit.height/2);
-            else if (exit.x >= 790) ctx.fillText('→', exit.x - 10, exit.y + exit.height/2);
+            if (exit.y <= 10) ctx.fillText('↑', exit.x + exit.width/2, exit.y + 20);
+            else if (exit.y >= 350) ctx.fillText('↓', exit.x + exit.width/2, exit.y - 10);
+            else if (exit.x <= 10) ctx.fillText('←', exit.x + 20, exit.y + exit.height/2);
+            else if (exit.x >= 760) ctx.fillText('→', exit.x - 10, exit.y + exit.height/2);
         });
         
         // セーブポイント
@@ -494,29 +490,37 @@ class MapSystem {
     }
     
     // マップ遷移実行
-    transitionToMap(mapId) {
+    transitionToMap(mapId, spawnX, spawnY) {
         if (!this.maps[mapId]) return false;
-        
+
         this.transitioning = true;
-        
+
         // フェードアウト効果
         const canvas = document.getElementById('gameCanvas');
         if (canvas) {
             canvas.style.opacity = '0';
-            
+
             setTimeout(() => {
                 this.currentMap = mapId;
+
+                // プレイヤーの位置を設定
+                if (spawnX !== undefined && spawnY !== undefined && window.player) {
+                    window.player.x = spawnX;
+                    window.player.y = spawnY;
+                    console.log(`Player spawned at: (${spawnX}, ${spawnY})`);
+                }
+
                 canvas.style.opacity = '1';
                 this.transitioning = false;
-                
+
                 // マップ名表示
                 this.showMapName();
-                
+
                 // デバッグ: 遷移完了
                 console.log(`Map transition completed! New map: ${this.currentMap}`);
             }, 300);
         }
-        
+
         return true;
     }
     

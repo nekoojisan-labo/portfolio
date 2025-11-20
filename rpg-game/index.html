@@ -1010,7 +1010,7 @@
                 player.facing = 'up';
             }
             if (keys['ArrowDown'] || keys['s']) {
-                newY = Math.min(430, player.y + speed); // UI領域(450px以降)に入らないように制限
+                newY = Math.min(400, player.y + speed); // UI領域(450px以降)に入らないように制限
                 player.facing = 'down';
             }
             if (keys['ArrowLeft'] || keys['a']) {
@@ -1048,13 +1048,11 @@
                         player.x = oldX;
                         player.y = oldY;
                     } else if (transition.nextMap) {
-                        mapSystem.transitionToMap(transition.nextMap);
+                        // spawn位置情報を使ってマップ遷移
+                        const spawnX = transition.exit.spawnX;
+                        const spawnY = transition.exit.spawnY;
+                        mapSystem.transitionToMap(transition.nextMap, spawnX, spawnY);
                         updateMapInfo();
-                        // プレイヤー位置調整（MAPエリア内に制限）
-                        if (transition.exit.x <= 30) player.x = canvas.width - 50;
-                        else if (transition.exit.x >= 750) player.x = 50;
-                        if (transition.exit.y <= 20) player.y = 380; // 上から来た→下部に配置（出口エリア付近）
-                        else if (transition.exit.y >= 380) player.y = 30; // 下から来た→上部に配置
                     }
                 }
                 
