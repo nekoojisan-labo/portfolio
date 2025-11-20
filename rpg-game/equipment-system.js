@@ -565,24 +565,24 @@ class EquipmentSystem {
         if (player.baseMaxMp === undefined) {
             player.baseMaxMp = 50;
         }
-        
+
         // 装備ボーナスを計算
         const equipStats = this.getTotalStats();
-        
+
         // 現在のHPとMPの割合を保存
         const hpRatio = player.hp / player.maxHp;
         const mpRatio = player.mp / player.maxMp;
-        
+
         // ステータスを再計算
         player.attack = player.baseAttack + equipStats.attack;
         player.defense = player.baseDefense + equipStats.defense;
         player.maxHp = player.baseMaxHp + equipStats.hp;
         player.maxMp = player.baseMaxMp + equipStats.mp;
-        
+
         // HPとMPを調整（割合を維持）
         player.hp = Math.min(Math.floor(player.maxHp * hpRatio), player.maxHp);
         player.mp = Math.min(Math.floor(player.maxMp * mpRatio), player.maxMp);
-        
+
         console.log('Stats recalculated:', {
             base: { attack: player.baseAttack, defense: player.baseDefense },
             equipment: equipStats,
