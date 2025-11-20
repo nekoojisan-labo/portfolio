@@ -1051,11 +1051,14 @@
         function updatePlayer() {
             // ショップが開いているかチェック
             if (window.gameShop && window.gameShop.isShopOpen) return;
-            
+
             // メニューが開いているかチェック
             const menuOverlay = document.getElementById('menuOverlay');
             if (menuOverlay && menuOverlay.classList.contains('active')) return;
-            
+
+            // マップ遷移中はプレイヤーの移動を無効化
+            if (mapSystem && mapSystem.transitioning) return;
+
             if (!gameStarted || battleSystem.inBattle) return;
             
             // デバッグ情報表示
@@ -1134,26 +1137,32 @@
                         player.x = oldX;
                         player.y = oldY;
                     } else if (transition.nextMap) {
+                        // マップ遷移を実行
                         mapSystem.transitionToMap(transition.nextMap);
-                        updateMapInfo();
-                        // プレイヤー位置調整（方向に応じて配置）
-                        if (transition.exit.direction === 'north') {
-                            // 北から入った → 南側に配置
-                            player.y = 360;
-                            player.x = 400;
-                        } else if (transition.exit.direction === 'south') {
-                            // 南から入った → 北側に配置
-                            player.y = 60;
-                            player.x = 400;
-                        } else if (transition.exit.direction === 'west') {
-                            // 西から入った → 東側に配置
-                            player.x = canvas.width - 80;
-                            player.y = 280;
-                        } else if (transition.exit.direction === 'east') {
-                            // 東から入った → 西側に配置
-                            player.x = 80;
-                            player.y = 280;
-                        }
+
+                        // プレイヤー位置調整をマップ遷移完了後に実行（350ms後）
+                        setTimeout(() => {
+                            if (transition.exit.direction === 'north') {
+                                // 北から入った → 南側に配置
+                                player.y = 360;
+                                player.x = 400;
+                            } else if (transition.exit.direction === 'south') {
+                                // 南から入った → 北側に配置
+                                player.y = 60;
+                                player.x = 400;
+                            } else if (transition.exit.direction === 'west') {
+                                // 西から入った → 東側に配置
+                                player.x = canvas.width - 80;
+                                player.y = 280;
+                            } else if (transition.exit.direction === 'east') {
+                                // 東から入った → 西側に配置
+                                player.x = 80;
+                                player.y = 280;
+                            }
+
+                            updateMapInfo();
+                            console.log('Player repositioned after map transition:', { x: player.x, y: player.y, map: mapSystem.currentMap });
+                        }, 350);
                     }
                 }
                 
