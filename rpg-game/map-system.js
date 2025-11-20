@@ -33,11 +33,16 @@ class MapSystem {
             encounterRate: 'low',  // 街の中心部は比較的安全
             area: 'city',
             buildings: [
-                { x: 70, y: 70, width: 70, height: 55, color: '#16213e' },
-                { x: 220, y: 120, width: 85, height: 45, color: '#16213e' },
-                { x: 530, y: 220, width: 55, height: 70, color: '#16213e' },
-                { x: 620, y: 70, width: 105, height: 65, color: '#16213e' },
-                { x: 120, y: 300, width: 140, height: 55, color: '#16213e' }
+                // 左上のビル（移動経路を確保するため位置調整）
+                { x: 50, y: 50, width: 80, height: 60, color: '#2a3555', borderColor: '#4a5575', type: 'building' },
+                // 中央上のビル（北の出口から離す）
+                { x: 550, y: 50, width: 90, height: 70, color: '#253550', borderColor: '#455570', type: 'office' },
+                // 右側のビル（東の出口から離す）
+                { x: 650, y: 180, width: 70, height: 80, color: '#2a3a55', borderColor: '#4a5a75', type: 'building' },
+                // 左下のビル（西の出口から離す）
+                { x: 50, y: 320, width: 100, height: 70, color: '#283555', borderColor: '#485575', type: 'office' },
+                // 中央下のビル（南の出口から離す）
+                { x: 550, y: 320, width: 85, height: 65, color: '#2a3050', borderColor: '#4a5070', type: 'building' }
             ],
             exits: [
                 { x: 0, y: 200, width: 30, height: 200, to: 'subway_entrance', direction: 'west' },
@@ -67,10 +72,14 @@ class MapSystem {
             encounterRate: 'medium',  // 地下は少し危険
             area: 'subway',
             buildings: [
-                { x: 130, y: 120, width: 420, height: 35, color: '#1a1a1a' },
-                { x: 130, y: 375, width: 420, height: 35, color: '#1a1a1a' },
-                { x: 230, y: 220, width: 42, height: 125, color: '#333333' },
-                { x: 528, y: 220, width: 42, height: 125, color: '#333333' }
+                // 上の壁
+                { x: 130, y: 120, width: 420, height: 35, color: '#2a2a2a', borderColor: '#4a4a4a', type: 'wall' },
+                // 下の壁
+                { x: 130, y: 375, width: 420, height: 35, color: '#2a2a2a', borderColor: '#4a4a4a', type: 'wall' },
+                // 左の柱
+                { x: 230, y: 220, width: 42, height: 125, color: '#3a3a3a', borderColor: '#5a5a5a', type: 'pillar' },
+                // 右の柱
+                { x: 528, y: 220, width: 42, height: 125, color: '#3a3a3a', borderColor: '#5a5a5a', type: 'pillar' }
             ],
             exits: [
                 { x: 770, y: 200, width: 30, height: 200, to: 'shinjuku_city', direction: 'east' },
@@ -89,11 +98,11 @@ class MapSystem {
             encounterRate: 'none',  // 管理された安全地帯
             area: 'garden',
             buildings: [
-                { x: 180, y: 170, width: 70, height: 70, color: '#2a4a2a', type: 'tree' },
-                { x: 550, y: 170, width: 70, height: 70, color: '#2a4a2a', type: 'tree' },
-                { x: 370, y: 260, width: 70, height: 105, color: '#3a5a3a', type: 'pond' },
-                { x: 180, y: 330, width: 70, height: 55, color: '#2a4a2a', type: 'tree' },
-                { x: 550, y: 330, width: 70, height: 55, color: '#2a4a2a', type: 'tree' }
+                { x: 180, y: 170, width: 70, height: 70, color: '#2a4a2a', borderColor: '#4a6a4a', type: 'tree' },
+                { x: 550, y: 170, width: 70, height: 70, color: '#2a4a2a', borderColor: '#4a6a4a', type: 'tree' },
+                { x: 370, y: 260, width: 70, height: 105, color: '#3a5a5a', borderColor: '#5a7a7a', type: 'pond' },
+                { x: 180, y: 330, width: 70, height: 55, color: '#2a4a2a', borderColor: '#4a6a4a', type: 'tree' },
+                { x: 550, y: 330, width: 70, height: 55, color: '#2a4a2a', borderColor: '#4a6a4a', type: 'tree' }
             ],
             exits: [
                 { x: 0, y: 200, width: 30, height: 200, to: 'shrine_path', direction: 'west' }
@@ -111,16 +120,16 @@ class MapSystem {
             encounterRate: 'low',  // 住民がいるので比較的安全
             area: 'market',
             buildings: [
-                { x: 70, y: 110, width: 55, height: 42, color: '#2a1a2a', type: 'stall' },
-                { x: 165, y: 110, width: 55, height: 42, color: '#2a1a2a', type: 'stall' },
-                { x: 260, y: 110, width: 55, height: 42, color: '#2a1a2a', type: 'stall' },
-                { x: 485, y: 110, width: 55, height: 42, color: '#2a1a2a', type: 'stall' },
-                { x: 580, y: 110, width: 55, height: 42, color: '#2a1a2a', type: 'stall' },
-                { x: 675, y: 110, width: 55, height: 42, color: '#2a1a2a', type: 'stall' },
-                { x: 70, y: 360, width: 55, height: 42, color: '#2a1a2a', type: 'stall' },
-                { x: 165, y: 360, width: 55, height: 42, color: '#2a1a2a', type: 'stall' },
-                { x: 580, y: 360, width: 55, height: 42, color: '#2a1a2a', type: 'stall' },
-                { x: 675, y: 360, width: 55, height: 42, color: '#2a1a2a', type: 'stall' }
+                { x: 70, y: 110, width: 55, height: 42, color: '#3a2a3a', borderColor: '#5a4a5a', type: 'stall' },
+                { x: 165, y: 110, width: 55, height: 42, color: '#3a2a3a', borderColor: '#5a4a5a', type: 'stall' },
+                { x: 260, y: 110, width: 55, height: 42, color: '#3a2a3a', borderColor: '#5a4a5a', type: 'stall' },
+                { x: 485, y: 110, width: 55, height: 42, color: '#3a2a3a', borderColor: '#5a4a5a', type: 'stall' },
+                { x: 580, y: 110, width: 55, height: 42, color: '#3a2a3a', borderColor: '#5a4a5a', type: 'stall' },
+                { x: 675, y: 110, width: 55, height: 42, color: '#3a2a3a', borderColor: '#5a4a5a', type: 'stall' },
+                { x: 70, y: 360, width: 55, height: 42, color: '#3a2a3a', borderColor: '#5a4a5a', type: 'stall' },
+                { x: 165, y: 360, width: 55, height: 42, color: '#3a2a3a', borderColor: '#5a4a5a', type: 'stall' },
+                { x: 580, y: 360, width: 55, height: 42, color: '#3a2a3a', borderColor: '#5a4a5a', type: 'stall' },
+                { x: 675, y: 360, width: 55, height: 42, color: '#3a2a3a', borderColor: '#5a4a5a', type: 'stall' }
             ],
             exits: [
                 { x: 770, y: 200, width: 30, height: 200, to: 'shopping_district', direction: 'east' }
@@ -147,10 +156,10 @@ class MapSystem {
             encounterRate: 'none',  // 神聖な場所、エンカウントなし
             area: 'shrine',
             buildings: [
-                { x: 370, y: 120, width: 70, height: 105, color: '#4a3a2a', type: 'torii' },
-                { x: 130, y: 220, width: 42, height: 140, color: '#3a2a1a', type: 'lantern' },
-                { x: 628, y: 220, width: 42, height: 140, color: '#3a2a1a', type: 'lantern' },
-                { x: 320, y: 380, width: 140, height: 70, color: '#5a4a3a', type: 'shrine' }
+                { x: 370, y: 120, width: 70, height: 105, color: '#5a4a3a', borderColor: '#7a6a5a', type: 'torii' },
+                { x: 130, y: 220, width: 42, height: 140, color: '#4a3a2a', borderColor: '#6a5a4a', type: 'lantern' },
+                { x: 628, y: 220, width: 42, height: 140, color: '#4a3a2a', borderColor: '#6a5a4a', type: 'lantern' },
+                { x: 320, y: 380, width: 140, height: 70, color: '#6a5a4a', borderColor: '#8a7a6a', type: 'shrine' }
             ],
             exits: [
                 { x: 300, y: 410, width: 200, height: 20, to: 'shinjuku_city', direction: 'south' },
@@ -178,9 +187,12 @@ class MapSystem {
             encounterRate: 'high',  // 敵の本拠地に近い
             area: 'city',
             buildings: [
-                { x: 230, y: 120, width: 280, height: 35, color: '#2a2a4a', type: 'wall' },
-                { x: 230, y: 375, width: 280, height: 35, color: '#2a2a4a', type: 'wall' },
-                { x: 370, y: 220, width: 70, height: 70, color: '#3a3a5a', type: 'elevator' }
+                // 上の壁
+                { x: 230, y: 120, width: 280, height: 35, color: '#2a2a4a', borderColor: '#4a4a6a', type: 'wall' },
+                // 下の壁
+                { x: 230, y: 375, width: 280, height: 35, color: '#2a2a4a', borderColor: '#4a4a6a', type: 'wall' },
+                // エレベーター
+                { x: 370, y: 220, width: 70, height: 70, color: '#4a4a7a', borderColor: '#6a6a9a', type: 'elevator' }
             ],
             exits: [
                 { x: 0, y: 200, width: 30, height: 200, to: 'shinjuku_city', direction: 'west' }
@@ -200,21 +212,21 @@ class MapSystem {
             area: 'dungeon',
             buildings: [
                 // 壁や障害物（外周壁を薄くして移動可能領域を拡大）
-                { x: 0, y: 0, width: 800, height: 35, color: '#1f1f1f', type: 'wall' },
-                { x: 0, y: 395, width: 800, height: 35, color: '#1f1f1f', type: 'wall' },
-                { x: 0, y: 0, width: 35, height: 430, color: '#1f1f1f', type: 'wall' },
-                { x: 765, y: 0, width: 35, height: 430, color: '#1f1f1f', type: 'wall' },
+                { x: 0, y: 0, width: 800, height: 35, color: '#1f1f1f', borderColor: '#3f3f3f', type: 'wall' },
+                { x: 0, y: 395, width: 800, height: 35, color: '#1f1f1f', borderColor: '#3f3f3f', type: 'wall' },
+                { x: 0, y: 0, width: 35, height: 430, color: '#1f1f1f', borderColor: '#3f3f3f', type: 'wall' },
+                { x: 765, y: 0, width: 35, height: 430, color: '#1f1f1f', borderColor: '#3f3f3f', type: 'wall' },
 
                 // 内部の柱や障害物（サイズ縮小）
-                { x: 210, y: 160, width: 28, height: 28, color: '#2f2f2f', type: 'pillar' },
-                { x: 562, y: 160, width: 28, height: 28, color: '#2f2f2f', type: 'pillar' },
-                { x: 210, y: 332, width: 28, height: 28, color: '#2f2f2f', type: 'pillar' },
-                { x: 562, y: 332, width: 28, height: 28, color: '#2f2f2f', type: 'pillar' },
-                { x: 386, y: 246, width: 28, height: 28, color: '#2f2f2f', type: 'pillar' },
+                { x: 210, y: 160, width: 28, height: 28, color: '#3f2f2f', borderColor: '#5f4f4f', type: 'pillar' },
+                { x: 562, y: 160, width: 28, height: 28, color: '#3f2f2f', borderColor: '#5f4f4f', type: 'pillar' },
+                { x: 210, y: 332, width: 28, height: 28, color: '#3f2f2f', borderColor: '#5f4f4f', type: 'pillar' },
+                { x: 562, y: 332, width: 28, height: 28, color: '#3f2f2f', borderColor: '#5f4f4f', type: 'pillar' },
+                { x: 386, y: 246, width: 28, height: 28, color: '#3f2f2f', borderColor: '#5f4f4f', type: 'pillar' },
 
                 // 宝箱
-                { x: 100, y: 350, width: 25, height: 25, color: '#8B4513', type: 'treasure' },
-                { x: 675, y: 100, width: 25, height: 25, color: '#8B4513', type: 'treasure' }
+                { x: 100, y: 350, width: 25, height: 25, color: '#8B6513', borderColor: '#CD8533', type: 'treasure' },
+                { x: 675, y: 100, width: 25, height: 25, color: '#8B6513', borderColor: '#CD8533', type: 'treasure' }
             ],
             exits: [
                 { x: 770, y: 200, width: 30, height: 200, to: 'subway_entrance', direction: 'east' },
@@ -239,20 +251,20 @@ class MapSystem {
             encounterRate: 'extreme',
             area: 'dungeon',
             buildings: [
-                { x: 0, y: 0, width: 800, height: 35, color: '#1a1a2f', type: 'wall' },
-                { x: 0, y: 395, width: 800, height: 35, color: '#1a1a2f', type: 'wall' },
-                { x: 0, y: 0, width: 35, height: 430, color: '#1a1a2f', type: 'wall' },
-                { x: 765, y: 0, width: 35, height: 430, color: '#1a1a2f', type: 'wall' },
+                { x: 0, y: 0, width: 800, height: 35, color: '#1a1a2f', borderColor: '#3a3a4f', type: 'wall' },
+                { x: 0, y: 395, width: 800, height: 35, color: '#1a1a2f', borderColor: '#3a3a4f', type: 'wall' },
+                { x: 0, y: 0, width: 35, height: 430, color: '#1a1a2f', borderColor: '#3a3a4f', type: 'wall' },
+                { x: 765, y: 0, width: 35, height: 430, color: '#1a1a2f', borderColor: '#3a3a4f', type: 'wall' },
 
                 // 複雑な迷路構造（サイズ縮小）
-                { x: 170, y: 110, width: 140, height: 28, color: '#2a2a3f', type: 'wall' },
-                { x: 490, y: 110, width: 140, height: 28, color: '#2a2a3f', type: 'wall' },
-                { x: 170, y: 342, width: 140, height: 28, color: '#2a2a3f', type: 'wall' },
-                { x: 490, y: 342, width: 140, height: 28, color: '#2a2a3f', type: 'wall' },
-                { x: 370, y: 210, width: 70, height: 140, color: '#2a2a3f', type: 'wall' },
+                { x: 170, y: 110, width: 140, height: 28, color: '#2a2a3f', borderColor: '#4a4a5f', type: 'wall' },
+                { x: 490, y: 110, width: 140, height: 28, color: '#2a2a3f', borderColor: '#4a4a5f', type: 'wall' },
+                { x: 170, y: 342, width: 140, height: 28, color: '#2a2a3f', borderColor: '#4a4a5f', type: 'wall' },
+                { x: 490, y: 342, width: 140, height: 28, color: '#2a2a3f', borderColor: '#4a4a5f', type: 'wall' },
+                { x: 370, y: 210, width: 70, height: 140, color: '#2a2a3f', borderColor: '#4a4a5f', type: 'wall' },
 
                 // ボス部屋
-                { x: 320, y: 260, width: 140, height: 70, color: '#4a1a1a', type: 'boss_area' }
+                { x: 320, y: 260, width: 140, height: 70, color: '#6a2a2a', borderColor: '#aa4a4a', type: 'boss_area' }
             ],
             exits: [
                 { x: 300, y: 0, width: 200, height: 20, to: 'deep_tunnel', direction: 'north' }
@@ -272,17 +284,17 @@ class MapSystem {
             area: 'town',
             buildings: [
                 // ショップ建物（サイズ縮小）
-                { x: 70, y: 110, width: 84, height: 56, color: '#2a4a2a', type: 'weapon_shop' },
-                { x: 220, y: 110, width: 84, height: 56, color: '#4a2a2a', type: 'armor_shop' },
-                { x: 370, y: 110, width: 84, height: 56, color: '#2a2a4a', type: 'item_shop' },
-                { x: 520, y: 110, width: 84, height: 56, color: '#4a4a2a', type: 'magic_shop' },
+                { x: 70, y: 110, width: 84, height: 56, color: '#2a4a2a', borderColor: '#4a6a4a', type: 'weapon_shop' },
+                { x: 220, y: 110, width: 84, height: 56, color: '#4a2a2a', borderColor: '#6a4a4a', type: 'armor_shop' },
+                { x: 370, y: 110, width: 84, height: 56, color: '#2a2a4a', borderColor: '#4a4a6a', type: 'item_shop' },
+                { x: 520, y: 110, width: 84, height: 56, color: '#4a4a2a', borderColor: '#6a6a4a', type: 'magic_shop' },
 
-                { x: 70, y: 310, width: 84, height: 56, color: '#3a3a4a', type: 'inn' },
-                { x: 220, y: 310, width: 84, height: 56, color: '#4a3a3a', type: 'bank' },
-                { x: 520, y: 310, width: 84, height: 56, color: '#3a4a3a', type: 'guild' },
+                { x: 70, y: 310, width: 84, height: 56, color: '#3a3a4a', borderColor: '#5a5a6a', type: 'inn' },
+                { x: 220, y: 310, width: 84, height: 56, color: '#4a3a3a', borderColor: '#6a5a5a', type: 'bank' },
+                { x: 520, y: 310, width: 84, height: 56, color: '#3a4a3a', borderColor: '#5a6a5a', type: 'guild' },
 
                 // 中央広場
-                { x: 320, y: 260, width: 140, height: 105, color: '#1e3e5e', type: 'plaza' }
+                { x: 320, y: 260, width: 140, height: 105, color: '#2e4e6e', borderColor: '#4e6e8e', type: 'plaza' }
             ],
             exits: [
                 { x: 0, y: 200, width: 30, height: 200, to: 'black_market', direction: 'west' },
@@ -311,13 +323,13 @@ class MapSystem {
             encounterRate: 'none',
             area: 'town',
             buildings: [
-                { x: 120, y: 110, width: 70, height: 56, color: '#3e4e3e', type: 'house' },
-                { x: 270, y: 110, width: 70, height: 56, color: '#4e3e3e', type: 'house' },
-                { x: 520, y: 110, width: 70, height: 56, color: '#3e3e4e', type: 'house' },
-                { x: 120, y: 310, width: 70, height: 56, color: '#4e4e3e', type: 'house' },
-                { x: 520, y: 310, width: 70, height: 56, color: '#3e5e3e', type: 'house' },
-                { x: 270, y: 210, width: 70, height: 56, color: '#5e3e3e', type: 'house' },
-                { x: 420, y: 210, width: 70, height: 56, color: '#3e3e5e', type: 'house' }
+                { x: 120, y: 110, width: 70, height: 56, color: '#3e4e3e', borderColor: '#5e6e5e', type: 'house' },
+                { x: 270, y: 110, width: 70, height: 56, color: '#4e3e3e', borderColor: '#6e5e5e', type: 'house' },
+                { x: 520, y: 110, width: 70, height: 56, color: '#3e3e4e', borderColor: '#5e5e6e', type: 'house' },
+                { x: 120, y: 310, width: 70, height: 56, color: '#4e4e3e', borderColor: '#6e6e5e', type: 'house' },
+                { x: 520, y: 310, width: 70, height: 56, color: '#3e5e3e', borderColor: '#5e7e5e', type: 'house' },
+                { x: 270, y: 210, width: 70, height: 56, color: '#5e3e3e', borderColor: '#7e5e5e', type: 'house' },
+                { x: 420, y: 210, width: 70, height: 56, color: '#3e3e5e', borderColor: '#5e5e7e', type: 'house' }
             ],
             exits: [
                 { x: 0, y: 200, width: 30, height: 200, to: 'shopping_district', direction: 'west' }
@@ -359,11 +371,35 @@ class MapSystem {
         
         // 建物・オブジェクト
         map.buildings.forEach(building => {
+            // 建物の背景色
             ctx.fillStyle = building.color;
             ctx.fillRect(building.x, building.y, building.width, building.height);
-            
+
+            // 建物の枠線（視認性向上）
+            ctx.strokeStyle = building.borderColor || '#ffffff';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(building.x, building.y, building.width, building.height);
+
             // タイプに応じた装飾
-            if (building.type === 'tree') {
+            if (building.type === 'building' || building.type === 'office') {
+                // 都市の建物（ビル風）
+                ctx.font = '32px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('🏢', building.x + building.width/2, building.y + building.height/2);
+
+                // 窓の表現
+                ctx.fillStyle = 'rgba(255, 255, 200, 0.3)';
+                for (let i = 0; i < 3; i++) {
+                    for (let j = 0; j < 2; j++) {
+                        const wx = building.x + 10 + i * 20;
+                        const wy = building.y + 10 + j * 20;
+                        if (wx + 8 < building.x + building.width && wy + 8 < building.y + building.height) {
+                            ctx.fillRect(wx, wy, 8, 8);
+                        }
+                    }
+                }
+            } else if (building.type === 'tree') {
                 ctx.font = '24px Arial';
                 ctx.textAlign = 'center';
                 ctx.fillText('🌳', building.x + building.width/2, building.y + building.height/2);
@@ -422,6 +458,78 @@ class MapSystem {
                 ctx.font = '20px Arial';
                 ctx.textAlign = 'center';
                 ctx.fillText('🏘️', building.x + building.width/2, building.y + building.height/2);
+            } else if (building.type === 'wall') {
+                // 壁の表現（レンガ模様）
+                ctx.fillStyle = 'rgba(100, 100, 100, 0.3)';
+                const brickWidth = 20;
+                const brickHeight = 10;
+                for (let y = 0; y < building.height; y += brickHeight) {
+                    for (let x = 0; x < building.width; x += brickWidth) {
+                        const offset = (y / brickHeight) % 2 === 0 ? 0 : brickWidth / 2;
+                        ctx.strokeRect(building.x + x + offset, building.y + y, brickWidth, brickHeight);
+                    }
+                }
+            } else if (building.type === 'pond') {
+                // 池の表現
+                ctx.font = '24px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('💧', building.x + building.width/2, building.y + building.height/2);
+            } else if (building.type === 'elevator') {
+                // エレベーターの表現
+                ctx.font = '32px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('🚪', building.x + building.width/2, building.y + building.height/2);
+
+                // エレベーターボタン
+                ctx.fillStyle = '#ff6666';
+                ctx.fillRect(building.x + building.width - 15, building.y + 10, 8, 8);
+                ctx.fillStyle = '#66ff66';
+                ctx.fillRect(building.x + building.width - 15, building.y + 25, 8, 8);
+            } else if (building.type === 'plaza') {
+                // 広場の表現
+                ctx.fillStyle = 'rgba(100, 150, 200, 0.2)';
+                ctx.fillRect(building.x, building.y, building.width, building.height);
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText('広場', building.x + building.width/2, building.y + building.height/2);
+            } else if (building.type === 'boss_area') {
+                // ボスエリアの表現（赤く警告的に）
+                ctx.fillStyle = 'rgba(200, 50, 50, 0.3)';
+                ctx.fillRect(building.x, building.y, building.width, building.height);
+                ctx.font = '32px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('⚠️', building.x + building.width/2, building.y + building.height/2);
+            } else if (building.type === 'shrine') {
+                // 神社の表現
+                ctx.font = '32px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('⛩️', building.x + building.width/2, building.y + building.height/2);
+            } else if (building.type === 'lantern') {
+                // 灯篭の表現
+                ctx.font = '24px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('🏮', building.x + building.width/2, building.y + building.height/2);
+            } else if (building.type === 'bank') {
+                // 銀行の表現
+                ctx.font = '24px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('💰', building.x + building.width/2, building.y + building.height/2);
+                ctx.font = '10px Courier New';
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText('銀行', building.x + building.width/2, building.y + building.height/2 + 15);
+            } else if (building.type === 'guild') {
+                // ギルドの表現
+                ctx.font = '24px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('⚔️', building.x + building.width/2, building.y + building.height/2);
+                ctx.font = '10px Courier New';
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText('ギルド', building.x + building.width/2, building.y + building.height/2 + 15);
             }
         });
         
