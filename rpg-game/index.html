@@ -576,12 +576,13 @@
             bottom: 20px;
             left: 0;
             right: 0;
-            display: none; /* デフォルトで非表示、モバイルのみ表示 */
+            display: flex; /* 常に表示 */
             justify-content: space-between;
             align-items: flex-end;
             padding: 0 20px;
             pointer-events: none;
             z-index: 10000;
+            opacity: 0.85; /* 半透明にして邪魔にならないように */
         }
 
         .dpad-container {
@@ -595,8 +596,8 @@
             position: absolute;
             width: 50px;
             height: 50px;
-            background: rgba(15, 52, 96, 0.8);
-            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: rgba(15, 52, 96, 0.7);
+            border: 2px solid rgba(255, 255, 255, 0.4);
             border-radius: 8px;
             display: flex;
             align-items: center;
@@ -607,6 +608,7 @@
             -webkit-user-select: none;
             touch-action: none;
             transition: all 0.1s ease;
+            cursor: pointer;
         }
 
         .dpad-button:active {
@@ -653,8 +655,8 @@
         .action-button {
             width: 60px;
             height: 60px;
-            background: rgba(15, 52, 96, 0.8);
-            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: rgba(15, 52, 96, 0.7);
+            border: 2px solid rgba(255, 255, 255, 0.4);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -666,6 +668,7 @@
             -webkit-user-select: none;
             touch-action: none;
             transition: all 0.1s ease;
+            cursor: pointer;
         }
 
         .action-button:active {
@@ -694,10 +697,10 @@
             border-color: #ff6633;
         }
 
-        /* タッチデバイスでのみ表示 */
+        /* タッチデバイスではさらに不透明度を上げる */
         @media (hover: none) and (pointer: coarse) {
             .on-screen-controller {
-                display: flex;
+                opacity: 0.95;
             }
         }
 
