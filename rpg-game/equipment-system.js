@@ -332,15 +332,7 @@ class EquipmentSystem {
             console.error('Equipment not found:', equipmentId);
             return { success: false, message: '装備が見つからない' };
         }
-        
-        // レベル要件チェック
-        if (equipment.requiredLevel > player.level) {
-            return { 
-                success: false, 
-                message: `レベル${equipment.requiredLevel}以上で装備可能` 
-            };
-        }
-        
+
         // インベントリにあるかチェック
         if (!this.inventory[equipmentId] || this.inventory[equipmentId].quantity <= 0) {
             console.error('Equipment not in inventory:', equipmentId, this.inventory);
