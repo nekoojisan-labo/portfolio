@@ -580,7 +580,17 @@
             <h1>デウス・コード</h1>
             <h2>八百万の神託</h2>
             <p style="margin-bottom: 20px; color: #aaa;">神々の力をその身に降ろし、AIが支配する無機質な世界に、人の心を取り戻せ</p>
-            <button class="start-button" onclick="startGame()">ゲーム開始</button>
+            <button class="start-button" onclick="startOpening()">ゲーム開始</button>
+        </div>
+
+        <!-- Opening Story Screen -->
+        <div class="title-screen" id="openingScreen" style="display: none;">
+            <div style="max-width: 700px; text-align: left; line-height: 1.8;">
+                <div id="openingText" style="font-size: 16px; color: #ddd; min-height: 200px;"></div>
+                <div style="text-align: center; margin-top: 30px;">
+                    <button class="start-button" onclick="nextOpeningMessage()" id="openingButton">次へ →</button>
+                </div>
+            </div>
         </div>
 
         <div class="map-info" id="mapInfo" style="display: none;">
@@ -612,7 +622,7 @@
                 </div>
             </div>
             <div class="message-box" id="messageBox">
-                近未来の新宿、AIシステム『アーク』によって管理された街を歩いている...
+                新宿中央区画。神威の力に目覚めたカイトは、アカリからの連絡を受け、異変の調査を始める...
             </div>
         </div>
 
@@ -800,6 +810,7 @@
         // Game state
         let gameStarted = false;
         let player = {
+            name: 'カイト',
             x: 400,
             y: 300,
             hp: 100,
@@ -870,8 +881,58 @@
             keys[e.key] = false;
         });
 
+        // Opening Story System
+        let openingMessages = [
+            "西暦2050年、新宿。\n\n高度に発達したAIシステム『アーク』が、この街を完璧に管理している。",
+            "交通、医療、流通...あらゆるインフラが最適化され、犯罪率はゼロに近い。\n\n一見、理想郷のように見えるこの街。",
+            "しかし、人々の表情から「心」が失われていた。\n\n感情を持つことは非効率。喜びも、悲しみも、怒りも...すべてが制御されている。",
+            "君の名前はカイト。\n\nごく普通の学生として、この無機質な街で暮らしていた。",
+            "ある日、君は不思議な夢を見た。\n\n「八百万の神々が、お前を選んだ」\n\n謎の声が響く。",
+            "目覚めると、手のひらに神秘的な紋様が浮かび上がっている。\n\nこれが、神々の力『神威（カムイ）』の証。",
+            "突如、街の様子がおかしくなり始める。\n\nアークの監視ドローンが暴走し、機械兵が街を徘徊している。",
+            "幼馴染のアカリから連絡が入る。\n\n「カイト、大変なの！新宿の地下で何かが起きてる！」",
+            "君は神威の力に目覚めた者として、この異変の真相を探ることになる。\n\nアークの支配から、人々の心を取り戻すために...。"
+        ];
+        let currentOpeningIndex = 0;
+
+        function startOpening() {
+            document.getElementById('titleScreen').style.display = 'none';
+            document.getElementById('openingScreen').style.display = 'flex';
+            currentOpeningIndex = 0;
+            showOpeningMessage();
+        }
+
+        function showOpeningMessage() {
+            const textElement = document.getElementById('openingText');
+            const buttonElement = document.getElementById('openingButton');
+
+            if (currentOpeningIndex < openingMessages.length) {
+                // テキストを表示（改行を<br>に変換）
+                textElement.innerHTML = openingMessages[currentOpeningIndex].replace(/\n/g, '<br>');
+
+                // 最後のメッセージの場合、ボタンテキストを変更
+                if (currentOpeningIndex === openingMessages.length - 1) {
+                    buttonElement.textContent = '冒険を始める →';
+                } else {
+                    buttonElement.textContent = '次へ →';
+                }
+            }
+        }
+
+        function nextOpeningMessage() {
+            currentOpeningIndex++;
+
+            if (currentOpeningIndex < openingMessages.length) {
+                showOpeningMessage();
+            } else {
+                // オープニング終了、ゲーム開始
+                startGame();
+            }
+        }
+
         function startGame() {
             document.getElementById('titleScreen').style.display = 'none';
+            document.getElementById('openingScreen').style.display = 'none';
             document.getElementById('gameUI').style.display = 'block';
             document.getElementById('mapInfo').style.display = 'block';
             
@@ -923,7 +984,21 @@
             gameStarted = true;
             updateMapInfo();
             gameLoop();
-            
+
+            // 開始直後にアカリとの会話を表示
+            setTimeout(() => {
+                showMessage('アカリ: カイト！やっと会えた。この街、おかしいよね？人々の様子が...。');
+                setTimeout(() => {
+                    showMessage('アカリ: あなたの手...その紋様！神威の力に目覚めたの？信じられない...！');
+                    setTimeout(() => {
+                        showMessage('アカリ: この力があれば、きっと何かできるはず。一緒に、この街の異変を調べよう！');
+                        setTimeout(() => {
+                            showMessage('矢印キー（↑↓←→）で移動、Zキーで話しかけ、Xキーでメニューを開く。');
+                        }, 3000);
+                    }, 3000);
+                }, 3000);
+            }, 500);
+
             // デバッグ用: グローバルアクセス
             window.debugMapSystem = mapSystem;
             window.debugPlayer = player;
