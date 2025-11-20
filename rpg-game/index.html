@@ -569,6 +569,169 @@
             transform: translateY(-2px);
             box-shadow: 0 6px 12px rgba(15, 52, 96, 0.5);
         }
+
+        /* オンスクリーンコントローラー（モバイル用） */
+        .on-screen-controller {
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            display: none; /* デフォルトで非表示、モバイルのみ表示 */
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 0 20px;
+            pointer-events: none;
+            z-index: 10000;
+        }
+
+        .dpad-container {
+            position: relative;
+            width: 160px;
+            height: 160px;
+            pointer-events: auto;
+        }
+
+        .dpad-button {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: rgba(15, 52, 96, 0.8);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #fff;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+            transition: all 0.1s ease;
+        }
+
+        .dpad-button:active {
+            background: rgba(15, 52, 96, 1);
+            transform: scale(0.95);
+            border-color: #00ffff;
+        }
+
+        .dpad-up {
+            top: 0;
+            left: 55px;
+        }
+
+        .dpad-down {
+            bottom: 0;
+            left: 55px;
+        }
+
+        .dpad-left {
+            top: 55px;
+            left: 0;
+        }
+
+        .dpad-right {
+            top: 55px;
+            right: 0;
+        }
+
+        .dpad-center {
+            top: 55px;
+            left: 55px;
+            background: rgba(0, 0, 0, 0.3);
+            border: none;
+            pointer-events: none;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: auto;
+        }
+
+        .action-button {
+            width: 60px;
+            height: 60px;
+            background: rgba(15, 52, 96, 0.8);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            color: #fff;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+            transition: all 0.1s ease;
+        }
+
+        .action-button:active {
+            background: rgba(15, 52, 96, 1);
+            transform: scale(0.95);
+            border-color: #00ffff;
+        }
+
+        .action-button.primary {
+            background: rgba(0, 255, 100, 0.3);
+            border-color: rgba(0, 255, 100, 0.5);
+        }
+
+        .action-button.primary:active {
+            background: rgba(0, 255, 100, 0.6);
+            border-color: #00ff66;
+        }
+
+        .action-button.secondary {
+            background: rgba(255, 100, 0, 0.3);
+            border-color: rgba(255, 100, 0, 0.5);
+        }
+
+        .action-button.secondary:active {
+            background: rgba(255, 100, 0, 0.6);
+            border-color: #ff6633;
+        }
+
+        /* タッチデバイスでのみ表示 */
+        @media (hover: none) and (pointer: coarse) {
+            .on-screen-controller {
+                display: flex;
+            }
+        }
+
+        /* 小さい画面用の調整 */
+        @media (max-width: 600px) {
+            .dpad-container {
+                width: 140px;
+                height: 140px;
+            }
+
+            .dpad-button {
+                width: 45px;
+                height: 45px;
+                font-size: 20px;
+            }
+
+            .dpad-up, .dpad-down {
+                left: 47.5px;
+            }
+
+            .dpad-left, .dpad-right, .dpad-center {
+                top: 47.5px;
+            }
+
+            .dpad-center {
+                left: 47.5px;
+            }
+
+            .action-button {
+                width: 55px;
+                height: 55px;
+                font-size: 13px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -782,6 +945,39 @@
         </div>
     </div>
 
+    <!-- オンスクリーンコントローラー（モバイル用） -->
+    <div class="on-screen-controller" id="onScreenController">
+        <!-- 方向パッド -->
+        <div class="dpad-container">
+            <div class="dpad-button dpad-up" data-key="ArrowUp">↑</div>
+            <div class="dpad-button dpad-down" data-key="ArrowDown">↓</div>
+            <div class="dpad-button dpad-left" data-key="ArrowLeft">←</div>
+            <div class="dpad-button dpad-right" data-key="ArrowRight">→</div>
+            <div class="dpad-center"></div>
+        </div>
+
+        <!-- アクションボタン -->
+        <div class="action-buttons">
+            <div class="action-button primary" data-key=" ">
+                <div style="text-align: center; font-size: 12px;">
+                    <div>話す</div>
+                </div>
+            </div>
+            <div class="action-button primary" data-key="z">
+                <div style="text-align: center; font-size: 12px;">
+                    <div>決定</div>
+                    <div style="font-size: 10px;">Z</div>
+                </div>
+            </div>
+            <div class="action-button secondary" data-key="x">
+                <div style="text-align: center; font-size: 12px;">
+                    <div>戻る</div>
+                    <div style="font-size: 10px;">X</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 外部スクリプト読み込み -->
     <script src="item-system.js"></script>
     <script src="equipment-system.js"></script>
@@ -890,6 +1086,61 @@
         document.addEventListener('keyup', (e) => {
             keys[e.key] = false;
         });
+
+        // オンスクリーンコントローラーのタッチ操作
+        function setupTouchControls() {
+            const controller = document.getElementById('onScreenController');
+            if (!controller) return;
+
+            const buttons = controller.querySelectorAll('[data-key]');
+
+            buttons.forEach(button => {
+                const key = button.getAttribute('data-key');
+
+                // タッチ開始
+                button.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    keys[key] = true;
+                    console.log(`[Touch] Key pressed: ${key}`);
+                });
+
+                // タッチ終了
+                button.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    keys[key] = false;
+                    console.log(`[Touch] Key released: ${key}`);
+                });
+
+                // タッチキャンセル
+                button.addEventListener('touchcancel', (e) => {
+                    e.preventDefault();
+                    keys[key] = false;
+                });
+
+                // マウス操作もサポート（テスト用）
+                button.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    keys[key] = true;
+                });
+
+                button.addEventListener('mouseup', (e) => {
+                    e.preventDefault();
+                    keys[key] = false;
+                });
+
+                button.addEventListener('mouseleave', (e) => {
+                    keys[key] = false;
+                });
+            });
+
+            console.log('[Touch Controls] On-screen controller initialized');
+        }
+
+        // タッチ操作を初期化
+        if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+            setupTouchControls();
+            console.log('[Touch Controls] Touch device detected');
+        }
 
         // Opening Story System
         let openingMessages = [
