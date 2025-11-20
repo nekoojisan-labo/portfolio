@@ -666,8 +666,33 @@ class MapSystem {
 
                 // BGM切り替え
                 const newMap = this.maps[mapId];
-                if (newMap && newMap.bgm && window.bgmSystem) {
-                    window.bgmSystem.play(newMap.bgm, true);
+                if (newMap && newMap.bgm) {
+                    console.log(`[Map] Switching BGM to: ${newMap.bgm} for map: ${newMap.name}`);
+
+                    if (window.bgmSystem) {
+                        // 現在のBGMを確認
+                        const currentBGM = window.bgmSystem.currentBGM;
+                        console.log(`[Map] Current BGM: ${currentBGM}, New BGM: ${newMap.bgm}`);
+
+                        // 異なるBGMの場合のみ切り替え
+                        if (currentBGM !== newMap.bgm) {
+                            // 前のBGMをフェードアウトで停止
+                            if (window.bgmSystem.audio) {
+                                window.bgmSystem.stop(true);
+                            }
+
+                            // 新しいBGMをフェードインで再生（少し遅延させる）
+                            setTimeout(() => {
+                                window.bgmSystem.play(newMap.bgm, true);
+                            }, 500);
+                        } else {
+                            console.log(`[Map] Same BGM, no need to switch`);
+                        }
+                    } else {
+                        console.warn('[Map] BGM System not initialized');
+                    }
+                } else if (!newMap.bgm) {
+                    console.log(`[Map] No BGM defined for map: ${newMap ? newMap.name : mapId}`);
                 }
 
                 // デバッグ: 遷移完了
