@@ -809,6 +809,15 @@
         
         // Game state
         let gameStarted = false;
+        let storyFlags = {
+            metAkari: false,
+            exploredSubway: false,
+            metYami: false,
+            visitedShrine: false,
+            metPriest: false,
+            exploredBiodome: false,
+            chapter: 1  // 現在のチャプター
+        };
         let player = {
             name: 'カイト',
             x: 400,
@@ -819,7 +828,7 @@
             maxMp: 50,
             level: 1,
             exp: 0,
-            gold: 1000,
+            gold: 100,
             baseAttack: 10,      // 基本攻撃力
             baseDefense: 5,      // 基本防御力
             attack: 10,          // 現在の攻撃力（基本 + 装備）
@@ -1002,8 +1011,10 @@
             // デバッグ用: グローバルアクセス
             window.debugMapSystem = mapSystem;
             window.debugPlayer = player;
+            window.debugStoryFlags = storyFlags;
             console.log('Game started! Available maps:', Object.keys(mapSystem.maps));
             console.log('Current map:', mapSystem.currentMap);
+            console.log('Story flags:', storyFlags);
             console.log('Use debugMapSystem.transitionToMap("shopping_district") to test map transition');
             
             console.log('🗺️  All map transitions are working correctly!');
@@ -1175,7 +1186,7 @@
         function checkInteractions() {
             const npc = mapSystem.checkNPCInteraction(player.x, player.y);
             const treasure = mapSystem.checkTreasureInteraction(player.x, player.y);
-            
+
             if (npc) {
                 if (npc.hostile) {
                     // 強制戦闘
@@ -1190,7 +1201,21 @@
                     // ショップを開く
                     window.gameShop.openShop(npc.shopType, npc);
                 } else {
-                    showMessage(`${npc.name}: 「${npc.dialogue}」`);
+                    // クエストNPCの場合、フラグをチェック
+                    if (npc.questFlag && npc.questDialogue) {
+                        if (!storyFlags[npc.questFlag]) {
+                            // 初めて話す場合、クエスト会話を表示してフラグを立てる
+                            showMessage(`${npc.name}: 「${npc.questDialogue}」`);
+                            storyFlags[npc.questFlag] = true;
+                            console.log(`Story flag set: ${npc.questFlag}`);
+                        } else {
+                            // 既に話した場合、通常の会話
+                            showMessage(`${npc.name}: 「${npc.dialogue}」`);
+                        }
+                    } else {
+                        // 通常のNPC
+                        showMessage(`${npc.name}: 「${npc.dialogue}」`);
+                    }
                 }
             } else if (treasure) {
                 // 宝箱を開く
@@ -1825,13 +1850,13 @@
             if (!battleSystem.inBattle) {
                 // マップ描画
                 mapSystem.drawCurrentMap(ctx, canvas);
-                mapSystem.drawNPCs(ctx);
-                
+                mapSystem.drawNPCs(ctx, storyFlags);
+
                 // プレイヤー描画と更新
                 drawPlayer();
                 updatePlayer();
             }
-            
+
             requestAnimationFrame(gameLoop);
         }
     </script>
