@@ -286,17 +286,14 @@ Game logo design, "デウス・コード 八百万の神託" (Deus Code: Oracle 
 ```
 rpg-game/
 └── assets/
-    ├── characters/
-    │   ├── kaito/
-    │   ├── akari/
-    │   ├── riku/
-    │   └── npcs/
-    ├── enemies/
-    ├── backgrounds/
-    ├── tilesets/
-    ├── items/
-    ├── equipment/
-    ├── ui/
-    ├── effects/
-    └── logo/
+    ├── bgm/           - BGM・効果音
+    ├── characters/    - キャラクター画像全般（フィールド、立ち絵、敵など）
+    │                    例: kaito_field.png, kaito_portrait.png, kaito_battle.png
+    │                        akari_field.png, drone_enemy.png, etc.
+    ├── icons/         - アイテム・装備アイコン
+    │                    例: potion.png, sword.png, armor.png
+    ├── maps/          - マップ背景・タイルセット
+    │                    例: shinjuku_bg.png, shrine_bg.png
+    └── ui/            - UI要素・ロゴ・エフェクト
+                         例: title_logo.png, hp_icon.png, slash_effect.png
 ```
