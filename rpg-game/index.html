@@ -1178,17 +1178,32 @@
             buttons.forEach(button => {
                 const key = button.getAttribute('data-key');
 
+                // キーボードイベントを発火させる関数
+                function triggerKeyEvent(eventType) {
+                    const event = new KeyboardEvent(eventType, {
+                        key: key,
+                        code: key === ' ' ? 'Space' : 'Key' + key.toUpperCase(),
+                        bubbles: true,
+                        cancelable: true
+                    });
+                    document.dispatchEvent(event);
+                }
+
                 // タッチ開始
                 button.addEventListener('touchstart', (e) => {
                     e.preventDefault();
+                    e.stopPropagation();
                     keys[key] = true;
+                    triggerKeyEvent('keydown');
                     console.log(`[Touch] Key pressed: ${key}`);
                 });
 
                 // タッチ終了
                 button.addEventListener('touchend', (e) => {
                     e.preventDefault();
+                    e.stopPropagation();
                     keys[key] = false;
+                    triggerKeyEvent('keyup');
                     console.log(`[Touch] Key released: ${key}`);
                 });
 
@@ -1196,21 +1211,30 @@
                 button.addEventListener('touchcancel', (e) => {
                     e.preventDefault();
                     keys[key] = false;
+                    triggerKeyEvent('keyup');
                 });
 
                 // マウス操作もサポート（テスト用）
                 button.addEventListener('mousedown', (e) => {
                     e.preventDefault();
+                    e.stopPropagation();
                     keys[key] = true;
+                    triggerKeyEvent('keydown');
+                    console.log(`[Mouse] Key pressed: ${key}`);
                 });
 
                 button.addEventListener('mouseup', (e) => {
                     e.preventDefault();
+                    e.stopPropagation();
                     keys[key] = false;
+                    triggerKeyEvent('keyup');
                 });
 
                 button.addEventListener('mouseleave', (e) => {
-                    keys[key] = false;
+                    if (keys[key]) {
+                        keys[key] = false;
+                        triggerKeyEvent('keyup');
+                    }
                 });
             });
 
