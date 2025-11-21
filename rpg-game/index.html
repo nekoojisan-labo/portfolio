@@ -1940,13 +1940,14 @@
                 } else {
                     setupBattleCommands();
                 }
-            } else if (key === 'Enter' || key === ' ') {
+            } else if (key === 'Enter' || key === ' ' || key === 'z' || key === 'Z') {
+                // 決定キー（Enter, Space, Z）
                 const selectedCmd = commands[battleSystem.selectedCommand];
                 if (selectedCmd) {
                     if (showingBattleItems) {
                         selectedCmd.click();
                     } else {
-                        console.log('Key pressed, executing:', selectedCmd.dataset.command);
+                        console.log('[Battle] Command selected:', selectedCmd.dataset.command);
                         executeBattleCommand(selectedCmd.dataset.command);
                     }
                 }
