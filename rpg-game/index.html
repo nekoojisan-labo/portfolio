@@ -1142,6 +1142,18 @@
         // グローバルプレイヤー参照
         window.player = player;
 
+        // プレイヤースプライト画像の読み込み
+        const playerSprite = new Image();
+        playerSprite.src = 'assets/characters/kaito_field.png';
+        let playerSpriteLoaded = false;
+        playerSprite.onload = () => {
+            playerSpriteLoaded = true;
+            console.log('✅ プレイヤースプライト読み込み完了');
+        };
+        playerSprite.onerror = () => {
+            console.log('⚠️ プレイヤースプライト読み込み失敗 - 絵文字で表示');
+        };
+
         // Input handling
         const keys = {};
         let menuSelectedIndex = 0;
@@ -1479,24 +1491,32 @@
         }
 
         function drawPlayer() {
-            const playerSize = 24;
-            ctx.font = `${playerSize}px Arial`;
-            ctx.textAlign = 'center';
-            ctx.fillText('🧑‍💼', player.x, player.y + playerSize/2);
-            
+            const playerSize = 32;
+
+            if (playerSpriteLoaded) {
+                // 画像でプレイヤーを描画
+                ctx.drawImage(playerSprite, player.x - playerSize/2, player.y - playerSize/2, playerSize, playerSize);
+            } else {
+                // フォールバック：絵文字で描画
+                ctx.font = `${playerSize}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.fillText('🧑‍💼', player.x, player.y + playerSize/4);
+            }
+
             ctx.font = '12px Courier New';
             ctx.fillStyle = '#00ffff';
-            ctx.fillText('カイト', player.x, player.y + playerSize + 12);
-            
+            ctx.textAlign = 'center';
+            ctx.fillText('カイト', player.x, player.y + playerSize/2 + 12);
+
             // HP bar
             const barWidth = 40;
             const barHeight = 4;
             const hpRatio = player.hp / player.maxHp;
-            
+
             ctx.fillStyle = '#333';
-            ctx.fillRect(player.x - barWidth/2, player.y - 20, barWidth, barHeight);
+            ctx.fillRect(player.x - barWidth/2, player.y - playerSize/2 - 8, barWidth, barHeight);
             ctx.fillStyle = hpRatio > 0.5 ? '#44ff44' : hpRatio > 0.25 ? '#ffff44' : '#ff4444';
-            ctx.fillRect(player.x - barWidth/2, player.y - 20, barWidth * hpRatio, barHeight);
+            ctx.fillRect(player.x - barWidth/2, player.y - playerSize/2 - 8, barWidth * hpRatio, barHeight);
         }
 
         function updatePlayer() {
