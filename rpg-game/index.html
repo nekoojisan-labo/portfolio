@@ -876,38 +876,50 @@
         <div class="menu-overlay" id="menuOverlay">
             <div class="menu-container">
                 <div class="menu-title">メニュー</div>
-                <div class="menu-stats">
-                    <div class="menu-stat-row">
-                        <span>名前:</span>
-                        <span>カイト</span>
+                <div class="menu-content-wrapper" style="display: flex; gap: 20px;">
+                    <!-- キャラクター立ち絵 -->
+                    <div class="character-portrait" style="flex-shrink: 0;">
+                        <img id="menuCharacterPortrait" src="assets/characters/kaito/portrait.png"
+                             alt="カイト"
+                             style="width: 120px; height: 240px; object-fit: contain; border: 2px solid #0f3460; border-radius: 8px; background: rgba(0,0,0,0.3);"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div style="display: none; width: 120px; height: 240px; background: rgba(0,0,0,0.3); border: 2px solid #0f3460; border-radius: 8px; align-items: center; justify-content: center; font-size: 64px;">🧑‍💼</div>
                     </div>
-                    <div class="menu-stat-row">
-                        <span>レベル:</span>
-                        <span id="menuLevel">1</span>
-                    </div>
-                    <div class="menu-stat-row">
-                        <span>HP:</span>
-                        <span><span id="menuHP">100</span>/<span id="menuMaxHP">100</span></span>
-                    </div>
-                    <div class="menu-stat-row">
-                        <span>MP:</span>
-                        <span><span id="menuMP">50</span>/<span id="menuMaxMP">50</span></span>
-                    </div>
-                    <div class="menu-stat-row">
-                        <span>攻撃力:</span>
-                        <span id="menuAttack">15</span>
-                    </div>
-                    <div class="menu-stat-row">
-                        <span>防御力:</span>
-                        <span id="menuDefense">5</span>
-                    </div>
-                    <div class="menu-stat-row">
-                        <span>経験値:</span>
-                        <span id="menuExp">0</span>
-                    </div>
-                    <div class="menu-stat-row">
-                        <span>ゴールド:</span>
-                        <span id="menuGold">0</span>
+                    <div style="flex: 1;">
+                        <div class="menu-stats">
+                            <div class="menu-stat-row">
+                                <span>名前:</span>
+                                <span>カイト</span>
+                            </div>
+                            <div class="menu-stat-row">
+                                <span>レベル:</span>
+                                <span id="menuLevel">1</span>
+                            </div>
+                            <div class="menu-stat-row">
+                                <span>HP:</span>
+                                <span><span id="menuHP">100</span>/<span id="menuMaxHP">100</span></span>
+                            </div>
+                            <div class="menu-stat-row">
+                                <span>MP:</span>
+                                <span><span id="menuMP">50</span>/<span id="menuMaxMP">50</span></span>
+                            </div>
+                            <div class="menu-stat-row">
+                                <span>攻撃力:</span>
+                                <span id="menuAttack">15</span>
+                            </div>
+                            <div class="menu-stat-row">
+                                <span>防御力:</span>
+                                <span id="menuDefense">5</span>
+                            </div>
+                            <div class="menu-stat-row">
+                                <span>経験値:</span>
+                                <span id="menuExp">0</span>
+                            </div>
+                            <div class="menu-stat-row">
+                                <span>ゴールド:</span>
+                                <span id="menuGold">0</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="menu-options" id="menuOptions">
@@ -1001,18 +1013,28 @@
                     <div class="command-item" data-command="item">どうぐ</div>
                     <div class="command-item" data-command="escape">にげる</div>
                 </div>
-                <div class="battle-status">
-                    <div class="status-row">
-                        <span>カイト</span>
-                        <span>Lv.<span id="battlePlayerLevel">1</span></span>
+                <div class="battle-status" style="display: flex; align-items: center; gap: 15px;">
+                    <!-- プレイヤー立ち絵（戦闘用） -->
+                    <div class="battle-player-portrait">
+                        <img id="battlePlayerPortrait" src="assets/characters/kaito/battle.png"
+                             alt="カイト"
+                             style="width: 80px; height: 160px; object-fit: contain;"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div style="display: none; width: 80px; height: 160px; align-items: center; justify-content: center; font-size: 48px;">🧑‍💼</div>
                     </div>
-                    <div class="status-row">
-                        <span>HP</span>
-                        <span><span id="battlePlayerHP">100</span>/<span id="battlePlayerMaxHP">100</span></span>
-                    </div>
-                    <div class="status-row">
-                        <span>MP</span>
-                        <span><span id="battlePlayerMP">50</span>/<span id="battlePlayerMaxMP">50</span></span>
+                    <div>
+                        <div class="status-row">
+                            <span>カイト</span>
+                            <span>Lv.<span id="battlePlayerLevel">1</span></span>
+                        </div>
+                        <div class="status-row">
+                            <span>HP</span>
+                            <span><span id="battlePlayerHP">100</span>/<span id="battlePlayerMaxHP">100</span></span>
+                        </div>
+                        <div class="status-row">
+                            <span>MP</span>
+                            <span><span id="battlePlayerMP">50</span>/<span id="battlePlayerMaxMP">50</span></span>
+                        </div>
                     </div>
                 </div>
             </div>
