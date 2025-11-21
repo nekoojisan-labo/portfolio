@@ -617,6 +617,7 @@
             transition: all 0.1s ease;
             cursor: pointer;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            pointer-events: auto;
         }
 
         .dpad-button:active {
@@ -678,6 +679,7 @@
             transition: all 0.1s ease;
             cursor: pointer;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            pointer-events: auto;
         }
 
         .action-button:active {
@@ -1169,11 +1171,22 @@
         });
 
         // オンスクリーンコントローラーのタッチ操作
+        let touchControlsInitialized = false;
         function setupTouchControls() {
             const controller = document.getElementById('onScreenController');
-            if (!controller) return;
+            if (!controller) {
+                console.warn('[Touch Controls] Controller element not found!');
+                return;
+            }
+
+            // 重複初期化を防止
+            if (touchControlsInitialized) {
+                console.log('[Touch Controls] Already initialized, skipping');
+                return;
+            }
 
             const buttons = controller.querySelectorAll('[data-key]');
+            console.log(`[Touch Controls] Found ${buttons.length} buttons`);
 
             buttons.forEach(button => {
                 const key = button.getAttribute('data-key');
@@ -1238,11 +1251,22 @@
                 });
             });
 
-            console.log('[Touch Controls] On-screen controller initialized');
+            touchControlsInitialized = true;
+            console.log('[Touch Controls] On-screen controller initialized successfully');
         }
 
         // タッチ操作を初期化（PC/スマートフォン両方で動作するよう常に初期化）
-        setupTouchControls();
+        // DOM読み込み完了後に確実に初期化
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                setupTouchControls();
+                console.log('[Touch Controls] Initialized after DOMContentLoaded');
+            });
+        } else {
+            // DOMが既に読み込まれている場合は即座に初期化
+            setupTouchControls();
+            console.log('[Touch Controls] Initialized immediately (DOM already loaded)');
+        }
 
         // タッチデバイス検出ログ
         if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
@@ -1250,6 +1274,12 @@
         } else {
             console.log('[Touch Controls] Non-touch device - mouse controls enabled');
         }
+
+        // ページ完全読み込み後に再初期化（念のため）
+        window.addEventListener('load', () => {
+            setupTouchControls();
+            console.log('[Touch Controls] Re-initialized after window load');
+        });
 
         // Opening Story System
         let openingMessages = [
