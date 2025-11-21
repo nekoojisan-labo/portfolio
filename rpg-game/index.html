@@ -2,7 +2,9 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>デウス・コード 八百万の神託 - RPG Demo</title>
     <style>
         * {
@@ -18,6 +20,10 @@
             overflow: hidden;
             display: flex;
             justify-content: center;
+            /* スマートフォン向け: タッチ操作の改善 */
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
             align-items: center;
             min-height: 100vh;
         }
@@ -704,35 +710,103 @@
             }
         }
 
-        /* 小さい画面用の調整 */
-        @media (max-width: 600px) {
+        /* スマートフォン向け: ボタンを大きく、操作しやすく */
+        @media (max-width: 800px) {
+            .on-screen-controller {
+                padding: 0 15px;
+                bottom: 15px;
+            }
+
             .dpad-container {
-                width: 140px;
-                height: 140px;
+                width: 150px;
+                height: 150px;
             }
 
             .dpad-button {
-                width: 45px;
-                height: 45px;
-                font-size: 20px;
+                width: 48px;
+                height: 48px;
+                font-size: 22px;
             }
 
-            .dpad-up, .dpad-down {
-                left: 47.5px;
+            .dpad-up {
+                top: 0;
+                left: 51px;
             }
 
-            .dpad-left, .dpad-right, .dpad-center {
-                top: 47.5px;
+            .dpad-down {
+                bottom: 0;
+                left: 51px;
+            }
+
+            .dpad-left {
+                top: 51px;
+                left: 0;
+            }
+
+            .dpad-right {
+                top: 51px;
+                right: 0;
             }
 
             .dpad-center {
-                left: 47.5px;
+                top: 51px;
+                left: 51px;
             }
 
             .action-button {
-                width: 55px;
-                height: 55px;
+                width: 58px;
+                height: 58px;
                 font-size: 13px;
+            }
+        }
+
+        /* さらに小さい画面用（iPhone SE など） */
+        @media (max-width: 400px) {
+            .on-screen-controller {
+                padding: 0 10px;
+                bottom: 10px;
+            }
+
+            .dpad-container {
+                width: 130px;
+                height: 130px;
+            }
+
+            .dpad-button {
+                width: 42px;
+                height: 42px;
+                font-size: 18px;
+            }
+
+            .dpad-up {
+                left: 44px;
+            }
+
+            .dpad-down {
+                left: 44px;
+            }
+
+            .dpad-left {
+                top: 44px;
+            }
+
+            .dpad-right {
+                top: 44px;
+            }
+
+            .dpad-center {
+                top: 44px;
+                left: 44px;
+            }
+
+            .action-button {
+                width: 50px;
+                height: 50px;
+                font-size: 11px;
+            }
+
+            .action-buttons {
+                gap: 8px;
             }
         }
     </style>
@@ -1139,10 +1213,14 @@
             console.log('[Touch Controls] On-screen controller initialized');
         }
 
-        // タッチ操作を初期化
+        // タッチ操作を初期化（PC/スマートフォン両方で動作するよう常に初期化）
+        setupTouchControls();
+
+        // タッチデバイス検出ログ
         if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
-            setupTouchControls();
             console.log('[Touch Controls] Touch device detected');
+        } else {
+            console.log('[Touch Controls] Non-touch device - mouse controls enabled');
         }
 
         // Opening Story System
