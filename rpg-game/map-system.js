@@ -163,8 +163,8 @@ class MapSystem {
             buildings: [
                 { x: 370, y: 120, width: 70, height: 105, color: '#5a4a3a', borderColor: '#7a6a5a', type: 'torii' },
                 { x: 130, y: 220, width: 42, height: 140, color: '#4a3a2a', borderColor: '#6a5a4a', type: 'lantern' },
-                { x: 628, y: 220, width: 42, height: 140, color: '#4a3a2a', borderColor: '#6a5a4a', type: 'lantern' },
-                { x: 320, y: 380, width: 140, height: 70, color: '#6a5a4a', borderColor: '#8a7a6a', type: 'shrine' }
+                { x: 628, y: 220, width: 42, height: 140, color: '#4a3a2a', borderColor: '#6a5a4a', type: 'lantern' }
+                // 神社の建物を削除（南の出口と重なっていたため）
             ],
             exits: [
                 { x: 300, y: 410, width: 200, height: 20, to: 'shinjuku_city', direction: 'south' },
@@ -666,8 +666,33 @@ class MapSystem {
 
                 // BGM切り替え
                 const newMap = this.maps[mapId];
-                if (newMap && newMap.bgm && window.bgmSystem) {
-                    window.bgmSystem.play(newMap.bgm, true);
+                if (newMap && newMap.bgm) {
+                    console.log(`[Map] Switching BGM to: ${newMap.bgm} for map: ${newMap.name}`);
+
+                    if (window.bgmSystem) {
+                        // 現在のBGMを確認
+                        const currentBGM = window.bgmSystem.currentBGM;
+                        console.log(`[Map] Current BGM: ${currentBGM}, New BGM: ${newMap.bgm}`);
+
+                        // 異なるBGMの場合のみ切り替え
+                        if (currentBGM !== newMap.bgm) {
+                            // 前のBGMをフェードアウトで停止
+                            if (window.bgmSystem.audio) {
+                                window.bgmSystem.stop(true);
+                            }
+
+                            // 新しいBGMをフェードインで再生（少し遅延させる）
+                            setTimeout(() => {
+                                window.bgmSystem.play(newMap.bgm, true);
+                            }, 500);
+                        } else {
+                            console.log(`[Map] Same BGM, no need to switch`);
+                        }
+                    } else {
+                        console.warn('[Map] BGM System not initialized');
+                    }
+                } else if (!newMap.bgm) {
+                    console.log(`[Map] No BGM defined for map: ${newMap ? newMap.name : mapId}`);
                 }
 
                 // デバッグ: 遷移完了

@@ -2,7 +2,9 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>デウス・コード 八百万の神託 - RPG Demo</title>
     <style>
         * {
@@ -18,6 +20,10 @@
             overflow: hidden;
             display: flex;
             justify-content: center;
+            /* スマートフォン向け: タッチ操作の改善 */
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
             align-items: center;
             min-height: 100vh;
         }
@@ -569,6 +575,240 @@
             transform: translateY(-2px);
             box-shadow: 0 6px 12px rgba(15, 52, 96, 0.5);
         }
+
+        /* オンスクリーンコントローラー（モバイル用） */
+        .on-screen-controller {
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            display: flex; /* 常に表示 */
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 0 20px;
+            pointer-events: none;
+            z-index: 10000;
+            opacity: 0.85; /* 半透明にして邪魔にならないように */
+        }
+
+        .dpad-container {
+            position: relative;
+            width: 160px;
+            height: 160px;
+            pointer-events: auto;
+        }
+
+        .dpad-button {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: rgba(15, 52, 96, 0.7);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #fff;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+            transition: all 0.1s ease;
+            cursor: pointer;
+        }
+
+        .dpad-button:active {
+            background: rgba(15, 52, 96, 1);
+            transform: scale(0.95);
+            border-color: #00ffff;
+        }
+
+        .dpad-up {
+            top: 0;
+            left: 55px;
+        }
+
+        .dpad-down {
+            bottom: 0;
+            left: 55px;
+        }
+
+        .dpad-left {
+            top: 55px;
+            left: 0;
+        }
+
+        .dpad-right {
+            top: 55px;
+            right: 0;
+        }
+
+        .dpad-center {
+            top: 55px;
+            left: 55px;
+            background: rgba(0, 0, 0, 0.3);
+            border: none;
+            pointer-events: none;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: auto;
+        }
+
+        .action-button {
+            width: 60px;
+            height: 60px;
+            background: rgba(15, 52, 96, 0.7);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            color: #fff;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: none;
+            transition: all 0.1s ease;
+            cursor: pointer;
+        }
+
+        .action-button:active {
+            background: rgba(15, 52, 96, 1);
+            transform: scale(0.95);
+            border-color: #00ffff;
+        }
+
+        .action-button.primary {
+            background: rgba(0, 255, 100, 0.3);
+            border-color: rgba(0, 255, 100, 0.5);
+        }
+
+        .action-button.primary:active {
+            background: rgba(0, 255, 100, 0.6);
+            border-color: #00ff66;
+        }
+
+        .action-button.secondary {
+            background: rgba(255, 100, 0, 0.3);
+            border-color: rgba(255, 100, 0, 0.5);
+        }
+
+        .action-button.secondary:active {
+            background: rgba(255, 100, 0, 0.6);
+            border-color: #ff6633;
+        }
+
+        /* タッチデバイスではさらに不透明度を上げる */
+        @media (hover: none) and (pointer: coarse) {
+            .on-screen-controller {
+                opacity: 0.95;
+            }
+        }
+
+        /* スマートフォン向け: ボタンを大きく、操作しやすく */
+        @media (max-width: 800px) {
+            .on-screen-controller {
+                padding: 0 15px;
+                bottom: 15px;
+            }
+
+            .dpad-container {
+                width: 150px;
+                height: 150px;
+            }
+
+            .dpad-button {
+                width: 48px;
+                height: 48px;
+                font-size: 22px;
+            }
+
+            .dpad-up {
+                top: 0;
+                left: 51px;
+            }
+
+            .dpad-down {
+                bottom: 0;
+                left: 51px;
+            }
+
+            .dpad-left {
+                top: 51px;
+                left: 0;
+            }
+
+            .dpad-right {
+                top: 51px;
+                right: 0;
+            }
+
+            .dpad-center {
+                top: 51px;
+                left: 51px;
+            }
+
+            .action-button {
+                width: 58px;
+                height: 58px;
+                font-size: 13px;
+            }
+        }
+
+        /* さらに小さい画面用（iPhone SE など） */
+        @media (max-width: 400px) {
+            .on-screen-controller {
+                padding: 0 10px;
+                bottom: 10px;
+            }
+
+            .dpad-container {
+                width: 130px;
+                height: 130px;
+            }
+
+            .dpad-button {
+                width: 42px;
+                height: 42px;
+                font-size: 18px;
+            }
+
+            .dpad-up {
+                left: 44px;
+            }
+
+            .dpad-down {
+                left: 44px;
+            }
+
+            .dpad-left {
+                top: 44px;
+            }
+
+            .dpad-right {
+                top: 44px;
+            }
+
+            .dpad-center {
+                top: 44px;
+                left: 44px;
+            }
+
+            .action-button {
+                width: 50px;
+                height: 50px;
+                font-size: 11px;
+            }
+
+            .action-buttons {
+                gap: 8px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -782,6 +1022,39 @@
         </div>
     </div>
 
+    <!-- オンスクリーンコントローラー（モバイル用） -->
+    <div class="on-screen-controller" id="onScreenController">
+        <!-- 方向パッド -->
+        <div class="dpad-container">
+            <div class="dpad-button dpad-up" data-key="ArrowUp">↑</div>
+            <div class="dpad-button dpad-down" data-key="ArrowDown">↓</div>
+            <div class="dpad-button dpad-left" data-key="ArrowLeft">←</div>
+            <div class="dpad-button dpad-right" data-key="ArrowRight">→</div>
+            <div class="dpad-center"></div>
+        </div>
+
+        <!-- アクションボタン -->
+        <div class="action-buttons">
+            <div class="action-button primary" data-key=" ">
+                <div style="text-align: center; font-size: 12px;">
+                    <div>話す</div>
+                </div>
+            </div>
+            <div class="action-button primary" data-key="z">
+                <div style="text-align: center; font-size: 12px;">
+                    <div>決定</div>
+                    <div style="font-size: 10px;">Z</div>
+                </div>
+            </div>
+            <div class="action-button secondary" data-key="x">
+                <div style="text-align: center; font-size: 12px;">
+                    <div>戻る</div>
+                    <div style="font-size: 10px;">X</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 外部スクリプト読み込み -->
     <script src="item-system.js"></script>
     <script src="equipment-system.js"></script>
@@ -891,6 +1164,65 @@
             keys[e.key] = false;
         });
 
+        // オンスクリーンコントローラーのタッチ操作
+        function setupTouchControls() {
+            const controller = document.getElementById('onScreenController');
+            if (!controller) return;
+
+            const buttons = controller.querySelectorAll('[data-key]');
+
+            buttons.forEach(button => {
+                const key = button.getAttribute('data-key');
+
+                // タッチ開始
+                button.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    keys[key] = true;
+                    console.log(`[Touch] Key pressed: ${key}`);
+                });
+
+                // タッチ終了
+                button.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    keys[key] = false;
+                    console.log(`[Touch] Key released: ${key}`);
+                });
+
+                // タッチキャンセル
+                button.addEventListener('touchcancel', (e) => {
+                    e.preventDefault();
+                    keys[key] = false;
+                });
+
+                // マウス操作もサポート（テスト用）
+                button.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    keys[key] = true;
+                });
+
+                button.addEventListener('mouseup', (e) => {
+                    e.preventDefault();
+                    keys[key] = false;
+                });
+
+                button.addEventListener('mouseleave', (e) => {
+                    keys[key] = false;
+                });
+            });
+
+            console.log('[Touch Controls] On-screen controller initialized');
+        }
+
+        // タッチ操作を初期化（PC/スマートフォン両方で動作するよう常に初期化）
+        setupTouchControls();
+
+        // タッチデバイス検出ログ
+        if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+            console.log('[Touch Controls] Touch device detected');
+        } else {
+            console.log('[Touch Controls] Non-touch device - mouse controls enabled');
+        }
+
         // Opening Story System
         let openingMessages = [
             "西暦2050年、新宿。\n\n高度に発達したAIシステム『アーク』が、この街を完璧に管理している。",
@@ -905,6 +1237,9 @@
         ];
         let currentOpeningIndex = 0;
 
+        // オープニングメッセージ用のキーハンドラー
+        let openingKeyHandler = null;
+
         function startOpening() {
             document.getElementById('titleScreen').style.display = 'none';
             document.getElementById('openingScreen').style.display = 'flex';
@@ -918,6 +1253,17 @@
                 }
                 window.bgmSystem.play('opening', true);
             }
+
+            // キーボード/コントローラー操作でメッセージを進められるようにする
+            openingKeyHandler = function(e) {
+                // Z、Space、Enterキーで次のメッセージへ
+                if (e.key === 'z' || e.key === 'Z' || e.key === ' ' || e.key === 'Enter') {
+                    e.preventDefault();
+                    nextOpeningMessage();
+                }
+            };
+            document.addEventListener('keydown', openingKeyHandler);
+            console.log('[Opening] Keyboard controls enabled (Z/Space/Enter to continue)');
         }
 
         function showOpeningMessage() {
@@ -949,11 +1295,18 @@
         }
 
         function startGame() {
+            // オープニングのキーボードハンドラーを削除
+            if (openingKeyHandler) {
+                document.removeEventListener('keydown', openingKeyHandler);
+                openingKeyHandler = null;
+                console.log('[Opening] Keyboard controls disabled');
+            }
+
             document.getElementById('titleScreen').style.display = 'none';
             document.getElementById('openingScreen').style.display = 'none';
             document.getElementById('gameUI').style.display = 'block';
             document.getElementById('mapInfo').style.display = 'block';
-            
+
             // システム初期化
             itemSystem = new ItemSystem();
             equipmentSystem = new EquipmentSystem();

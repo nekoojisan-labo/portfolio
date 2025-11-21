@@ -9,6 +9,7 @@ class BGMSystem {
         this.volume = 0.3; // デフォルト音量（0.0 - 1.0）
         this.fadeDuration = 1000; // フェード時間（ミリ秒）
         this.isFading = false;
+        this.isUnlocked = false; // ブラウザの自動再生ロック解除フラグ
 
         // BGM定義（実際の音楽ファイルパスはここで設定）
         this.bgmTracks = {
@@ -140,44 +141,70 @@ class BGMSystem {
             return;
         }
 
-        // 前のBGMを停止
-        if (this.audio) {
-            this.stop(fadeIn);
-        }
+        // 新しいBGMを準備（前のBGMは呼び出し側で停止済みと想定）
+        try {
+            console.log(`[BGM] Attempting to load: ${track.path}`);
+            this.audio = new Audio(track.path);
 
-        // 新しいBGMを準備
-        setTimeout(() => {
-            try {
-                this.audio = new Audio(track.path);
-                this.audio.loop = track.loop;
-                this.audio.volume = fadeIn ? 0 : (track.volume * this.volume);
+            // ループ設定を確実に適用
+            this.audio.loop = true;
+            this.audio.volume = fadeIn ? 0 : (track.volume * this.volume);
 
-                this.audio.addEventListener('error', (e) => {
-                    console.warn(`BGM file not found or cannot be loaded: ${track.path}`);
-                    console.log('Please add BGM files to the assets/bgm/ directory');
-                });
+            // プリロード設定
+            this.audio.preload = 'auto';
 
-                this.audio.play().then(() => {
+            // エラーハンドリング
+            this.audio.addEventListener('error', (e) => {
+                console.error(`[BGM ERROR] File not found or cannot be loaded: ${track.path}`);
+                console.error('Error details:', e);
+                console.log(`[BGM] Make sure the file exists at: rpg-game/${track.path}`);
+            });
+
+            // ロード完了
+            this.audio.addEventListener('canplaythrough', () => {
+                console.log(`[BGM] File loaded successfully: ${track.name}`);
+            });
+
+            // ループ開始時のログ
+            this.audio.addEventListener('ended', () => {
+                console.log(`[BGM] Track ended (should loop): ${track.name}`);
+            });
+
+            // 再生試行
+            const playPromise = this.audio.play();
+
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
                     this.currentBGM = trackId;
-                    console.log(`BGM playing: ${track.name}`);
+                    this.isUnlocked = true;
+                    console.log(`[BGM] ✓ Now playing: ${track.name} (loop: ${this.audio.loop})`);
 
                     // フェードイン
                     if (fadeIn) {
                         this.fadeIn(track.volume * this.volume);
                     }
                 }).catch(error => {
-                    console.warn('BGM playback failed:', error);
-                });
+                    console.warn(`[BGM] Playback failed (browser auto-play policy): ${error.message}`);
+                    console.log('[BGM] Click anywhere on the page to enable audio');
 
-            } catch (error) {
-                console.warn('Failed to create audio:', error);
+                    // ユーザー操作を待つ
+                    this.waitForUserInteraction(trackId, fadeIn);
+                });
             }
-        }, fadeIn ? this.fadeDuration : 0);
+
+        } catch (error) {
+            console.error('[BGM] Failed to create audio:', error);
+        }
     }
 
     // BGM停止
     stop(fadeOut = false) {
-        if (!this.audio) return;
+        if (!this.audio) {
+            console.log('[BGM] No audio to stop');
+            return;
+        }
+
+        console.log(`[BGM] Stopping current BGM: ${this.currentBGM} (fadeOut: ${fadeOut})`);
 
         if (fadeOut) {
             this.fadeOut(() => {
@@ -186,6 +213,7 @@ class BGMSystem {
                     this.audio.currentTime = 0;
                     this.audio = null;
                 }
+                console.log('[BGM] Fade out completed, audio stopped');
                 this.currentBGM = null;
             });
         } else {
@@ -193,6 +221,7 @@ class BGMSystem {
             this.audio.currentTime = 0;
             this.audio = null;
             this.currentBGM = null;
+            console.log('[BGM] Audio stopped immediately');
         }
     }
 
@@ -278,6 +307,41 @@ class BGMSystem {
                 this.audio.volume = track.volume * this.volume;
             }
         }
+    }
+
+    // ユーザー操作を待ってBGMを再生（ブラウザの自動再生ポリシー対応）
+    waitForUserInteraction(trackId, fadeIn = false) {
+        const unlockAudio = () => {
+            if (!this.isUnlocked) {
+                console.log('[BGM] User interaction detected, unlocking audio...');
+                this.isUnlocked = true;
+
+                // 再度再生を試みる
+                if (this.audio) {
+                    this.audio.play().then(() => {
+                        console.log('[BGM] Audio unlocked and playing');
+                        if (fadeIn) {
+                            const track = this.bgmTracks[trackId];
+                            if (track) {
+                                this.fadeIn(track.volume * this.volume);
+                            }
+                        }
+                    }).catch(e => {
+                        console.warn('[BGM] Still cannot play:', e);
+                    });
+                }
+
+                // リスナーを削除
+                document.removeEventListener('click', unlockAudio);
+                document.removeEventListener('keydown', unlockAudio);
+                document.removeEventListener('touchstart', unlockAudio);
+            }
+        };
+
+        // ユーザー操作イベントを待つ
+        document.addEventListener('click', unlockAudio, { once: true });
+        document.addEventListener('keydown', unlockAudio, { once: true });
+        document.addEventListener('touchstart', unlockAudio, { once: true });
     }
 
     // 現在のBGM情報を取得
