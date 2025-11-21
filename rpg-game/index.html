@@ -602,25 +602,28 @@
             position: absolute;
             width: 50px;
             height: 50px;
-            background: rgba(15, 52, 96, 0.7);
-            border: 2px solid rgba(255, 255, 255, 0.4);
+            background: rgba(0, 180, 255, 0.95);
+            border: 3px solid #ffffff;
             border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 24px;
-            color: #fff;
+            color: #000;
+            font-weight: bold;
             user-select: none;
             -webkit-user-select: none;
             touch-action: none;
             transition: all 0.1s ease;
             cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            pointer-events: auto;
         }
 
         .dpad-button:active {
-            background: rgba(15, 52, 96, 1);
+            background: rgba(0, 255, 255, 1);
             transform: scale(0.95);
-            border-color: #00ffff;
+            border-color: #ffff00;
         }
 
         .dpad-up {
@@ -661,46 +664,49 @@
         .action-button {
             width: 60px;
             height: 60px;
-            background: rgba(15, 52, 96, 0.7);
-            border: 2px solid rgba(255, 255, 255, 0.4);
+            background: rgba(150, 150, 150, 0.95);
+            border: 3px solid #ffffff;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 14px;
             font-weight: bold;
-            color: #fff;
+            color: #000;
             user-select: none;
             -webkit-user-select: none;
             touch-action: none;
             transition: all 0.1s ease;
             cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+            pointer-events: auto;
         }
 
         .action-button:active {
-            background: rgba(15, 52, 96, 1);
             transform: scale(0.95);
-            border-color: #00ffff;
+            border-color: #ffff00;
         }
 
         .action-button.primary {
-            background: rgba(0, 255, 100, 0.3);
-            border-color: rgba(0, 255, 100, 0.5);
+            background: rgba(50, 220, 100, 0.95);
+            border-color: #ffffff;
+            color: #000;
         }
 
         .action-button.primary:active {
-            background: rgba(0, 255, 100, 0.6);
-            border-color: #00ff66;
+            background: rgba(100, 255, 150, 1);
+            border-color: #ffff00;
         }
 
         .action-button.secondary {
-            background: rgba(255, 100, 0, 0.3);
-            border-color: rgba(255, 100, 0, 0.5);
+            background: rgba(255, 120, 50, 0.95);
+            border-color: #ffffff;
+            color: #000;
         }
 
         .action-button.secondary:active {
-            background: rgba(255, 100, 0, 0.6);
-            border-color: #ff6633;
+            background: rgba(255, 180, 100, 1);
+            border-color: #ffff00;
         }
 
         /* タッチデバイスではさらに不透明度を上げる */
@@ -870,38 +876,50 @@
         <div class="menu-overlay" id="menuOverlay">
             <div class="menu-container">
                 <div class="menu-title">メニュー</div>
-                <div class="menu-stats">
-                    <div class="menu-stat-row">
-                        <span>名前:</span>
-                        <span>カイト</span>
+                <div class="menu-content-wrapper" style="display: flex; gap: 20px;">
+                    <!-- キャラクター立ち絵 -->
+                    <div class="character-portrait" style="flex-shrink: 0;">
+                        <img id="menuCharacterPortrait" src="assets/characters/kaito_portrait.png"
+                             alt="カイト"
+                             style="width: 120px; height: 240px; object-fit: contain; border: 2px solid #0f3460; border-radius: 8px; background: rgba(0,0,0,0.3);"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div style="display: none; width: 120px; height: 240px; background: rgba(0,0,0,0.3); border: 2px solid #0f3460; border-radius: 8px; align-items: center; justify-content: center; font-size: 64px;">🧑‍💼</div>
                     </div>
-                    <div class="menu-stat-row">
-                        <span>レベル:</span>
-                        <span id="menuLevel">1</span>
-                    </div>
-                    <div class="menu-stat-row">
-                        <span>HP:</span>
-                        <span><span id="menuHP">100</span>/<span id="menuMaxHP">100</span></span>
-                    </div>
-                    <div class="menu-stat-row">
-                        <span>MP:</span>
-                        <span><span id="menuMP">50</span>/<span id="menuMaxMP">50</span></span>
-                    </div>
-                    <div class="menu-stat-row">
-                        <span>攻撃力:</span>
-                        <span id="menuAttack">15</span>
-                    </div>
-                    <div class="menu-stat-row">
-                        <span>防御力:</span>
-                        <span id="menuDefense">5</span>
-                    </div>
-                    <div class="menu-stat-row">
-                        <span>経験値:</span>
-                        <span id="menuExp">0</span>
-                    </div>
-                    <div class="menu-stat-row">
-                        <span>ゴールド:</span>
-                        <span id="menuGold">0</span>
+                    <div style="flex: 1;">
+                        <div class="menu-stats">
+                            <div class="menu-stat-row">
+                                <span>名前:</span>
+                                <span>カイト</span>
+                            </div>
+                            <div class="menu-stat-row">
+                                <span>レベル:</span>
+                                <span id="menuLevel">1</span>
+                            </div>
+                            <div class="menu-stat-row">
+                                <span>HP:</span>
+                                <span><span id="menuHP">100</span>/<span id="menuMaxHP">100</span></span>
+                            </div>
+                            <div class="menu-stat-row">
+                                <span>MP:</span>
+                                <span><span id="menuMP">50</span>/<span id="menuMaxMP">50</span></span>
+                            </div>
+                            <div class="menu-stat-row">
+                                <span>攻撃力:</span>
+                                <span id="menuAttack">15</span>
+                            </div>
+                            <div class="menu-stat-row">
+                                <span>防御力:</span>
+                                <span id="menuDefense">5</span>
+                            </div>
+                            <div class="menu-stat-row">
+                                <span>経験値:</span>
+                                <span id="menuExp">0</span>
+                            </div>
+                            <div class="menu-stat-row">
+                                <span>ゴールド:</span>
+                                <span id="menuGold">0</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="menu-options" id="menuOptions">
@@ -995,18 +1013,28 @@
                     <div class="command-item" data-command="item">どうぐ</div>
                     <div class="command-item" data-command="escape">にげる</div>
                 </div>
-                <div class="battle-status">
-                    <div class="status-row">
-                        <span>カイト</span>
-                        <span>Lv.<span id="battlePlayerLevel">1</span></span>
+                <div class="battle-status" style="display: flex; align-items: center; gap: 15px;">
+                    <!-- プレイヤー立ち絵（戦闘用） -->
+                    <div class="battle-player-portrait">
+                        <img id="battlePlayerPortrait" src="assets/characters/kaito_battle.png"
+                             alt="カイト"
+                             style="width: 80px; height: 160px; object-fit: contain;"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div style="display: none; width: 80px; height: 160px; align-items: center; justify-content: center; font-size: 48px;">🧑‍💼</div>
                     </div>
-                    <div class="status-row">
-                        <span>HP</span>
-                        <span><span id="battlePlayerHP">100</span>/<span id="battlePlayerMaxHP">100</span></span>
-                    </div>
-                    <div class="status-row">
-                        <span>MP</span>
-                        <span><span id="battlePlayerMP">50</span>/<span id="battlePlayerMaxMP">50</span></span>
+                    <div>
+                        <div class="status-row">
+                            <span>カイト</span>
+                            <span>Lv.<span id="battlePlayerLevel">1</span></span>
+                        </div>
+                        <div class="status-row">
+                            <span>HP</span>
+                            <span><span id="battlePlayerHP">100</span>/<span id="battlePlayerMaxHP">100</span></span>
+                        </div>
+                        <div class="status-row">
+                            <span>MP</span>
+                            <span><span id="battlePlayerMP">50</span>/<span id="battlePlayerMaxMP">50</span></span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1114,6 +1142,18 @@
         // グローバルプレイヤー参照
         window.player = player;
 
+        // プレイヤースプライト画像の読み込み
+        const playerSprite = new Image();
+        playerSprite.src = 'assets/characters/kaito_field.png';
+        let playerSpriteLoaded = false;
+        playerSprite.onload = () => {
+            playerSpriteLoaded = true;
+            console.log('✅ プレイヤースプライト読み込み完了');
+        };
+        playerSprite.onerror = () => {
+            console.log('⚠️ プレイヤースプライト読み込み失敗 - 絵文字で表示');
+        };
+
         // Input handling
         const keys = {};
         let menuSelectedIndex = 0;
@@ -1165,26 +1205,52 @@
         });
 
         // オンスクリーンコントローラーのタッチ操作
+        let touchControlsInitialized = false;
         function setupTouchControls() {
             const controller = document.getElementById('onScreenController');
-            if (!controller) return;
+            if (!controller) {
+                console.warn('[Touch Controls] Controller element not found!');
+                return;
+            }
+
+            // 重複初期化を防止
+            if (touchControlsInitialized) {
+                console.log('[Touch Controls] Already initialized, skipping');
+                return;
+            }
 
             const buttons = controller.querySelectorAll('[data-key]');
+            console.log(`[Touch Controls] Found ${buttons.length} buttons`);
 
             buttons.forEach(button => {
                 const key = button.getAttribute('data-key');
 
+                // キーボードイベントを発火させる関数
+                function triggerKeyEvent(eventType) {
+                    const event = new KeyboardEvent(eventType, {
+                        key: key,
+                        code: key === ' ' ? 'Space' : 'Key' + key.toUpperCase(),
+                        bubbles: true,
+                        cancelable: true
+                    });
+                    document.dispatchEvent(event);
+                }
+
                 // タッチ開始
                 button.addEventListener('touchstart', (e) => {
                     e.preventDefault();
+                    e.stopPropagation();
                     keys[key] = true;
+                    triggerKeyEvent('keydown');
                     console.log(`[Touch] Key pressed: ${key}`);
                 });
 
                 // タッチ終了
                 button.addEventListener('touchend', (e) => {
                     e.preventDefault();
+                    e.stopPropagation();
                     keys[key] = false;
+                    triggerKeyEvent('keyup');
                     console.log(`[Touch] Key released: ${key}`);
                 });
 
@@ -1192,29 +1258,49 @@
                 button.addEventListener('touchcancel', (e) => {
                     e.preventDefault();
                     keys[key] = false;
+                    triggerKeyEvent('keyup');
                 });
 
                 // マウス操作もサポート（テスト用）
                 button.addEventListener('mousedown', (e) => {
                     e.preventDefault();
+                    e.stopPropagation();
                     keys[key] = true;
+                    triggerKeyEvent('keydown');
+                    console.log(`[Mouse] Key pressed: ${key}`);
                 });
 
                 button.addEventListener('mouseup', (e) => {
                     e.preventDefault();
+                    e.stopPropagation();
                     keys[key] = false;
+                    triggerKeyEvent('keyup');
                 });
 
                 button.addEventListener('mouseleave', (e) => {
-                    keys[key] = false;
+                    if (keys[key]) {
+                        keys[key] = false;
+                        triggerKeyEvent('keyup');
+                    }
                 });
             });
 
-            console.log('[Touch Controls] On-screen controller initialized');
+            touchControlsInitialized = true;
+            console.log('[Touch Controls] On-screen controller initialized successfully');
         }
 
         // タッチ操作を初期化（PC/スマートフォン両方で動作するよう常に初期化）
-        setupTouchControls();
+        // DOM読み込み完了後に確実に初期化
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                setupTouchControls();
+                console.log('[Touch Controls] Initialized after DOMContentLoaded');
+            });
+        } else {
+            // DOMが既に読み込まれている場合は即座に初期化
+            setupTouchControls();
+            console.log('[Touch Controls] Initialized immediately (DOM already loaded)');
+        }
 
         // タッチデバイス検出ログ
         if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
@@ -1222,6 +1308,12 @@
         } else {
             console.log('[Touch Controls] Non-touch device - mouse controls enabled');
         }
+
+        // ページ完全読み込み後に再初期化（念のため）
+        window.addEventListener('load', () => {
+            setupTouchControls();
+            console.log('[Touch Controls] Re-initialized after window load');
+        });
 
         // Opening Story System
         let openingMessages = [
@@ -1399,24 +1491,32 @@
         }
 
         function drawPlayer() {
-            const playerSize = 24;
-            ctx.font = `${playerSize}px Arial`;
-            ctx.textAlign = 'center';
-            ctx.fillText('🧑‍💼', player.x, player.y + playerSize/2);
-            
+            const playerSize = 32;
+
+            if (playerSpriteLoaded) {
+                // 画像でプレイヤーを描画
+                ctx.drawImage(playerSprite, player.x - playerSize/2, player.y - playerSize/2, playerSize, playerSize);
+            } else {
+                // フォールバック：絵文字で描画
+                ctx.font = `${playerSize}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.fillText('🧑‍💼', player.x, player.y + playerSize/4);
+            }
+
             ctx.font = '12px Courier New';
             ctx.fillStyle = '#00ffff';
-            ctx.fillText('カイト', player.x, player.y + playerSize + 12);
-            
+            ctx.textAlign = 'center';
+            ctx.fillText('カイト', player.x, player.y + playerSize/2 + 12);
+
             // HP bar
             const barWidth = 40;
             const barHeight = 4;
             const hpRatio = player.hp / player.maxHp;
-            
+
             ctx.fillStyle = '#333';
-            ctx.fillRect(player.x - barWidth/2, player.y - 20, barWidth, barHeight);
+            ctx.fillRect(player.x - barWidth/2, player.y - playerSize/2 - 8, barWidth, barHeight);
             ctx.fillStyle = hpRatio > 0.5 ? '#44ff44' : hpRatio > 0.25 ? '#ffff44' : '#ff4444';
-            ctx.fillRect(player.x - barWidth/2, player.y - 20, barWidth * hpRatio, barHeight);
+            ctx.fillRect(player.x - barWidth/2, player.y - playerSize/2 - 8, barWidth * hpRatio, barHeight);
         }
 
         function updatePlayer() {
@@ -1882,13 +1982,14 @@
                 } else {
                     setupBattleCommands();
                 }
-            } else if (key === 'Enter' || key === ' ') {
+            } else if (key === 'Enter' || key === ' ' || key === 'z' || key === 'Z') {
+                // 決定キー（Enter, Space, Z）
                 const selectedCmd = commands[battleSystem.selectedCommand];
                 if (selectedCmd) {
                     if (showingBattleItems) {
                         selectedCmd.click();
                     } else {
-                        console.log('Key pressed, executing:', selectedCmd.dataset.command);
+                        console.log('[Battle] Command selected:', selectedCmd.dataset.command);
                         executeBattleCommand(selectedCmd.dataset.command);
                     }
                 }
