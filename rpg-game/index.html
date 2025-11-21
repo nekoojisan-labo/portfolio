@@ -602,25 +602,27 @@
             position: absolute;
             width: 50px;
             height: 50px;
-            background: rgba(15, 52, 96, 0.7);
-            border: 2px solid rgba(255, 255, 255, 0.4);
+            background: rgba(0, 180, 255, 0.95);
+            border: 3px solid #ffffff;
             border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 24px;
-            color: #fff;
+            color: #000;
+            font-weight: bold;
             user-select: none;
             -webkit-user-select: none;
             touch-action: none;
             transition: all 0.1s ease;
             cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
         }
 
         .dpad-button:active {
-            background: rgba(15, 52, 96, 1);
+            background: rgba(0, 255, 255, 1);
             transform: scale(0.95);
-            border-color: #00ffff;
+            border-color: #ffff00;
         }
 
         .dpad-up {
@@ -661,46 +663,48 @@
         .action-button {
             width: 60px;
             height: 60px;
-            background: rgba(15, 52, 96, 0.7);
-            border: 2px solid rgba(255, 255, 255, 0.4);
+            background: rgba(150, 150, 150, 0.95);
+            border: 3px solid #ffffff;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 14px;
             font-weight: bold;
-            color: #fff;
+            color: #000;
             user-select: none;
             -webkit-user-select: none;
             touch-action: none;
             transition: all 0.1s ease;
             cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
         }
 
         .action-button:active {
-            background: rgba(15, 52, 96, 1);
             transform: scale(0.95);
-            border-color: #00ffff;
+            border-color: #ffff00;
         }
 
         .action-button.primary {
-            background: rgba(0, 255, 100, 0.3);
-            border-color: rgba(0, 255, 100, 0.5);
+            background: rgba(50, 220, 100, 0.95);
+            border-color: #ffffff;
+            color: #000;
         }
 
         .action-button.primary:active {
-            background: rgba(0, 255, 100, 0.6);
-            border-color: #00ff66;
+            background: rgba(100, 255, 150, 1);
+            border-color: #ffff00;
         }
 
         .action-button.secondary {
-            background: rgba(255, 100, 0, 0.3);
-            border-color: rgba(255, 100, 0, 0.5);
+            background: rgba(255, 120, 50, 0.95);
+            border-color: #ffffff;
+            color: #000;
         }
 
         .action-button.secondary:active {
-            background: rgba(255, 100, 0, 0.6);
-            border-color: #ff6633;
+            background: rgba(255, 180, 100, 1);
+            border-color: #ffff00;
         }
 
         /* タッチデバイスではさらに不透明度を上げる */
