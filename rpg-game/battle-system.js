@@ -205,18 +205,9 @@ class BattleSystem {
             this.startPlayerTurn();
         }, 1000);
 
-        // 戦闘BGM開始（フィールドBGMを停止してから）
+        // 戦闘BGM開始（新しいBGMシステムを使用）
         if (window.bgmSystem) {
-            // 前のBGMを停止
-            if (window.bgmSystem.audio) {
-                window.bgmSystem.stop(true);
-            }
-
-            // 戦闘BGMを開始
-            setTimeout(() => {
-                const bgmTrack = enemy.boss ? 'boss_battle' : 'battle';
-                window.bgmSystem.play(bgmTrack, true);
-            }, 500);
+            window.bgmSystem.startBattleBGM(enemy.boss || false);
         }
     }
     
@@ -482,20 +473,9 @@ class BattleSystem {
             document.getElementById('gameUI').style.display = 'block';
         }
 
-        // フィールドBGMに戻す（戦闘BGMを停止してから）
-        if (window.bgmSystem && window.mapSystem) {
-            // 戦闘BGMを停止
-            if (window.bgmSystem.audio) {
-                window.bgmSystem.stop(true);
-            }
-
-            // フィールドBGMを開始
-            setTimeout(() => {
-                const currentMap = window.mapSystem.maps[window.mapSystem.currentMap];
-                if (currentMap && currentMap.bgm) {
-                    window.bgmSystem.play(currentMap.bgm, true);
-                }
-            }, 500);
+        // フィールドBGMに戻す（新しいBGMシステムを使用）
+        if (window.bgmSystem) {
+            window.bgmSystem.endBattleBGM();
         }
         
         // UI更新

@@ -4,12 +4,16 @@
 
 class BGMSystem {
     constructor() {
-        this.currentBGM = null;
+        this.currentBGM = null;      // 現在再生中のBGM ID
+        this.currentScene = null;    // 現在のシーン（'field', 'battle', 'opening'）
+        this.fieldBGM = null;        // フィールドBGM（バトル後に復帰用）
         this.audio = null;
-        this.volume = 0.3; // デフォルト音量（0.0 - 1.0）
-        this.fadeDuration = 1000; // フェード時間（ミリ秒）
+        this.volume = 0.3;           // デフォルト音量（0.0 - 1.0）
+        this.fadeDuration = 1000;    // フェード時間（ミリ秒）
         this.isFading = false;
-        this.isUnlocked = false; // ブラウザの自動再生ロック解除フラグ
+        this.isTransitioning = false; // BGM切り替え中フラグ
+        this.isUnlocked = false;     // ブラウザの自動再生ロック解除フラグ
+        this.pendingBGM = null;      // 切り替え待ちのBGM
 
         // BGM定義（実際の音楽ファイルパスはここで設定）
         this.bgmTracks = {
@@ -115,17 +119,63 @@ class BGMSystem {
         console.log('BGM System initialized');
     }
 
-    // BGM再生
-    play(trackId, fadeIn = false) {
+    // BGM再生（内部用）
+    _playInternal(trackId, fadeIn = false) {
         const track = this.bgmTracks[trackId];
 
         if (!track) {
-            console.warn(`BGM track not found: ${trackId}`);
+            console.warn(`[BGM] Track not found: ${trackId}`);
+            this.isTransitioning = false;
             return;
         }
 
+        // 音楽ファイルが存在しない場合
+        if (!track.path) {
+            console.log(`[BGM] "${track.name}" is not available yet.`);
+            this.isTransitioning = false;
+            return;
+        }
+
+        try {
+            console.log(`[BGM] Loading: ${track.path}`);
+            this.audio = new Audio(track.path);
+            this.audio.loop = true;
+            this.audio.volume = fadeIn ? 0 : (track.volume * this.volume);
+            this.audio.preload = 'auto';
+
+            this.audio.addEventListener('error', (e) => {
+                console.error(`[BGM ERROR] Cannot load: ${track.path}`);
+                this.isTransitioning = false;
+            });
+
+            const playPromise = this.audio.play();
+
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    this.currentBGM = trackId;
+                    this.isUnlocked = true;
+                    this.isTransitioning = false;
+                    console.log(`[BGM] ✓ Playing: ${track.name} (scene: ${this.currentScene})`);
+
+                    if (fadeIn) {
+                        this.fadeIn(track.volume * this.volume);
+                    }
+                }).catch(error => {
+                    console.warn(`[BGM] Auto-play blocked: ${error.message}`);
+                    this.waitForUserInteraction(trackId, fadeIn);
+                });
+            }
+        } catch (error) {
+            console.error('[BGM] Failed to create audio:', error);
+            this.isTransitioning = false;
+        }
+    }
+
+    // BGM再生（外部からの呼び出し用）
+    play(trackId, fadeIn = false) {
         // 同じBGMが既に再生中の場合はスキップ
         if (this.currentBGM === trackId && this.audio && !this.audio.paused) {
+            console.log(`[BGM] Already playing: ${trackId}`);
             return;
         }
 
@@ -135,65 +185,126 @@ class BGMSystem {
             return;
         }
 
-        // 音楽ファイルが存在しない場合（まだ用意されていない）
-        if (!track.path) {
-            console.log(`BGM "${track.name}" is not available yet. Path: ${track.path}`);
+        // 切り替え中の場合は待機リストに追加
+        if (this.isTransitioning) {
+            console.log(`[BGM] Transition in progress, queuing: ${trackId}`);
+            this.pendingBGM = { trackId, fadeIn };
             return;
         }
 
-        // 新しいBGMを準備（前のBGMは呼び出し側で停止済みと想定）
-        try {
-            console.log(`[BGM] Attempting to load: ${track.path}`);
-            this.audio = new Audio(track.path);
+        this._playInternal(trackId, fadeIn);
+    }
 
-            // ループ設定を確実に適用
-            this.audio.loop = true;
-            this.audio.volume = fadeIn ? 0 : (track.volume * this.volume);
+    // フィールドBGM切り替え（マップ移動時）
+    changeFieldBGM(trackId) {
+        console.log(`[BGM] === Field BGM Change: ${this.currentBGM} -> ${trackId} ===`);
 
-            // プリロード設定
-            this.audio.preload = 'auto';
+        // 同じBGMなら何もしない
+        if (this.currentBGM === trackId && this.audio && !this.audio.paused) {
+            console.log(`[BGM] Same field BGM, continuing: ${trackId}`);
+            return;
+        }
 
-            // エラーハンドリング
-            this.audio.addEventListener('error', (e) => {
-                console.error(`[BGM ERROR] File not found or cannot be loaded: ${track.path}`);
-                console.error('Error details:', e);
-                console.log(`[BGM] Make sure the file exists at: rpg-game/${track.path}`);
+        // 切り替え中なら待機
+        if (this.isTransitioning) {
+            console.log(`[BGM] Transition in progress, queuing field: ${trackId}`);
+            this.pendingBGM = { trackId, fadeIn: true, scene: 'field' };
+            return;
+        }
+
+        this.isTransitioning = true;
+        this.currentScene = 'field';
+        this.fieldBGM = trackId;
+
+        // 前のBGMがあればフェードアウト
+        if (this.audio && this.currentBGM) {
+            this.fadeOut(() => {
+                if (this.audio) {
+                    this.audio.pause();
+                    this.audio = null;
+                }
+                this.currentBGM = null;
+                // 少し待ってから新しいBGMを開始
+                setTimeout(() => {
+                    this._playInternal(trackId, true);
+                }, 100);
             });
+        } else {
+            this._playInternal(trackId, true);
+        }
+    }
 
-            // ロード完了
-            this.audio.addEventListener('canplaythrough', () => {
-                console.log(`[BGM] File loaded successfully: ${track.name}`);
+    // バトルBGM開始
+    startBattleBGM(isBoss = false) {
+        const trackId = isBoss ? 'boss_battle' : 'battle';
+        console.log(`[BGM] === Battle Start: ${trackId} ===`);
+
+        // 切り替え中なら待機
+        if (this.isTransitioning) {
+            console.log(`[BGM] Transition in progress, queuing battle: ${trackId}`);
+            this.pendingBGM = { trackId, fadeIn: true, scene: 'battle' };
+            return;
+        }
+
+        // 現在のフィールドBGMを保存
+        if (this.currentScene === 'field') {
+            this.fieldBGM = this.currentBGM;
+        }
+
+        this.isTransitioning = true;
+        this.currentScene = 'battle';
+
+        // フィールドBGMを停止してからバトルBGMを開始
+        if (this.audio && this.currentBGM) {
+            this.fadeOut(() => {
+                if (this.audio) {
+                    this.audio.pause();
+                    this.audio = null;
+                }
+                this.currentBGM = null;
+                setTimeout(() => {
+                    this._playInternal(trackId, true);
+                }, 100);
             });
+        } else {
+            this._playInternal(trackId, true);
+        }
+    }
 
-            // ループ開始時のログ
-            this.audio.addEventListener('ended', () => {
-                console.log(`[BGM] Track ended (should loop): ${track.name}`);
+    // バトル終了後、フィールドBGMに復帰
+    endBattleBGM() {
+        console.log(`[BGM] === Battle End, returning to field: ${this.fieldBGM} ===`);
+
+        // 切り替え中なら待機
+        if (this.isTransitioning) {
+            console.log(`[BGM] Transition in progress, queuing field return`);
+            this.pendingBGM = { trackId: this.fieldBGM, fadeIn: true, scene: 'field' };
+            return;
+        }
+
+        if (!this.fieldBGM) {
+            console.log(`[BGM] No field BGM to return to`);
+            this.stop(true);
+            return;
+        }
+
+        this.isTransitioning = true;
+        this.currentScene = 'field';
+
+        // バトルBGMを停止してからフィールドBGMを開始
+        if (this.audio && this.currentBGM) {
+            this.fadeOut(() => {
+                if (this.audio) {
+                    this.audio.pause();
+                    this.audio = null;
+                }
+                this.currentBGM = null;
+                setTimeout(() => {
+                    this._playInternal(this.fieldBGM, true);
+                }, 100);
             });
-
-            // 再生試行
-            const playPromise = this.audio.play();
-
-            if (playPromise !== undefined) {
-                playPromise.then(() => {
-                    this.currentBGM = trackId;
-                    this.isUnlocked = true;
-                    console.log(`[BGM] ✓ Now playing: ${track.name} (loop: ${this.audio.loop})`);
-
-                    // フェードイン
-                    if (fadeIn) {
-                        this.fadeIn(track.volume * this.volume);
-                    }
-                }).catch(error => {
-                    console.warn(`[BGM] Playback failed (browser auto-play policy): ${error.message}`);
-                    console.log('[BGM] Click anywhere on the page to enable audio');
-
-                    // ユーザー操作を待つ
-                    this.waitForUserInteraction(trackId, fadeIn);
-                });
-            }
-
-        } catch (error) {
-            console.error('[BGM] Failed to create audio:', error);
+        } else {
+            this._playInternal(this.fieldBGM, true);
         }
     }
 
