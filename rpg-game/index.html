@@ -2132,39 +2132,47 @@
 
         function executeBattleCommand(command) {
             console.log('Executing command:', command, 'waiting:', battleSystem.waitingForCommand);
-            
+
             // 連続実行を防ぐ
             if (!battleSystem.waitingForCommand) {
                 console.log('Not waiting for command, ignoring');
                 return;
             }
-            battleSystem.waitingForCommand = false;
-            
-            const commands = document.getElementById('battleCommands');
-            commands.style.display = 'none';
-            
-            switch(command) {
-                case 'attack':
-                    console.log('Player attack!');
-                    battleSystem.playerAttack(player);
-                    break;
-                case 'kamui':
-                    console.log('Player kamui!');
-                    battleSystem.playerKamui(player);
-                    break;
-                case 'defend':
-                    console.log('Player defend!');
-                    battleSystem.playerDefend(player);
-                    break;
-                case 'item':
-                    console.log('Player item!');
-                    showBattleItemMenu();
-                    break;
-                case 'escape':
-                    console.log('Player escape!');
-                    battleSystem.tryEscape();
-                    break;
+
+            // アイテムと逃走は即座に実行（全体コマンド）
+            if (command === 'item') {
+                showBattleItemMenu();
+                return;
             }
+
+            if (command === 'escape') {
+                battleSystem.waitingForCommand = false;
+                const commands = document.getElementById('battleCommands');
+                commands.style.display = 'none';
+                battleSystem.tryEscape();
+                return;
+            }
+
+            // 通常のコマンドはpartyCommandsに保存
+            const partyMembers = battleSystem.getPartyMembers();
+            const currentMember = partyMembers[battleSystem.currentMemberIndex];
+
+            battleSystem.partyCommands[battleSystem.currentMemberIndex] = {
+                member: currentMember,
+                command: command
+            };
+
+            console.log(`Command saved for ${currentMember.name}: ${command}`);
+
+            battleSystem.waitingForCommand = false;
+            const commandsEl = document.getElementById('battleCommands');
+            commandsEl.style.display = 'none';
+
+            // 次のメンバーのコマンド選択へ
+            battleSystem.currentMemberIndex++;
+            setTimeout(() => {
+                battleSystem.showNextMemberCommand();
+            }, 300);
         }
 
         function showMessage(text) {

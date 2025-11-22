@@ -11,7 +11,12 @@ class BattleSystem {
         this.battleLog = [];
         this.turnCount = 0;
         this.waitingForCommand = false;
-        
+
+        // パーティバトル設定
+        this.partyCommands = []; // 各パーティメンバーのコマンドを保存
+        this.currentMemberIndex = 0; // 現在コマンド選択中のメンバー
+        this.allCommandsSelected = false; // 全員のコマンド選択完了フラグ
+
         // エンカウント設定
         this.encounterSteps = 0;
         this.encounterThreshold = this.getRandomEncounterSteps('medium');
@@ -273,12 +278,195 @@ class BattleSystem {
 
     // プレイヤーターン開始
     startPlayerTurn() {
+        // パーティメンバーを取得
+        const partyMembers = this.getPartyMembers();
+
+        // パーティコマンドを初期化
+        this.partyCommands = partyMembers.map(() => null);
+        this.currentMemberIndex = 0;
+        this.allCommandsSelected = false;
+
         this.addBattleLog(`ターン ${this.turnCount}`);
-        this.addBattleLog('コマンドを せんたくしてください');
-        this.waitingForCommand = true;
-        this.showCommands();
+
+        // 最初のメンバーのコマンド選択開始
+        this.showNextMemberCommand();
     }
-    
+
+    // パーティメンバーを取得
+    getPartyMembers() {
+        const members = [window.player];
+        if (window.partySystem) {
+            members.push(...window.partySystem.getMembers());
+        }
+        return members;
+    }
+
+    // 次のメンバーのコマンド選択を表示
+    showNextMemberCommand() {
+        const partyMembers = this.getPartyMembers();
+
+        if (this.currentMemberIndex >= partyMembers.length) {
+            // 全員のコマンド選択完了
+            this.allCommandsSelected = true;
+            this.executeTurn();
+            return;
+        }
+
+        const currentMember = partyMembers[this.currentMemberIndex];
+        this.addBattleLog(`${currentMember.name || 'カイト'}の こうどう`);
+
+        this.waitingForCommand = true;
+        this.selectedCommand = 0;
+        this.showCommands();
+        this.updateCurrentMemberDisplay();
+    }
+
+    // 現在選択中のメンバーをUIに表示
+    updateCurrentMemberDisplay() {
+        const partyMembers = this.getPartyMembers();
+        const statusContainer = document.getElementById('battlePartyStatus');
+        if (!statusContainer) return;
+
+        // 全てのステータスボックスのハイライトを更新
+        const statusBoxes = statusContainer.children;
+        for (let i = 0; i < statusBoxes.length; i++) {
+            if (i === this.currentMemberIndex && this.waitingForCommand) {
+                statusBoxes[i].style.border = '3px solid #ffff00';
+                statusBoxes[i].style.boxShadow = '0 0 20px rgba(255, 255, 0, 0.8)';
+            } else {
+                statusBoxes[i].style.border = '2px solid #00ffff';
+                statusBoxes[i].style.boxShadow = '0 0 15px rgba(0, 255, 255, 0.3)';
+            }
+        }
+    }
+
+    // ターン実行（全員のコマンドを速度順に実行）
+    executeTurn() {
+        console.log('Executing turn with commands:', this.partyCommands);
+
+        // 全てのハイライトをクリア
+        const statusContainer = document.getElementById('battlePartyStatus');
+        if (statusContainer) {
+            const statusBoxes = statusContainer.children;
+            for (let i = 0; i < statusBoxes.length; i++) {
+                statusBoxes[i].style.border = '2px solid #00ffff';
+                statusBoxes[i].style.boxShadow = '0 0 15px rgba(0, 255, 255, 0.3)';
+            }
+        }
+
+        // パーティメンバーの行動を速度順にソート
+        const actions = this.partyCommands
+            .map((cmd, index) => ({
+                ...cmd,
+                speed: cmd.member.speed || 5,
+                index
+            }))
+            .sort((a, b) => b.speed - a.speed); // 速度が高い順
+
+        // 行動を順番に実行
+        this.executeActionsSequentially(actions, 0);
+    }
+
+    // 行動を順番に実行
+    executeActionsSequentially(actions, actionIndex) {
+        if (actionIndex >= actions.length) {
+            // 全員の行動が終わったら敵のターンへ
+            setTimeout(() => this.enemyTurn(window.player), 1000);
+            return;
+        }
+
+        const action = actions[actionIndex];
+        const member = action.member;
+        const command = action.command;
+
+        console.log(`Executing action for ${member.name}: ${command}`);
+
+        // コマンドを実行
+        switch (command) {
+            case 'attack':
+                this.memberAttack(member, () => {
+                    // 次の行動へ
+                    this.executeActionsSequentially(actions, actionIndex + 1);
+                });
+                break;
+            case 'kamui':
+                this.memberKamui(member, () => {
+                    this.executeActionsSequentially(actions, actionIndex + 1);
+                });
+                break;
+            case 'defend':
+                this.memberDefend(member, () => {
+                    this.executeActionsSequentially(actions, actionIndex + 1);
+                });
+                break;
+            default:
+                // 不明なコマンドの場合は次へ
+                this.executeActionsSequentially(actions, actionIndex + 1);
+                break;
+        }
+    }
+
+    // メンバーの攻撃
+    memberAttack(member, callback) {
+        const baseDamage = member.attack || 10;
+        const variance = Math.floor(Math.random() * 5) - 2;
+        const damage = Math.max(1, baseDamage + variance - Math.floor(this.currentEnemy.defense / 2));
+
+        this.currentEnemy.currentHp = Math.max(0, this.currentEnemy.currentHp - damage);
+        this.addBattleLog(`${member.name}の こうげき！`);
+        this.addBattleLog(`${this.currentEnemy.name}に ${Math.floor(damage)}の ダメージ！`);
+
+        this.showDamageEffect(damage, true);
+        this.updateBattleUI();
+
+        // 敵が倒れたかチェック
+        if (this.currentEnemy.currentHp <= 0) {
+            this.currentEnemy.currentHp = 0;
+            this.updateBattleUI();
+            setTimeout(() => this.battleVictory(window.player), 1500);
+        } else {
+            setTimeout(callback, 1500);
+        }
+    }
+
+    // メンバーのカムイ
+    memberKamui(member, callback) {
+        const mpCost = 20;
+        if ((member.mp || 0) < mpCost) {
+            this.addBattleLog(`${member.name}の MPが たりない！`);
+            setTimeout(callback, 1000);
+            return;
+        }
+
+        member.mp = (member.mp || 0) - mpCost;
+
+        const baseDamage = (member.magic || member.attack || 10) * 2;
+        const variance = Math.floor(Math.random() * 10) - 5;
+        const damage = Math.max(1, baseDamage + variance);
+
+        this.currentEnemy.currentHp = Math.max(0, this.currentEnemy.currentHp - damage);
+        this.addBattleLog(`${member.name}は 神威の力を よびだした！`);
+        this.addBattleLog(`${this.currentEnemy.name}に ${damage}の ダメージ！`);
+
+        this.showDamageEffect(damage, true, true);
+        this.updateBattleUI();
+
+        if (this.currentEnemy.currentHp <= 0) {
+            this.currentEnemy.currentHp = 0;
+            this.updateBattleUI();
+            setTimeout(() => this.battleVictory(window.player), 1500);
+        } else {
+            setTimeout(callback, 1500);
+        }
+    }
+
+    // メンバーの防御
+    memberDefend(member, callback) {
+        this.addBattleLog(`${member.name}は みをまもっている！`);
+        member.defending = true;
+        setTimeout(callback, 1500);
+    }
+
     // 戦闘画面表示
     showBattleScreen() {
         const battleScreen = document.getElementById('battleScreen');
