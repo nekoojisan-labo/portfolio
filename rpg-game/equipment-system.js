@@ -407,24 +407,42 @@ class EquipmentSystem {
             console.error('Unknown equipment:', equipmentId);
             return false;
         }
-        
+
         console.log(`Adding equipment: ${equipmentId} x${quantity}`);
         console.log('Current inventory before add:', this.inventory);
-        
+
         if (!this.inventory[equipmentId]) {
             this.inventory[equipmentId] = {
                 ...equipment,
                 quantity: 0
             };
         }
-        
+
         this.inventory[equipmentId].quantity += quantity;
         console.log(`Added ${quantity}x ${equipment.name}`);
         console.log('Current inventory after add:', this.inventory);
         console.log('Total equipment count:', Object.keys(this.inventory).length);
         return true;
     }
-    
+
+    // 装備を削除
+    removeEquipment(equipmentId, quantity = 1) {
+        if (!this.inventory[equipmentId]) {
+            console.error('Equipment not in inventory:', equipmentId);
+            return false;
+        }
+
+        this.inventory[equipmentId].quantity -= quantity;
+        console.log(`Removed ${quantity}x ${equipmentId}`);
+
+        if (this.inventory[equipmentId].quantity <= 0) {
+            delete this.inventory[equipmentId];
+            console.log(`${equipmentId} removed from inventory (quantity 0)`);
+        }
+
+        return true;
+    }
+
     // 装備する
     equipItem(equipmentId, player) {
         const equipment = this.equipmentDatabase[equipmentId];

@@ -962,7 +962,18 @@
         <div class="menu-overlay" id="equipmentMenuOverlay">
             <div class="menu-container" style="max-width: 600px;">
                 <div class="menu-title">装備</div>
-                
+
+                <!-- パーティメンバータブ -->
+                <div class="party-tabs" id="equipmentPartyTabs" style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                    <!-- JavaScriptで動的生成 -->
+                </div>
+
+                <!-- キャラクター名表示 -->
+                <div style="margin-bottom: 10px;">
+                    <span style="font-size: 20px; color: #00ffff;" id="equipmentCharacterName">カイト</span>
+                    <span style="font-size: 16px; color: #aaa; margin-left: 10px;" id="equipmentCharacterRole">主人公</span>
+                </div>
+
                 <!-- 現在の装備 -->
                 <div style="margin-bottom: 20px;">
                     <div style="font-size: 18px; color: #ffff00; margin-bottom: 10px;">▼ 装備中</div>
@@ -998,7 +1009,7 @@
                     </div>
                 </div>
                 
-                <div class="menu-close">↑↓で選択 / ENTERで装備変更 / ESCで戻る</div>
+                <div class="menu-close">←→でキャラ切替 / ↑↓で選択 / ENTERで装備変更 / ESCで戻る</div>
             </div>
         </div>
 
@@ -1155,6 +1166,7 @@
         let menuSelectedIndex = 0;
         let itemSelectedIndex = 0;
         let equipmentSelectedIndex = 0;
+        let equipmentCurrentMemberIndex = 0;
         
         document.addEventListener('keydown', (e) => {
             // ショップが開いている場合
@@ -2303,12 +2315,46 @@
         }
         
         // 装備メニュー
+        function updateEquipmentPartyTabs() {
+            const tabsContainer = document.getElementById('equipmentPartyTabs');
+            if (!tabsContainer) return;
+
+            const partyMembers = [player, ...partySystem.getMembers()];
+            tabsContainer.innerHTML = '';
+
+            partyMembers.forEach((member, index) => {
+                const tab = document.createElement('div');
+                tab.className = 'party-tab';
+                if (index === equipmentCurrentMemberIndex) {
+                    tab.classList.add('active');
+                }
+                tab.textContent = member.name;
+                tab.style.cssText = `
+                    padding: 8px 15px;
+                    background: ${index === equipmentCurrentMemberIndex ? '#00ffff' : '#1a1a2e'};
+                    color: ${index === equipmentCurrentMemberIndex ? '#000' : '#fff'};
+                    border: 2px solid ${index === equipmentCurrentMemberIndex ? '#00ffff' : '#0f3460'};
+                    border-radius: 5px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                `;
+                tab.onclick = () => {
+                    equipmentCurrentMemberIndex = index;
+                    updateEquipmentPartyTabs();
+                    updateEquipmentDisplay();
+                };
+                tabsContainer.appendChild(tab);
+            });
+        }
+
         function openEquipmentMenu() {
             closeMenu();
             const equipmentMenuOverlay = document.getElementById('equipmentMenuOverlay');
             if (equipmentMenuOverlay) {
                 equipmentMenuOverlay.classList.add('active');
                 equipmentSelectedIndex = 0;
+                equipmentCurrentMemberIndex = 0;
+                updateEquipmentPartyTabs();
                 updateEquipmentDisplay();
                 console.log('Equipment menu opened');
             }
@@ -2324,22 +2370,51 @@
         
         function updateEquipmentDisplay() {
             console.log('updateEquipmentDisplay called');
-            console.log('equipmentSystem:', equipmentSystem);
-            console.log('equipmentSystem.inventory:', equipmentSystem ? equipmentSystem.inventory : 'N/A');
-            console.log('equipmentSystem.equipped:', equipmentSystem ? equipmentSystem.equipped : 'N/A');
-            
+
+            // 現在選択されているキャラクターを取得
+            const partyMembers = [player, ...partySystem.getMembers()];
+            const currentMember = partyMembers[equipmentCurrentMemberIndex];
+
+            if (!currentMember) {
+                console.error('Current member not found');
+                return;
+            }
+
+            // キャラクター名とロールを表示
+            document.getElementById('equipmentCharacterName').textContent = currentMember.name;
+            let role = currentMember === player ? '主人公' : currentMember.role || '';
+            if (role === 'healer') role = 'ヒーラー';
+            else if (role === 'tank') role = 'タンク';
+            else if (role === 'mage') role = 'メイジ';
+            document.getElementById('equipmentCharacterRole').textContent = role;
+
             // 装備中のアイテムを表示
-            const equipped = equipmentSystem.getEquippedItems();
-            
-            document.getElementById('equippedWeapon').textContent = 
+            let equipped = {};
+
+            // プレイヤーの場合はequipmentSystemから、パーティメンバーの場合はmember.equipmentから取得
+            if (currentMember === player) {
+                equipped = equipmentSystem.getEquippedItems();
+            } else {
+                // パーティメンバーの装備を取得
+                const memberEquipment = currentMember.equipment || {};
+                equipped = {
+                    weapon: memberEquipment.weapon ? equipmentSystem.equipmentDatabase[memberEquipment.weapon] : null,
+                    head: memberEquipment.head ? equipmentSystem.equipmentDatabase[memberEquipment.head] : null,
+                    body: memberEquipment.body ? equipmentSystem.equipmentDatabase[memberEquipment.body] : null,
+                    hands: memberEquipment.hands ? equipmentSystem.equipmentDatabase[memberEquipment.hands] : null,
+                    accessory: memberEquipment.accessory ? equipmentSystem.equipmentDatabase[memberEquipment.accessory] : null
+                };
+            }
+
+            document.getElementById('equippedWeapon').textContent =
                 equipped.weapon ? `${equipped.weapon.emoji} ${equipped.weapon.name}` : '-';
-            document.getElementById('equippedHead').textContent = 
+            document.getElementById('equippedHead').textContent =
                 equipped.head ? `${equipped.head.emoji} ${equipped.head.name}` : '-';
-            document.getElementById('equippedBody').textContent = 
+            document.getElementById('equippedBody').textContent =
                 equipped.body ? `${equipped.body.emoji} ${equipped.body.name}` : '-';
-            document.getElementById('equippedHands').textContent = 
+            document.getElementById('equippedHands').textContent =
                 equipped.hands ? `${equipped.hands.emoji} ${equipped.hands.name}` : '-';
-            document.getElementById('equippedAccessory').textContent = 
+            document.getElementById('equippedAccessory').textContent =
                 equipped.accessory ? `${equipped.accessory.emoji} ${equipped.accessory.name}` : '-';
             
             // 所持装備リストを表示
@@ -2390,15 +2465,31 @@
         }
         
         function handleEquipmentMenuInput(key) {
+            const partyMembers = [player, ...partySystem.getMembers()];
             const inventory = equipmentSystem.getEquipmentInventory();
-            
+
+            // 左右キーでキャラクター切り替え
+            if (key === 'ArrowLeft' || key === 'a' || key === 'A') {
+                equipmentCurrentMemberIndex = (equipmentCurrentMemberIndex - 1 + partyMembers.length) % partyMembers.length;
+                equipmentSelectedIndex = 0;
+                updateEquipmentPartyTabs();
+                updateEquipmentDisplay();
+                return;
+            } else if (key === 'ArrowRight' || key === 'd' || key === 'D') {
+                equipmentCurrentMemberIndex = (equipmentCurrentMemberIndex + 1) % partyMembers.length;
+                equipmentSelectedIndex = 0;
+                updateEquipmentPartyTabs();
+                updateEquipmentDisplay();
+                return;
+            }
+
             if (inventory.length === 0) {
                 if (key === 'Escape' || key === 'x' || key === 'X') {
                     closeEquipmentMenu();
                 }
                 return;
             }
-            
+
             if (key === 'ArrowUp' || key === 'w' || key === 'W') {
                 equipmentSelectedIndex = (equipmentSelectedIndex - 1 + inventory.length) % inventory.length;
                 updateEquipmentDisplay();
@@ -2415,25 +2506,55 @@
         
         function equipFromMenu(equipmentId) {
             console.log('equipFromMenu called with:', equipmentId);
-            console.log('Player stats before:', { 
-                attack: player.attack, 
-                defense: player.defense,
-                maxHp: player.maxHp,
-                maxMp: player.maxMp 
-            });
-            console.log('Equipment inventory:', equipmentSystem.inventory);
-            console.log('Currently equipped:', equipmentSystem.equipped);
-            
-            const result = equipmentSystem.equipItem(equipmentId, player);
-            
+
+            // 現在選択されているキャラクターを取得
+            const partyMembers = [player, ...partySystem.getMembers()];
+            const currentMember = partyMembers[equipmentCurrentMemberIndex];
+
+            if (!currentMember) {
+                console.error('Current member not found');
+                return;
+            }
+
+            console.log(`Equipping ${equipmentId} to ${currentMember.name}`);
+
+            // プレイヤーの場合はequipmentSystemを使用、パーティメンバーの場合は直接装備
+            let result;
+            if (currentMember === player) {
+                result = equipmentSystem.equipItem(equipmentId, player);
+            } else {
+                // パーティメンバーに装備
+                const equipment = equipmentSystem.equipmentDatabase[equipmentId];
+                if (!equipment) {
+                    showMessage('装備が見つかりません');
+                    return;
+                }
+
+                // 装備スロットから古い装備を外す
+                const slot = equipment.slot;
+                const oldEquipmentId = currentMember.equipment[slot];
+                if (oldEquipmentId) {
+                    // 古い装備をインベントリに戻す
+                    equipmentSystem.addEquipment(oldEquipmentId, 1);
+                }
+
+                // 新しい装備を装着
+                currentMember.equipment[slot] = equipmentId;
+
+                // ステータスを再計算
+                partySystem.recalculateMemberStats(currentMember);
+
+                // インベントリから装備を削除
+                equipmentSystem.removeEquipment(equipmentId, 1);
+
+                result = {
+                    success: true,
+                    message: `${currentMember.name}が${equipment.name}を装備しました`
+                };
+            }
+
             console.log('Equip result:', result);
-            console.log('Player stats after:', { 
-                attack: player.attack, 
-                defense: player.defense,
-                maxHp: player.maxHp,
-                maxMp: player.maxMp 
-            });
-            
+
             if (result.success) {
                 showMessage(result.message);
                 updateUI();
