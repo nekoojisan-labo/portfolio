@@ -16,7 +16,11 @@ class BattleSystem {
         this.encounterSteps = 0;
         this.encounterThreshold = this.getRandomEncounterSteps('medium');
         this.firstEncounter = true;  // 初回エンカウントフラグ
-        
+
+        // ボス戦設定
+        this.isBossBattle = false;
+        this.onBossDefeat = null;
+
         // 敵データベース
         this.enemyDatabase = {
             watcher: {
@@ -88,6 +92,39 @@ class BattleSystem {
                 type: 'android',
                 skills: ['laserBeam', 'barrier', 'analyze'],
                 description: 'アークの精鋭機械兵。バランスが良い。'
+            },
+            // ボスエネミー
+            corrupted_drone_boss: {
+                name: '暴走監視ドローン・Ω',
+                emoji: '🛸',
+                hp: 150,
+                maxHp: 150,
+                mp: 50,
+                attack: 20,
+                defense: 15,
+                exp: 200,
+                gold: 300,
+                type: 'boss',
+                boss: true,
+                skills: ['omega_laser', 'emp_pulse', 'repair_protocol'],
+                description: 'アークの監視システムが暴走した巨大ドローン。強力なレーザー攻撃を放つ。',
+                bossId: 'corrupted_drone_boss'
+            },
+            rogue_ai_core: {
+                name: '暴走AIコア',
+                emoji: '⚡',
+                hp: 250,
+                maxHp: 250,
+                mp: 100,
+                attack: 25,
+                defense: 20,
+                exp: 500,
+                gold: 800,
+                type: 'boss',
+                boss: true,
+                skills: ['data_storm', 'system_hack', 'firewall'],
+                description: 'アークのコアシステムの一部。圧倒的な計算能力で攻撃する。',
+                bossId: 'rogue_ai_core'
             }
         };
         
@@ -180,8 +217,10 @@ class BattleSystem {
     }
     
     // 戦闘開始
-    startBattle(enemy) {
+    startBattle(enemy, isBossBattle = false, onBossDefeat = null) {
         this.inBattle = true;
+        this.isBossBattle = isBossBattle || enemy.boss || false;
+        this.onBossDefeat = onBossDefeat;
         this.currentEnemy = { ...enemy }; // 敵データをコピー
         // currentHpを確実に初期化
         if (!this.currentEnemy.currentHp) {
@@ -210,7 +249,28 @@ class BattleSystem {
             window.bgmSystem.startBattleBGM(enemy.boss || false);
         }
     }
-    
+
+    // ボス戦を開始するヘルパーメソッド
+    startBossBattle(bossId, onDefeat = null) {
+        const bossData = this.enemyDatabase[bossId];
+        if (!bossData) {
+            console.error(`Boss ${bossId} not found in enemy database`);
+            return false;
+        }
+
+        const boss = {
+            ...bossData,
+            currentHp: bossData.hp,
+            currentMp: bossData.mp || 0,
+            maxHp: bossData.maxHp || bossData.hp,
+            id: bossId
+        };
+
+        this.startBattle(boss, true, onDefeat);
+        console.log(`🔥 Boss battle started: ${boss.name}`);
+        return true;
+    }
+
     // プレイヤーターン開始
     startPlayerTurn() {
         this.addBattleLog(`ターン ${this.turnCount}`);
@@ -419,11 +479,11 @@ class BattleSystem {
                     }
                     
                     // 戦闘終了
-                    setTimeout(() => this.endBattle(), 2000);
+                    setTimeout(() => this.endBattle(true), 2000);
                 }, 1000);
             } else {
                 // レベルアップしない場合は戦闘終了
-                setTimeout(() => this.endBattle(), 2000);
+                setTimeout(() => this.endBattle(true), 2000);
             }
         }, 1000);
     }
@@ -442,12 +502,19 @@ class BattleSystem {
     // 逃走処理
     tryEscape() {
         console.log('tryEscape called');
-        
+
+        // ボス戦では逃げられない
+        if (this.isBossBattle) {
+            this.addBattleLog('ボスせんから にげることは できない！');
+            setTimeout(() => this.enemyTurn(window.player), 1500);
+            return;
+        }
+
         const escapeChance = Math.random();
-        
+
         if (escapeChance > 0.4) { // 60%の確率で逃走成功
             this.addBattleLog('うまく にげきれた！');
-            setTimeout(() => this.endBattle(), 1000);
+            setTimeout(() => this.endBattle(false), 1000);
         } else {
             this.addBattleLog('にげられない！');
             // 逃走失敗時も敵のターンへ
@@ -456,12 +523,18 @@ class BattleSystem {
     }
     
     // 戦闘終了
-    endBattle() {
+    endBattle(victory = false) {
+        const wasBossBattle = this.isBossBattle;
+        const bossId = this.currentEnemy ? this.currentEnemy.bossId : null;
+        const bossDefeatCallback = this.onBossDefeat;
+
         this.inBattle = false;
         this.currentEnemy = null;
         this.turnCount = 0;
         this.waitingForCommand = false;
         this.battleLog = [];
+        this.isBossBattle = false;
+        this.onBossDefeat = null;
 
         // 戦闘後は少し安全期間を設ける
         this.encounterSteps = 0;
@@ -476,6 +549,24 @@ class BattleSystem {
         // フィールドBGMに戻す（新しいBGMシステムを使用）
         if (window.bgmSystem) {
             window.bgmSystem.endBattleBGM();
+        }
+
+        // ボス戦勝利時のコールバック実行
+        if (wasBossBattle && victory && bossDefeatCallback) {
+            setTimeout(() => {
+                bossDefeatCallback(bossId);
+            }, 500);
+        }
+
+        // ボス戦勝利イベントをトリガー
+        if (wasBossBattle && victory && window.storyEventSystem && bossId) {
+            setTimeout(() => {
+                window.storyEventSystem.triggerEvent('shrine_path_opens', {
+                    storyFlags: window.storyFlags,
+                    player: window.player,
+                    mapSystem: window.mapSystem
+                });
+            }, 1000);
         }
         
         // UI更新

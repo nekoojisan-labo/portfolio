@@ -1090,6 +1090,8 @@
     <script src="battle-system.js"></script>
     <script src="map-system.js"></script>
     <script src="bgm-system.js"></script>
+    <script src="party-system.js"></script>
+    <script src="story-events.js"></script>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
@@ -1406,7 +1408,9 @@
             battleSystem = new BattleSystem();
             mapSystem = new MapSystem();
             bgmSystem = new BGMSystem();
-            
+            partySystem = new PartySystem();
+            storyEventSystem = new StoryEventSystem();
+
             // デバッグ用: 初期アイテムを追加
             itemSystem.addItem('heal_potion', 3);
             itemSystem.addItem('energy_core', 2);
@@ -1442,6 +1446,9 @@
             window.magicSystem = magicSystem;
             window.bgmSystem = bgmSystem;
             window.mapSystem = mapSystem;
+            window.partySystem = partySystem;
+            window.storyEventSystem = storyEventSystem;
+            window.storyFlags = storyFlags;
             
             // デバッグ用: 初期魔法を習得
             magicSystem.learnMagic('heal');
@@ -1457,19 +1464,14 @@
                 bgmSystem.play(initialMap.bgm, true);
             }
 
-            // 開始直後にアカリとの会話を表示
-            setTimeout(() => {
-                showMessage('アカリ: カイト！やっと会えた。この街、おかしいよね？人々の様子が...。');
-                setTimeout(() => {
-                    showMessage('アカリ: あなたの手...その紋様！神威の力に目覚めたの？信じられない...！');
-                    setTimeout(() => {
-                        showMessage('アカリ: この力があれば、きっと何かできるはず。一緒に、この街の異変を調べよう！');
-                        setTimeout(() => {
-                            showMessage('矢印キー（↑↓←→）で移動、Zキーで話しかけ、Xキーでメニューを開く。');
-                        }, 3000);
-                    }, 3000);
-                }, 3000);
-            }, 500);
+            // チャプター1開始イベントを自動再生
+            storyEventSystem.checkAutoEvents({
+                storyFlags,
+                player,
+                mapSystem,
+                magicSystem,
+                partySystem
+            });
 
             // デバッグ用: グローバルアクセス
             window.debugMapSystem = mapSystem;
