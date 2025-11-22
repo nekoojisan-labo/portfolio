@@ -638,7 +638,7 @@ class BattleSystem {
             if (enemyHpFill) {
                 enemyHpFill.style.width = (enemyHpRatio * 100) + '%';
             }
-            
+
             // 敵が倒れたら表示を更新
             if (this.currentEnemy.currentHp <= 0) {
                 const enemySprite = document.getElementById('enemySprite');
@@ -648,21 +648,80 @@ class BattleSystem {
                 }
             }
         }
-        
-        // プレイヤーステータス更新
-        if (window.player) {
-            const battlePlayerLevel = document.getElementById('battlePlayerLevel');
-            const battlePlayerHP = document.getElementById('battlePlayerHP');
-            const battlePlayerMaxHP = document.getElementById('battlePlayerMaxHP');
-            const battlePlayerMP = document.getElementById('battlePlayerMP');
-            const battlePlayerMaxMP = document.getElementById('battlePlayerMaxMP');
-            
-            if (battlePlayerLevel) battlePlayerLevel.textContent = window.player.level;
-            if (battlePlayerHP) battlePlayerHP.textContent = Math.max(0, window.player.hp);
-            if (battlePlayerMaxHP) battlePlayerMaxHP.textContent = window.player.maxHp;
-            if (battlePlayerMP) battlePlayerMP.textContent = window.player.mp;
-            if (battlePlayerMaxMP) battlePlayerMaxMP.textContent = window.player.maxMp;
+
+        // パーティメンバー全員のステータス更新
+        this.updatePartyStatus();
+    }
+
+    // パーティメンバーのステータス表示を更新
+    updatePartyStatus() {
+        const statusContainer = document.getElementById('battlePartyStatus');
+        if (!statusContainer) return;
+
+        // プレイヤー + パーティメンバー
+        const allMembers = [window.player];
+        if (window.partySystem) {
+            allMembers.push(...window.partySystem.getMembers());
         }
+
+        // ステータスボックスを生成
+        statusContainer.innerHTML = '';
+        allMembers.forEach((member, index) => {
+            const hpRatio = Math.max(0, Math.min(1, (member.hp || member.maxHp) / (member.maxHp || 100)));
+            const mpRatio = Math.max(0, Math.min(1, (member.mp || member.maxMp) / (member.maxMp || 50)));
+
+            const statusBox = document.createElement('div');
+            statusBox.style.cssText = `
+                background: rgba(0, 0, 0, 0.9);
+                border: 2px solid #00ffff;
+                border-radius: 5px;
+                padding: 8px;
+                min-width: 220px;
+                box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+            `;
+
+            // HP色を設定
+            let hpColor = '#44ff44';
+            if (hpRatio <= 0.25) hpColor = '#ff4444';
+            else if (hpRatio <= 0.5) hpColor = '#ffff44';
+
+            statusBox.innerHTML = `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px; color: #00ffff;">
+                    <span>${member.name || 'カイト'}</span>
+                    <span>Lv.${member.level || 1}</span>
+                </div>
+                <div style="margin-bottom: 3px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 2px;">
+                        <span style="color: #aaa;">HP</span>
+                        <span style="color: #fff;">${Math.max(0, member.hp || member.maxHp)}/${member.maxHp || 100}</span>
+                    </div>
+                    <div style="background: #333; height: 8px; border-radius: 4px; overflow: hidden;">
+                        <div style="
+                            width: ${hpRatio * 100}%;
+                            height: 100%;
+                            background: linear-gradient(90deg, ${hpColor}, ${hpColor}dd);
+                            transition: width 0.3s;
+                        "></div>
+                    </div>
+                </div>
+                <div>
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 2px;">
+                        <span style="color: #aaa;">MP</span>
+                        <span style="color: #fff;">${member.mp || member.maxMp}/${member.maxMp || 50}</span>
+                    </div>
+                    <div style="background: #333; height: 6px; border-radius: 3px; overflow: hidden;">
+                        <div style="
+                            width: ${mpRatio * 100}%;
+                            height: 100%;
+                            background: linear-gradient(90deg, #4444ff, #4444ffdd);
+                            transition: width 0.3s;
+                        "></div>
+                    </div>
+                </div>
+            `;
+
+            statusContainer.appendChild(statusBox);
+        });
     }
     
     // コマンド表示

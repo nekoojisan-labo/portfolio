@@ -876,6 +876,12 @@
         <div class="menu-overlay" id="menuOverlay">
             <div class="menu-container">
                 <div class="menu-title">メニュー</div>
+
+                <!-- パーティメンバータブ -->
+                <div class="party-tabs" id="partyTabs" style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                    <!-- JavaScriptで動的生成 -->
+                </div>
+
                 <div class="menu-content-wrapper" style="display: flex; gap: 20px;">
                     <!-- キャラクター立ち絵 -->
                     <div class="character-portrait" style="flex-shrink: 0;">
@@ -883,13 +889,17 @@
                              alt="カイト"
                              style="width: 120px; height: 240px; object-fit: contain; border: 2px solid #0f3460; border-radius: 8px; background: rgba(0,0,0,0.3);"
                              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                        <div style="display: none; width: 120px; height: 240px; background: rgba(0,0,0,0.3); border: 2px solid #0f3460; border-radius: 8px; align-items: center; justify-content: center; font-size: 64px;">🧑‍💼</div>
+                        <div id="menuCharacterEmoji" style="display: none; width: 120px; height: 240px; background: rgba(0,0,0,0.3); border: 2px solid #0f3460; border-radius: 8px; align-items: center; justify-content: center; font-size: 64px;">🧑‍💼</div>
                     </div>
                     <div style="flex: 1;">
                         <div class="menu-stats">
                             <div class="menu-stat-row">
                                 <span>名前:</span>
-                                <span>カイト</span>
+                                <span id="menuCharacterName">カイト</span>
+                            </div>
+                            <div class="menu-stat-row">
+                                <span>役割:</span>
+                                <span id="menuCharacterRole">主人公</span>
                             </div>
                             <div class="menu-stat-row">
                                 <span>レベル:</span>
@@ -911,11 +921,11 @@
                                 <span>防御力:</span>
                                 <span id="menuDefense">5</span>
                             </div>
-                            <div class="menu-stat-row">
+                            <div class="menu-stat-row" id="menuExpRow">
                                 <span>経験値:</span>
                                 <span id="menuExp">0</span>
                             </div>
-                            <div class="menu-stat-row">
+                            <div class="menu-stat-row" id="menuGoldRow">
                                 <span>ゴールド:</span>
                                 <span id="menuGold">0</span>
                             </div>
@@ -929,7 +939,7 @@
                     <div class="menu-option" data-menu="kamui">神威</div>
                     <div class="menu-option" data-menu="close">閉じる</div>
                 </div>
-                <div class="menu-close">↑↓で選択 / ENTERで決定 / Xキーで閉じる</div>
+                <div class="menu-close">←→でキャラ切替 / ↑↓で選択 / ENTERで決定 / Xキーで閉じる</div>
             </div>
         </div>
         
@@ -1013,29 +1023,9 @@
                     <div class="command-item" data-command="item">どうぐ</div>
                     <div class="command-item" data-command="escape">にげる</div>
                 </div>
-                <div class="battle-status" style="display: flex; align-items: center; gap: 15px;">
-                    <!-- プレイヤー立ち絵（戦闘用） -->
-                    <div class="battle-player-portrait">
-                        <img id="battlePlayerPortrait" src="assets/characters/kaito_battle.png"
-                             alt="カイト"
-                             style="width: 80px; height: 160px; object-fit: contain;"
-                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                        <div style="display: none; width: 80px; height: 160px; align-items: center; justify-content: center; font-size: 48px;">🧑‍💼</div>
-                    </div>
-                    <div>
-                        <div class="status-row">
-                            <span>カイト</span>
-                            <span>Lv.<span id="battlePlayerLevel">1</span></span>
-                        </div>
-                        <div class="status-row">
-                            <span>HP</span>
-                            <span><span id="battlePlayerHP">100</span>/<span id="battlePlayerMaxHP">100</span></span>
-                        </div>
-                        <div class="status-row">
-                            <span>MP</span>
-                            <span><span id="battlePlayerMP">50</span>/<span id="battlePlayerMaxMP">50</span></span>
-                        </div>
-                    </div>
+                <!-- パーティメンバーステータス -->
+                <div id="battlePartyStatus" style="position: absolute; bottom: 10px; right: 10px; display: flex; flex-direction: column; gap: 8px;">
+                    <!-- JavaScriptで動的生成 -->
                 </div>
             </div>
         </div>
@@ -1759,11 +1749,15 @@
         }
 
         // メニューシステム
+        let selectedPartyMemberIndex = 0;
+
         function openMenu() {
             const menuOverlay = document.getElementById('menuOverlay');
             if (menuOverlay) {
                 menuOverlay.classList.add('active');
                 menuSelectedIndex = 0;
+                selectedPartyMemberIndex = 0;
+                updatePartyTabs();
                 updateMenuStats();
                 updateMenuSelection();
                 console.log('Menu opened');
@@ -1790,8 +1784,25 @@
         
         function handleMenuInput(key) {
             const options = document.querySelectorAll('#menuOptions .menu-option');
-            
-            if (key === 'ArrowUp' || key === 'w' || key === 'W') {
+
+            // 左右キーでパーティメンバー切り替え
+            if (key === 'ArrowLeft' || key === 'a' || key === 'A') {
+                const allMembers = [player];
+                if (window.partySystem) {
+                    allMembers.push(...window.partySystem.getMembers());
+                }
+                selectedPartyMemberIndex = (selectedPartyMemberIndex - 1 + allMembers.length) % allMembers.length;
+                updatePartyTabs();
+                updateMenuStats();
+            } else if (key === 'ArrowRight' || key === 'd' || key === 'D') {
+                const allMembers = [player];
+                if (window.partySystem) {
+                    allMembers.push(...window.partySystem.getMembers());
+                }
+                selectedPartyMemberIndex = (selectedPartyMemberIndex + 1) % allMembers.length;
+                updatePartyTabs();
+                updateMenuStats();
+            } else if (key === 'ArrowUp' || key === 'w' || key === 'W') {
                 menuSelectedIndex = (menuSelectedIndex - 1 + options.length) % options.length;
                 updateMenuSelection();
             } else if (key === 'ArrowDown' || key === 's' || key === 'S') {
@@ -1825,20 +1836,107 @@
             }
         }
 
+        // パーティメンバータブの更新
+        function updatePartyTabs() {
+            const tabsContainer = document.getElementById('partyTabs');
+            if (!tabsContainer) return;
+
+            // プレイヤー + パーティメンバー
+            const allMembers = [player];
+            if (window.partySystem) {
+                allMembers.push(...window.partySystem.getMembers());
+            }
+
+            // タブを生成
+            tabsContainer.innerHTML = '';
+            allMembers.forEach((member, index) => {
+                const tab = document.createElement('button');
+                tab.style.cssText = `
+                    padding: 8px 15px;
+                    background: ${index === selectedPartyMemberIndex ? 'linear-gradient(135deg, #00ffff 0%, #0080ff 100%)' : 'rgba(0, 128, 255, 0.3)'};
+                    border: 2px solid ${index === selectedPartyMemberIndex ? '#00ffff' : '#0080ff'};
+                    border-radius: 5px;
+                    color: ${index === selectedPartyMemberIndex ? '#000000' : '#ffffff'};
+                    font-size: 14px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                `;
+                tab.textContent = member.name || 'カイト';
+                tab.onclick = () => {
+                    selectedPartyMemberIndex = index;
+                    updatePartyTabs();
+                    updateMenuStats();
+                };
+                tabsContainer.appendChild(tab);
+            });
+        }
+
+        // メニューのステータス表示を更新
         function updateMenuStats() {
-            document.getElementById('menuLevel').textContent = player.level;
-            document.getElementById('menuHP').textContent = Math.max(0, player.hp);
-            document.getElementById('menuMaxHP').textContent = player.maxHp;
-            document.getElementById('menuMP').textContent = player.mp;
-            document.getElementById('menuMaxMP').textContent = player.maxMp;
-            
-            // 装備ボーナスを含めたステータス表示
-            const equipStats = equipmentSystem ? equipmentSystem.getTotalStats() : { attack: 0, defense: 0 };
-            document.getElementById('menuAttack').textContent = player.attack || 15;
-            document.getElementById('menuDefense').textContent = player.defense || 5;
-            
-            document.getElementById('menuExp').textContent = player.exp || 0;
-            document.getElementById('menuGold').textContent = player.gold || 0;
+            // 表示するメンバーを取得
+            const allMembers = [player];
+            if (window.partySystem) {
+                allMembers.push(...window.partySystem.getMembers());
+            }
+            const member = allMembers[selectedPartyMemberIndex] || player;
+
+            // 名前と役割
+            document.getElementById('menuCharacterName').textContent = member.name || 'カイト';
+
+            // 役割の設定
+            let role = '主人公';
+            if (member.role === 'healer') role = 'ヒーラー';
+            else if (member.role === 'tank') role = 'タンク';
+            else if (member.role === 'mage') role = 'メイジ';
+            document.getElementById('menuCharacterRole').textContent = role;
+
+            // ステータス
+            document.getElementById('menuLevel').textContent = member.level || 1;
+            document.getElementById('menuHP').textContent = Math.max(0, member.hp || member.maxHp);
+            document.getElementById('menuMaxHP').textContent = member.maxHp || 100;
+            document.getElementById('menuMP').textContent = member.mp || member.maxMp;
+            document.getElementById('menuMaxMP').textContent = member.maxMp || 50;
+
+            // プレイヤーの場合は装備ボーナスを含む
+            if (member === player) {
+                document.getElementById('menuAttack').textContent = member.attack || 15;
+                document.getElementById('menuDefense').textContent = member.defense || 5;
+            } else {
+                document.getElementById('menuAttack').textContent = member.attack || 10;
+                document.getElementById('menuDefense').textContent = member.defense || 5;
+            }
+
+            // 経験値とゴールドはプレイヤーのみ
+            const expRow = document.getElementById('menuExpRow');
+            const goldRow = document.getElementById('menuGoldRow');
+            if (member === player) {
+                expRow.style.display = 'flex';
+                goldRow.style.display = 'flex';
+                document.getElementById('menuExp').textContent = player.exp || 0;
+                document.getElementById('menuGold').textContent = player.gold || 0;
+            } else {
+                expRow.style.display = 'none';
+                goldRow.style.display = 'none';
+            }
+
+            // キャラクター立ち絵の更新
+            const portrait = document.getElementById('menuCharacterPortrait');
+            const emoji = document.getElementById('menuCharacterEmoji');
+
+            if (member === player) {
+                portrait.src = 'assets/characters/kaito_portrait.png';
+                portrait.style.display = 'block';
+                emoji.style.display = 'none';
+                emoji.textContent = '🧑‍💼';
+            } else {
+                // 他のキャラクターの画像パス
+                const portraitPath = `assets/characters/${member.id}_portrait.png`;
+                portrait.src = portraitPath;
+                portrait.style.display = 'block';
+                emoji.style.display = 'none';
+                emoji.textContent = member.sprite || '👤';
+            }
         }
         
         // アイテムメニュー
