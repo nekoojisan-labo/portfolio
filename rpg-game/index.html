@@ -921,6 +921,10 @@
                                 <span>防御力:</span>
                                 <span id="menuDefense">5</span>
                             </div>
+                            <div class="menu-stat-row">
+                                <span>魔力:</span>
+                                <span id="menuMagic">10</span>
+                            </div>
                             <div class="menu-stat-row" id="menuExpRow">
                                 <span>経験値:</span>
                                 <span id="menuExp">0</span>
@@ -1898,14 +1902,10 @@
             document.getElementById('menuMP').textContent = member.mp || member.maxMp;
             document.getElementById('menuMaxMP').textContent = member.maxMp || 50;
 
-            // プレイヤーの場合は装備ボーナスを含む
-            if (member === player) {
-                document.getElementById('menuAttack').textContent = member.attack || 15;
-                document.getElementById('menuDefense').textContent = member.defense || 5;
-            } else {
-                document.getElementById('menuAttack').textContent = member.attack || 10;
-                document.getElementById('menuDefense').textContent = member.defense || 5;
-            }
+            // ステータス表示（装備ボーナス込み）
+            document.getElementById('menuAttack').textContent = member.attack || 10;
+            document.getElementById('menuDefense').textContent = member.defense || 5;
+            document.getElementById('menuMagic').textContent = member.magic || 10;
 
             // 経験値とゴールドはプレイヤーのみ
             const expRow = document.getElementById('menuExpRow');

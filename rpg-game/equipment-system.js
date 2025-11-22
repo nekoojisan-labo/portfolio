@@ -74,7 +74,57 @@ class EquipmentSystem {
                 sellPrice: 300,
                 requiredLevel: 4
             },
-            
+
+            // アカリ専用武器
+            healing_staff: {
+                id: 'healing_staff',
+                name: '癒しの杖',
+                emoji: '🪄',
+                type: 'weapon',
+                slot: 'weapon',
+                attack: 3,
+                defense: 0,
+                mp: 10,
+                magic: 8,
+                description: '回復魔法を強化する杖',
+                price: 200,
+                sellPrice: 100,
+                requiredLevel: 1
+            },
+
+            // リク専用武器
+            guardian_shield: {
+                id: 'guardian_shield',
+                name: '守護の盾',
+                emoji: '🛡️',
+                type: 'weapon',
+                slot: 'weapon',
+                attack: 8,
+                defense: 8,
+                hp: 20,
+                description: '仲間を守る頑丈な盾',
+                price: 250,
+                sellPrice: 125,
+                requiredLevel: 1
+            },
+
+            // ヤミ専用武器
+            dark_grimoire: {
+                id: 'dark_grimoire',
+                name: '闇の魔導書',
+                emoji: '📖',
+                type: 'weapon',
+                slot: 'weapon',
+                attack: 4,
+                defense: 0,
+                mp: 15,
+                magic: 12,
+                description: '闇魔法の力を引き出す魔導書',
+                price: 300,
+                sellPrice: 150,
+                requiredLevel: 1
+            },
+
             // 防具 - 頭
             cloth_hat: {
                 id: 'cloth_hat',
@@ -173,7 +223,57 @@ class EquipmentSystem {
                 sellPrice: 750,
                 requiredLevel: 8
             },
-            
+
+            // アカリ専用防具
+            healer_robe: {
+                id: 'healer_robe',
+                name: 'ヒーラーローブ',
+                emoji: '👗',
+                type: 'armor',
+                slot: 'body',
+                attack: 0,
+                defense: 5,
+                mp: 20,
+                magic: 5,
+                description: '回復魔法を強化する白いローブ',
+                price: 200,
+                sellPrice: 100,
+                requiredLevel: 1
+            },
+
+            // リク専用防具
+            plate_armor: {
+                id: 'plate_armor',
+                name: 'プレートアーマー',
+                emoji: '🛡️',
+                type: 'armor',
+                slot: 'body',
+                attack: 0,
+                defense: 15,
+                hp: 40,
+                description: '重厚な金属製の鎧',
+                price: 300,
+                sellPrice: 150,
+                requiredLevel: 1
+            },
+
+            // ヤミ専用防具
+            shadow_robe: {
+                id: 'shadow_robe',
+                name: 'シャドウローブ',
+                emoji: '🧥',
+                type: 'armor',
+                slot: 'body',
+                attack: 0,
+                defense: 4,
+                mp: 25,
+                magic: 8,
+                description: '闇の力を高める黒いローブ',
+                price: 250,
+                sellPrice: 125,
+                requiredLevel: 1
+            },
+
             // 防具 - 手
             cloth_gloves: {
                 id: 'cloth_gloves',

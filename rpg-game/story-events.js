@@ -161,8 +161,19 @@ class StoryEventSystem {
                 storyFlags.chapter1_started = true;
                 // アカリをパーティに追加
                 if (partySystem && window.CHARACTER_DATA) {
-                    const akari = { ...window.CHARACTER_DATA.akari };
+                    const akari = {
+                        ...window.CHARACTER_DATA.akari,
+                        equipment: {
+                            weapon: null,
+                            head: null,
+                            body: null,
+                            hands: null,
+                            accessory: null
+                        }
+                    };
                     partySystem.addMember(akari);
+                    // 初期装備を装備
+                    partySystem.equipInitialEquipment(akari);
                 }
                 console.log('✅ Chapter 1 started - Akari joined the party');
             }
