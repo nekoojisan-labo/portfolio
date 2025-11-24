@@ -1155,15 +1155,25 @@
         let menuSelectedIndex = 0;
         let itemSelectedIndex = 0;
         let equipmentSelectedIndex = 0;
-        
+        let isMessageShown = false;
+
         document.addEventListener('keydown', (e) => {
+            // セリフ（メッセージ）が表示されている場合、決定キーのみ受け付ける
+            if (isMessageShown) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    clearMessage();
+                }
+                e.preventDefault();
+                return;
+            }
+
             // ショップが開いている場合
             if (window.gameShop && window.gameShop.isShopOpen) {
                 // ショップのキーボード操作は後で実装
                 e.preventDefault();
                 return;
             }
-            
+
             // 装備メニューが開いている場合
             const equipmentMenuOverlay = document.getElementById('equipmentMenuOverlay');
             if (equipmentMenuOverlay && equipmentMenuOverlay.classList.contains('active')) {
@@ -1171,7 +1181,7 @@
                 e.preventDefault();
                 return;
             }
-            
+
             // アイテムメニューが開いている場合
             const itemMenuOverlay = document.getElementById('itemMenuOverlay');
             if (itemMenuOverlay && itemMenuOverlay.classList.contains('active')) {
@@ -1179,7 +1189,7 @@
                 e.preventDefault();
                 return;
             }
-            
+
             // メニューが開いている場合
             const menuOverlay = document.getElementById('menuOverlay');
             if (menuOverlay && menuOverlay.classList.contains('active')) {
@@ -1187,7 +1197,7 @@
                 e.preventDefault();
                 return;
             }
-            
+
             // 戦闘中
             if (battleSystem && battleSystem.inBattle) {
                 handleBattleInput(e.key);
@@ -1447,8 +1457,10 @@
             // デバッグ用: 初期魔法を習得
             magicSystem.learnMagic('heal');
             magicSystem.learnMagic('fire_bolt');
-            
+
             gameStarted = true;
+            // 初期メッセージが表示されているのでフラグを立てる
+            isMessageShown = true;
             updateMapInfo();
             gameLoop();
 
@@ -2252,7 +2264,15 @@
         }
 
         function showMessage(text) {
-            document.getElementById('messageBox').textContent = text;
+            const messageBox = document.getElementById('messageBox');
+            messageBox.textContent = text;
+            isMessageShown = true;
+        }
+
+        function clearMessage() {
+            const messageBox = document.getElementById('messageBox');
+            messageBox.textContent = '';
+            isMessageShown = false;
         }
 
         function updateUI() {
