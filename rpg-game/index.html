@@ -1158,15 +1158,6 @@
         let isMessageShown = false;
 
         document.addEventListener('keydown', (e) => {
-            // セリフ（メッセージ）が表示されている場合、決定キーのみ受け付ける
-            if (isMessageShown) {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    clearMessage();
-                }
-                e.preventDefault();
-                return;
-            }
-
             // ショップが開いている場合
             if (window.gameShop && window.gameShop.isShopOpen) {
                 // ショップのキーボード操作は後で実装
@@ -1194,6 +1185,16 @@
             const menuOverlay = document.getElementById('menuOverlay');
             if (menuOverlay && menuOverlay.classList.contains('active')) {
                 handleMenuInput(e.key);
+                e.preventDefault();
+                return;
+            }
+
+            // セリフ（メッセージ）が表示されている場合、決定キーのみ受け付ける
+            // （メニューが開いていない場合のみ適用）
+            if (isMessageShown) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    clearMessage();
+                }
                 e.preventDefault();
                 return;
             }
@@ -1908,6 +1909,7 @@
             switch(menuType) {
                 case 'status':
                     // ステータス確認（現在の表示を維持）
+                    // 何もしない - ステータスは既に表示されている
                     break;
                 case 'items':
                     openItemMenu();
@@ -1916,6 +1918,8 @@
                     openEquipmentMenu();
                     break;
                 case 'kamui':
+                    // メニューを閉じてからメッセージを表示
+                    closeMenu();
                     showMessage('神威機能は開発中です');
                     break;
                 case 'close':
