@@ -430,25 +430,26 @@ class BattleSystem {
     }
 
     // メンバーのカムイ
-    memberKamui(member, callback) {
-        const mpCost = 20;
-        if ((member.mp || 0) < mpCost) {
-            this.addBattleLog(`${member.name}の MPが たりない！`);
+    memberKamui(member, callback, magicId = null) {
+        // 魔法IDが指定されていない場合は、習得済みカムイスキル一覧を表示
+        if (!magicId) {
+            this.showKamuiSkillSelection(member, callback);
+            return;
+        }
+
+        // 魔法システムから使用
+        const result = window.magicSystem.useMagic(magicId, member, this.currentEnemy, true);
+
+        if (!result.success) {
+            this.addBattleLog(result.message);
             setTimeout(callback, 1000);
             return;
         }
 
-        member.mp = (member.mp || 0) - mpCost;
+        this.addBattleLog(`${member.name}は ${result.magic.name}を よびだした！`);
+        this.addBattleLog(result.message);
 
-        const baseDamage = (member.magic || member.attack || 10) * 2;
-        const variance = Math.floor(Math.random() * 10) - 5;
-        const damage = Math.max(1, baseDamage + variance);
-
-        this.currentEnemy.currentHp = Math.max(0, this.currentEnemy.currentHp - damage);
-        this.addBattleLog(`${member.name}は 神威の力を よびだした！`);
-        this.addBattleLog(`${this.currentEnemy.name}に ${damage}の ダメージ！`);
-
-        this.showDamageEffect(damage, true, true);
+        this.showDamageEffect(result.damage, true, true);
         this.updateBattleUI();
 
         if (this.currentEnemy.currentHp <= 0) {
@@ -457,6 +458,116 @@ class BattleSystem {
             setTimeout(() => this.battleVictory(window.player), 1500);
         } else {
             setTimeout(callback, 1500);
+        }
+    }
+
+    // カムイスキル選択UIを表示
+    showKamuiSkillSelection(member, callback) {
+        if (!window.magicSystem) {
+            this.addBattleLog('魔法システムが初期化されていません');
+            setTimeout(callback, 1000);
+            return;
+        }
+
+        const kamuiSkills = window.magicSystem.getLearnedKamuiMagic(member);
+
+        if (kamuiSkills.length === 0) {
+            this.addBattleLog(`${member.name}は カムイスキルを 習得していない！`);
+            setTimeout(callback, 1000);
+            return;
+        }
+
+        // スキル選択UIを表示
+        this.currentKamuiCallback = callback;
+        this.currentKamuiMember = member;
+        this.selectedKamuiSkill = 0;
+        this.showKamuiSkillMenu(kamuiSkills);
+    }
+
+    // カムイスキルメニューを表示
+    showKamuiSkillMenu(skills) {
+        const menu = document.getElementById('kamuiSkillMenu');
+        if (!menu) {
+            console.error('カムイスキルメニューが見つかりません');
+            return;
+        }
+
+        const skillList = menu.querySelector('.kamui-skill-list');
+        if (!skillList) {
+            console.error('カムイスキルリストが見つかりません');
+            return;
+        }
+
+        // スキルリストを作成
+        skillList.innerHTML = '';
+        skills.forEach((skill, index) => {
+            const skillItem = document.createElement('div');
+            skillItem.className = 'kamui-skill-item' + (index === this.selectedKamuiSkill ? ' selected' : '');
+            skillItem.dataset.index = index;
+            skillItem.dataset.magicId = skill.id;
+
+            skillItem.innerHTML = `
+                <div class="skill-icon">${skill.emoji}</div>
+                <div class="skill-details">
+                    <div class="skill-name">${skill.name}</div>
+                    <div class="skill-mp">MP: ${skill.mpCost}</div>
+                </div>
+                <div class="skill-description">${skill.description}</div>
+            `;
+
+            // クリックイベント
+            skillItem.onclick = () => {
+                this.selectedKamuiSkill = index;
+                this.updateKamuiSkillSelection();
+                this.executeKamuiSkill(skill.id);
+            };
+
+            skillList.appendChild(skillItem);
+        });
+
+        menu.style.display = 'block';
+
+        // キーボード操作を有効化
+        this.kamuiSkillMenuActive = true;
+    }
+
+    // カムイスキル選択を更新
+    updateKamuiSkillSelection() {
+        const skillItems = document.querySelectorAll('.kamui-skill-item');
+        skillItems.forEach((item, index) => {
+            if (index === this.selectedKamuiSkill) {
+                item.classList.add('selected');
+            } else {
+                item.classList.remove('selected');
+            }
+        });
+    }
+
+    // カムイスキルを実行
+    executeKamuiSkill(magicId) {
+        const menu = document.getElementById('kamuiSkillMenu');
+        if (menu) {
+            menu.style.display = 'none';
+        }
+
+        this.kamuiSkillMenuActive = false;
+
+        // カムイを実行
+        this.memberKamui(this.currentKamuiMember, this.currentKamuiCallback, magicId);
+    }
+
+    // カムイスキルメニューを閉じる
+    closeKamuiSkillMenu() {
+        const menu = document.getElementById('kamuiSkillMenu');
+        if (menu) {
+            menu.style.display = 'none';
+        }
+
+        this.kamuiSkillMenuActive = false;
+
+        // コールバックを呼び出して次のアクションへ
+        if (this.currentKamuiCallback) {
+            this.currentKamuiCallback();
         }
     }
 

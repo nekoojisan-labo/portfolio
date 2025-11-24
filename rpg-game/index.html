@@ -303,6 +303,66 @@
             }
         }
 
+        /* Kamui Skill Menu Styles */
+        .kamui-skill-item {
+            background: rgba(0, 50, 100, 0.8);
+            border: 2px solid #00aaff;
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .kamui-skill-item:hover {
+            background: rgba(0, 100, 150, 0.9);
+            border-color: #00ffff;
+            transform: scale(1.05);
+        }
+
+        .kamui-skill-item.selected {
+            background: rgba(0, 150, 200, 1);
+            border: 3px solid #00ffff;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.8);
+            transform: scale(1.08);
+        }
+
+        .kamui-skill-item .skill-icon {
+            font-size: 48px;
+            text-align: center;
+            text-shadow: 0 0 15px rgba(255, 255, 255, 0.8);
+        }
+
+        .kamui-skill-item .skill-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .kamui-skill-item .skill-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: #00ffff;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+
+        .kamui-skill-item .skill-mp {
+            font-size: 14px;
+            color: #4488ff;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 3px 8px;
+            border-radius: 5px;
+        }
+
+        .kamui-skill-item .skill-description {
+            font-size: 13px;
+            color: #cccccc;
+            text-align: center;
+            line-height: 1.4;
+        }
+
         .title-screen {
             position: absolute;
             top: 0;
@@ -1033,6 +1093,19 @@
             </div>
         </div>
 
+        <!-- Kamui Skill Selection Menu -->
+        <div id="kamuiSkillMenu" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10000; background: rgba(0, 0, 0, 0.95); border: 3px solid #00ffff; border-radius: 10px; padding: 20px; min-width: 600px; box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);">
+            <div style="text-align: center; font-size: 24px; color: #00ffff; margin-bottom: 20px; text-shadow: 0 0 10px #00ffff;">
+                ⚡ 神威スキル ⚡
+            </div>
+            <div class="kamui-skill-list" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; max-height: 400px; overflow-y: auto;">
+                <!-- JavaScriptで動的生成 -->
+            </div>
+            <div style="text-align: center; margin-top: 15px; font-size: 14px; color: #888;">
+                ↑↓←→で選択 / ENTERで決定 / Xで戻る
+            </div>
+        </div>
+
         <div class="controls">
             <div><strong>操作方法:</strong></div>
             <div>↑↓←→: 移動</div>
@@ -1116,7 +1189,9 @@
             chapter: 1  // 現在のチャプター
         };
         let player = {
+            characterId: 'kaito',
             name: 'カイト',
+            role: 'all-rounder',
             x: 400,
             y: 300,
             hp: 100,
@@ -1160,6 +1235,13 @@
             // ショップが開いている場合
             if (window.gameShop && window.gameShop.isShopOpen) {
                 // ショップのキーボード操作は後で実装
+                e.preventDefault();
+                return;
+            }
+
+            // カムイスキルメニューが開いている場合
+            if (battleSystem && battleSystem.kamuiSkillMenuActive) {
+                handleKamuiSkillMenuInput(e.key);
                 e.preventDefault();
                 return;
             }
@@ -1495,13 +1577,18 @@
             // 初期装備を装備
             equipmentSystem.equipItem('wooden_sword', player);
             equipmentSystem.equipItem('cloth_armor', player);
-            
+
             console.log('Initial player stats after equipping:', {
                 attack: player.attack,
                 defense: player.defense,
                 maxHp: player.maxHp,
                 maxMp: player.maxMp
             });
+
+            // 初期習得スキル（カイト）
+            magicSystem.learnMagic('heal', player);
+            magicSystem.learnMagic('fire_bolt', player);
+            console.log('✅ カイトが初期スキルを習得: heal, fire_bolt');
             
             // グローバルに公開
             window.itemSystem = itemSystem;
@@ -1953,10 +2040,12 @@
                     menuSelectedIndex = currentRow * cols;
                 }
                 updateMenuSelection();
-            } else if (key === 'Enter' || key === ' ') {
+            } else if (key === 'Enter') {
+                // 決定キー: ENTERのみ（Spaceは除外）
                 const selectedOption = options[menuSelectedIndex];
                 executeMenuOption(selectedOption.dataset.menu);
             } else if (key === 'x' || key === 'X' || key === 'Escape') {
+                // キャンセルキー: X / Escape
                 closeMenu();
             }
         }
@@ -1965,20 +2054,22 @@
             switch(menuType) {
                 case 'status':
                     // ステータス確認（現在の表示を維持）
-                    // 何もしない - ステータスは既に表示されている
+                    // 何もしない - ステータスは既にメインメニューで表示されている
                     break;
                 case 'items':
+                    // アイテムメニューを開く
                     openItemMenu();
                     break;
                 case 'equipment':
+                    // 装備メニューを開く
                     openEquipmentMenu();
                     break;
                 case 'kamui':
-                    // メニューを閉じてからメッセージを表示
-                    closeMenu();
-                    showMessage('神威機能は開発中です');
+                    // 神威メニュー（戦闘中のみ使用可能なのでフィールドでは何もしない）
+                    // 何もしない - カムイは戦闘中に使用
                     break;
                 case 'close':
+                    // メニューを閉じる
                     closeMenu();
                     break;
             }
@@ -2157,10 +2248,12 @@
             } else if (key === 'ArrowDown' || key === 's' || key === 'S') {
                 itemSelectedIndex = (itemSelectedIndex + 1) % inventory.length;
                 updateItemList();
-            } else if (key === 'Enter' || key === ' ') {
+            } else if (key === 'Enter') {
+                // 決定キー: ENTERのみ
                 const selectedItem = inventory[itemSelectedIndex];
                 useItemFromMenu(selectedItem.id);
             } else if (key === 'Escape' || key === 'x' || key === 'X') {
+                // キャンセルキー: X / Escape
                 closeItemMenu();
             }
         }
@@ -2210,9 +2303,62 @@
         window.closeMenu = closeMenu;
 
         // Battle System Functions
+        function handleKamuiSkillMenuInput(key) {
+            const skillItems = document.querySelectorAll('.kamui-skill-item');
+            const numSkills = skillItems.length;
+
+            if (numSkills === 0) return;
+
+            const cols = 2; // 2列グリッド
+            const currentRow = Math.floor(battleSystem.selectedKamuiSkill / cols);
+            const currentCol = battleSystem.selectedKamuiSkill % cols;
+
+            if (key === 'ArrowUp') {
+                // 上へ移動
+                let newRow = currentRow - 1;
+                if (newRow < 0) newRow = Math.floor((numSkills - 1) / cols);
+                battleSystem.selectedKamuiSkill = newRow * cols + currentCol;
+                if (battleSystem.selectedKamuiSkill >= numSkills) {
+                    battleSystem.selectedKamuiSkill = numSkills - 1;
+                }
+                battleSystem.updateKamuiSkillSelection();
+            } else if (key === 'ArrowDown') {
+                // 下へ移動
+                let newRow = currentRow + 1;
+                const maxRow = Math.floor((numSkills - 1) / cols);
+                if (newRow > maxRow) newRow = 0;
+                battleSystem.selectedKamuiSkill = newRow * cols + currentCol;
+                if (battleSystem.selectedKamuiSkill >= numSkills) {
+                    battleSystem.selectedKamuiSkill = numSkills - 1;
+                }
+                battleSystem.updateKamuiSkillSelection();
+            } else if (key === 'ArrowLeft') {
+                // 左へ移動
+                battleSystem.selectedKamuiSkill = battleSystem.selectedKamuiSkill - 1;
+                if (battleSystem.selectedKamuiSkill < 0) {
+                    battleSystem.selectedKamuiSkill = numSkills - 1;
+                }
+                battleSystem.updateKamuiSkillSelection();
+            } else if (key === 'ArrowRight') {
+                // 右へ移動
+                battleSystem.selectedKamuiSkill = (battleSystem.selectedKamuiSkill + 1) % numSkills;
+                battleSystem.updateKamuiSkillSelection();
+            } else if (key === 'Enter' || key === ' ' || key === 'z' || key === 'Z') {
+                // 決定
+                const selectedSkill = skillItems[battleSystem.selectedKamuiSkill];
+                if (selectedSkill) {
+                    const magicId = selectedSkill.dataset.magicId;
+                    battleSystem.executeKamuiSkill(magicId);
+                }
+            } else if (key === 'Escape' || key === 'x' || key === 'X') {
+                // キャンセル
+                battleSystem.closeKamuiSkillMenu();
+            }
+        }
+
         function handleBattleInput(key) {
             if (!battleSystem.waitingForCommand) return;
-            
+
             const commands = document.querySelectorAll('.command-item');
             const numCommands = commands.length;
             
@@ -2561,10 +2707,12 @@
             } else if (key === 'ArrowDown' || key === 's' || key === 'S') {
                 equipmentSelectedIndex = (equipmentSelectedIndex + 1) % inventory.length;
                 updateEquipmentDisplay();
-            } else if (key === 'Enter' || key === ' ') {
+            } else if (key === 'Enter') {
+                // 決定キー: ENTERのみ
                 const selectedEquipment = inventory[equipmentSelectedIndex];
                 equipFromMenu(selectedEquipment.id);
             } else if (key === 'Escape' || key === 'x' || key === 'X') {
+                // キャンセルキー: X / Escape
                 closeEquipmentMenu();
             }
         }
