@@ -986,7 +986,7 @@
                             </div>
                             <div class="menu-stat-row" id="menuExpRow">
                                 <span>経験値:</span>
-                                <span id="menuExp">0</span>
+                                <span><span id="menuExp">0</span>/<span id="menuExpNeeded">100</span></span>
                             </div>
                             <div class="menu-stat-row" id="menuGoldRow">
                                 <span>ゴールド:</span>
@@ -996,7 +996,6 @@
                     </div>
                 </div>
                 <div class="menu-options" id="menuOptions">
-                    <div class="menu-option" data-menu="status">ステータス確認</div>
                     <div class="menu-option" data-menu="items">アイテム</div>
                     <div class="menu-option" data-menu="equipment">装備</div>
                     <div class="menu-option" data-menu="kamui">神威</div>
@@ -1020,8 +1019,10 @@
         <!-- Equipment Menu -->
         <div class="menu-overlay" id="equipmentMenuOverlay">
             <div class="menu-container" style="max-width: 600px;">
-                <div class="menu-title">装備</div>
-                
+                <div class="menu-title">
+                    <span id="equipmentCharacterName">カイト</span> の装備
+                </div>
+
                 <!-- 現在の装備 -->
                 <div style="margin-bottom: 20px;">
                     <div style="font-size: 18px; color: #ffff00; margin-bottom: 10px;">▼ 装備中</div>
@@ -1058,6 +1059,19 @@
                 </div>
                 
                 <div class="menu-close">↑↓で選択 / ENTERで装備変更 / ESCで戻る</div>
+            </div>
+        </div>
+
+        <!-- Kamui Menu (Field) -->
+        <div class="menu-overlay" id="kamuiMenuOverlay">
+            <div class="menu-container" style="max-width: 700px;">
+                <div class="menu-title">
+                    <span id="kamuiCharacterName">カイト</span> の神威スキル
+                </div>
+                <div id="kamuiSkillGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 20px 0;">
+                    <!-- JavaScriptで動的生成 -->
+                </div>
+                <div class="menu-close">↑↓←→で選択 / ENTERで使用 / ESCで戻る</div>
             </div>
         </div>
 
@@ -1241,9 +1255,17 @@
                 return;
             }
 
-            // カムイスキルメニューが開いている場合
+            // カムイスキルメニュー（戦闘）が開いている場合
             if (battleSystem && battleSystem.kamuiSkillMenuActive) {
                 handleKamuiSkillMenuInput(e.key);
+                e.preventDefault();
+                return;
+            }
+
+            // 神威メニュー（フィールド）が開いている場合
+            const kamuiMenuOverlay = document.getElementById('kamuiMenuOverlay');
+            if (kamuiMenuOverlay && kamuiMenuOverlay.classList.contains('active')) {
+                handleKamuiMenuInput(e.key);
                 e.preventDefault();
                 return;
             }
@@ -2108,10 +2130,6 @@
         
         function executeMenuOption(menuType) {
             switch(menuType) {
-                case 'status':
-                    // ステータス確認（現在の表示を維持）
-                    // 何もしない - ステータスは既にメインメニューで表示されている
-                    break;
                 case 'items':
                     // アイテムメニューを開く
                     openItemMenu();
@@ -2121,8 +2139,8 @@
                     openEquipmentMenu();
                     break;
                 case 'kamui':
-                    // 神威メニュー（戦闘中のみ使用可能なのでフィールドでは何もしない）
-                    // 何もしない - カムイは戦闘中に使用
+                    // 神威メニューを開く
+                    openKamuiMenu();
                     break;
                 case 'close':
                     // メニューを閉じる
@@ -2208,7 +2226,10 @@
             if (member === player) {
                 expRow.style.display = 'flex';
                 goldRow.style.display = 'flex';
-                document.getElementById('menuExp').textContent = player.exp || 0;
+                const currentExp = player.exp || 0;
+                const expNeeded = player.level * 100; // レベル × 100が必要経験値
+                document.getElementById('menuExp').textContent = currentExp;
+                document.getElementById('menuExpNeeded').textContent = expNeeded;
                 document.getElementById('menuGold').textContent = player.gold || 0;
             } else {
                 expRow.style.display = 'none';
@@ -2667,6 +2688,15 @@
             if (equipmentMenuOverlay) {
                 equipmentMenuOverlay.classList.add('active');
                 equipmentSelectedIndex = 0;
+
+                // 現在のキャラクター名を表示
+                const allMembers = [player];
+                if (window.partySystem) {
+                    allMembers.push(...window.partySystem.getMembers());
+                }
+                const currentMember = allMembers[selectedPartyMemberIndex] || player;
+                document.getElementById('equipmentCharacterName').textContent = currentMember.name || 'カイト';
+
                 updateEquipmentDisplay();
                 console.log('Equipment menu opened');
             }
@@ -2804,6 +2834,196 @@
             }
         }
         
+        // 神威メニュー（フィールド用）
+        let kamuiSelectedIndex = 0;
+
+        function openKamuiMenu() {
+            closeMenu();
+            const kamuiMenuOverlay = document.getElementById('kamuiMenuOverlay');
+            if (kamuiMenuOverlay) {
+                kamuiMenuOverlay.classList.add('active');
+                kamuiSelectedIndex = 0;
+
+                // 現在のキャラクター名を表示
+                const allMembers = [player];
+                if (window.partySystem) {
+                    allMembers.push(...window.partySystem.getMembers());
+                }
+                const currentMember = allMembers[selectedPartyMemberIndex] || player;
+                document.getElementById('kamuiCharacterName').textContent = currentMember.name || 'カイト';
+
+                updateKamuiSkillDisplay();
+                console.log('Kamui menu opened');
+            }
+        }
+
+        function closeKamuiMenu() {
+            const kamuiMenuOverlay = document.getElementById('kamuiMenuOverlay');
+            if (kamuiMenuOverlay) {
+                kamuiMenuOverlay.classList.remove('active');
+                openMenu();
+            }
+        }
+
+        function updateKamuiSkillDisplay() {
+            const skillGrid = document.getElementById('kamuiSkillGrid');
+            if (!skillGrid || !window.magicSystem) return;
+
+            // 現在のキャラクターの習得スキルを取得
+            const allMembers = [player];
+            if (window.partySystem) {
+                allMembers.push(...window.partySystem.getMembers());
+            }
+            const currentMember = allMembers[selectedPartyMemberIndex] || player;
+            const learnedSkills = magicSystem.getLearnedMagic(currentMember);
+
+            if (!learnedSkills || Object.keys(learnedSkills).length === 0) {
+                skillGrid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #888;">習得している神威スキルがありません</div>';
+                return;
+            }
+
+            skillGrid.innerHTML = '';
+            const skillArray = Object.values(learnedSkills);
+
+            skillArray.forEach((skill, index) => {
+                const skillDiv = document.createElement('div');
+                skillDiv.className = 'kamui-skill-item';
+                if (index === kamuiSelectedIndex) {
+                    skillDiv.classList.add('selected');
+                }
+
+                // MPが足りるかチェック
+                const canUse = currentMember.mp >= skill.mpCost;
+                const mpColor = canUse ? '#4488ff' : '#ff4444';
+
+                skillDiv.innerHTML = `
+                    <div class="skill-icon">${skill.emoji}</div>
+                    <div class="skill-details">
+                        <div class="skill-name">${skill.name}</div>
+                        <div class="skill-mp" style="color: ${mpColor};">MP ${skill.mpCost}</div>
+                    </div>
+                    <div class="skill-description">${skill.description}</div>
+                `;
+
+                skillDiv.onclick = () => {
+                    kamuiSelectedIndex = index;
+                    useKamuiSkill(skill.id);
+                };
+
+                skillGrid.appendChild(skillDiv);
+            });
+        }
+
+        function handleKamuiMenuInput(key) {
+            const skillGrid = document.getElementById('kamuiSkillGrid');
+            if (!skillGrid) return;
+
+            const allMembers = [player];
+            if (window.partySystem) {
+                allMembers.push(...window.partySystem.getMembers());
+            }
+            const currentMember = allMembers[selectedPartyMemberIndex] || player;
+            const learnedSkills = magicSystem.getLearnedMagic(currentMember);
+            const skillArray = Object.values(learnedSkills);
+
+            if (skillArray.length === 0) {
+                if (key === 'Escape' || key === 'x' || key === 'X') {
+                    closeKamuiMenu();
+                }
+                return;
+            }
+
+            const cols = 2;
+            const totalSkills = skillArray.length;
+
+            if (key === 'ArrowUp' || key === 'w' || key === 'W') {
+                const currentRow = Math.floor(kamuiSelectedIndex / cols);
+                const currentCol = kamuiSelectedIndex % cols;
+                const newRow = currentRow - 1;
+                if (newRow >= 0) {
+                    kamuiSelectedIndex = newRow * cols + currentCol;
+                    if (kamuiSelectedIndex >= totalSkills) {
+                        kamuiSelectedIndex = totalSkills - 1;
+                    }
+                } else {
+                    const maxRow = Math.floor((totalSkills - 1) / cols);
+                    kamuiSelectedIndex = maxRow * cols + currentCol;
+                    if (kamuiSelectedIndex >= totalSkills) {
+                        kamuiSelectedIndex = totalSkills - 1;
+                    }
+                }
+                updateKamuiSkillDisplay();
+            } else if (key === 'ArrowDown' || key === 's' || key === 'S') {
+                const currentRow = Math.floor(kamuiSelectedIndex / cols);
+                const currentCol = kamuiSelectedIndex % cols;
+                const maxRow = Math.floor((totalSkills - 1) / cols);
+                const newRow = currentRow + 1;
+                if (newRow <= maxRow) {
+                    kamuiSelectedIndex = newRow * cols + currentCol;
+                    if (kamuiSelectedIndex >= totalSkills) {
+                        kamuiSelectedIndex = totalSkills - 1;
+                    }
+                } else {
+                    kamuiSelectedIndex = currentCol;
+                    if (kamuiSelectedIndex >= totalSkills) {
+                        kamuiSelectedIndex = 0;
+                    }
+                }
+                updateKamuiSkillDisplay();
+            } else if (key === 'ArrowLeft' || key === 'a' || key === 'A') {
+                kamuiSelectedIndex = (kamuiSelectedIndex - 1 + totalSkills) % totalSkills;
+                updateKamuiSkillDisplay();
+            } else if (key === 'ArrowRight' || key === 'd' || key === 'D') {
+                kamuiSelectedIndex = (kamuiSelectedIndex + 1) % totalSkills;
+                updateKamuiSkillDisplay();
+            } else if (key === 'Enter') {
+                const selectedSkill = skillArray[kamuiSelectedIndex];
+                if (selectedSkill) {
+                    useKamuiSkill(selectedSkill.id);
+                }
+            } else if (key === 'Escape' || key === 'x' || key === 'X') {
+                closeKamuiMenu();
+            }
+        }
+
+        function useKamuiSkill(skillId) {
+            const allMembers = [player];
+            if (window.partySystem) {
+                allMembers.push(...window.partySystem.getMembers());
+            }
+            const currentMember = allMembers[selectedPartyMemberIndex] || player;
+            const learnedSkills = magicSystem.getLearnedMagic(currentMember);
+            const skill = learnedSkills[skillId];
+
+            if (!skill) {
+                showMessage('このスキルは使用できません');
+                return;
+            }
+
+            if (currentMember.mp < skill.mpCost) {
+                showMessage('MPが足りません！');
+                return;
+            }
+
+            // MPを消費
+            currentMember.mp -= skill.mpCost;
+
+            // スキルの効果を適用
+            if (skill.type === 'recovery') {
+                // 回復系
+                const healAmount = skill.power;
+                currentMember.hp = Math.min(currentMember.maxHp, currentMember.hp + healAmount);
+                showMessage(`${currentMember.name}は${skill.name}を使用した！\nHPが${healAmount}回復した！`);
+            } else {
+                // その他のスキル
+                showMessage(`${currentMember.name}は${skill.name}を使用した！\n（フィールドでは効果がありません）`);
+            }
+
+            updateUI();
+            updateKamuiSkillDisplay();
+            closeKamuiMenu();
+        }
+
         // グローバル関数として公開
         window.updateUI = updateUI;
         window.setupBattleCommands = setupBattleCommands;
