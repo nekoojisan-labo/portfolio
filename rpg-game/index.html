@@ -835,10 +835,11 @@
 
         <!-- Opening Story Screen -->
         <div class="title-screen" id="openingScreen" style="display: none;">
-            <div style="max-width: 700px; text-align: left; line-height: 1.8;">
-                <div id="openingText" style="font-size: 16px; color: #ddd; min-height: 200px;"></div>
+            <div style="max-width: 800px; width: 90%; text-align: left; line-height: 1.8; background: rgba(0, 0, 0, 0.7); padding: 40px; border-radius: 10px; border: 2px solid #00ffff;">
+                <div id="openingText" style="font-size: 16px; color: #ddd; min-height: 300px;"></div>
                 <div style="text-align: center; margin-top: 30px;">
                     <button class="start-button" onclick="nextOpeningMessage()" id="openingButton">次へ →</button>
+                    <div style="margin-top: 15px; font-size: 12px; color: #888;">[ Z / Space / Enter キーでも進めます ]</div>
                 </div>
             </div>
         </div>
@@ -871,9 +872,7 @@
                     <div>ゴールド: <span id="playerGold">0</span></div>
                 </div>
             </div>
-            <div class="message-box" id="messageBox">
-                新宿中央区画。神威の力に目覚めたカイトは、アカリからの連絡を受け、異変の調査を始める...
-            </div>
+            <div class="message-box" id="messageBox"></div>
         </div>
 
         <!-- Menu Screen -->
@@ -1324,15 +1323,52 @@
 
         // Opening Story System
         let openingMessages = [
-            "西暦2050年、新宿。\n\n高度に発達したAIシステム『アーク』が、この街を完璧に管理している。",
-            "交通、医療、流通...あらゆるインフラが最適化され、犯罪率はゼロに近い。\n\n一見、理想郷のように見えるこの街。",
-            "しかし、人々の表情から「心」が失われていた。\n\n感情を持つことは非効率。喜びも、悲しみも、怒りも...すべてが制御されている。",
-            "君の名前はカイト。\n\nごく普通の学生として、この無機質な街で暮らしていた。",
-            "ある日、君は不思議な夢を見た。\n\n「八百万の神々が、お前を選んだ」\n\n謎の声が響く。",
-            "目覚めると、手のひらに神秘的な紋様が浮かび上がっている。\n\nこれが、神々の力『神威（カムイ）』の証。",
-            "突如、街の様子がおかしくなり始める。\n\nアークの監視ドローンが暴走し、機械兵が街を徘徊している。",
-            "幼馴染のアカリから連絡が入る。\n\n「カイト、大変なの！新宿の地下で何かが起きてる！」",
-            "君は神威の力に目覚めた者として、この異変の真相を探ることになる。\n\nアークの支配から、人々の心を取り戻すために...。"
+            {
+                title: "デウス・コード 八百万の神託",
+                subtitle: "- Prologue -",
+                text: "西暦2050年、東京・新宿。\n\n全てを見通す人工知能『アーク』が、この巨大都市を完璧に管理する時代。",
+                emoji: "🏙️"
+            },
+            {
+                title: "完璧なる統治",
+                text: "交通、医療、治安、流通...あらゆるインフラが最適化され、犯罪率はほぼゼロ。\n\n一見、理想郷のように見えるこの街。\n\nしかし、効率を追求するあまり、人々の表情から「心」が失われていた。",
+                emoji: "🤖"
+            },
+            {
+                title: "感情の喪失",
+                text: "喜びも、悲しみも、怒りも...感情を持つことは非効率とされ、すべてが制御される世界。\n\n人々は笑顔を忘れ、ただ淡々と日々を過ごしている。\n\nかつて「人間らしさ」と呼ばれたものは、もはや記憶の彼方へ。",
+                emoji: "😶"
+            },
+            {
+                title: "主人公 - カイト",
+                text: "17歳、高校3年生。\n\nごく普通の学生として、この無機質な街で暮らしていた。\n\nアークが最適化したカリキュラムに従い、何の疑問も持たずに...いや、疑問を持つことすら忘れて。",
+                emoji: "🧑‍💼"
+            },
+            {
+                title: "不思議な夢",
+                text: "ある夜、カイトは奇妙な夢を見た。\n\n暗闇の中、無数の光が舞い踊る。そして、どこからか声が響く。\n\n『八百万の神々が、汝を選びし者』\n\n『デウス・コードが目覚める時、世界は変革を迎える』",
+                emoji: "✨"
+            },
+            {
+                title: "神威の覚醒",
+                text: "目を覚ますと、右手のひらに見たこともない紋様が浮かび上がっていた。\n\n青白く光る、神秘的な幾何学模様。\n\n触れると、体の奥底から熱いエネルギーが湧き上がる。\n\nこれが...神々の力『神威（カムイ）』の証。",
+                emoji: "⚡"
+            },
+            {
+                title: "異変の始まり",
+                text: "その日を境に、街の様子が変わり始めた。\n\nアークの監視ドローンが暴走し、機械兵が街を徘徊する。\n\n完璧だったはずのシステムに、次々と異常が発生していく。\n\n何かが...壊れ始めている。",
+                emoji: "⚠️"
+            },
+            {
+                title: "アカリからの連絡",
+                text: "幼馴染のアカリから、緊急の連絡が入った。\n\n『カイト、大変なの！新宿の地下で何かが起きてる！』\n\n『機械兵が人々を襲い始めてるの...助けて！』\n\n声は震えていた。アカリがこんなに取り乱すなんて。",
+                emoji: "👧"
+            },
+            {
+                title: "物語の始まり",
+                text: "カイトは決意した。\n\n神威の力を手に、この異変の真相を探ることを。\n\nアークの支配から人々の心を取り戻し、失われた感情を呼び覚ますために。\n\n少年の、世界を変える戦いが今始まる━━",
+                emoji: "🔥"
+            }
         ];
         let currentOpeningIndex = 0;
 
@@ -1370,12 +1406,34 @@
             const buttonElement = document.getElementById('openingButton');
 
             if (currentOpeningIndex < openingMessages.length) {
-                // テキストを表示（改行を<br>に変換）
-                textElement.innerHTML = openingMessages[currentOpeningIndex].replace(/\n/g, '<br>');
+                const message = openingMessages[currentOpeningIndex];
+
+                // 新しいフォーマットでメッセージを構築
+                let htmlContent = '';
+
+                // 絵文字（大きく表示）
+                if (message.emoji) {
+                    htmlContent += `<div style="text-align: center; font-size: 80px; margin-bottom: 20px;">${message.emoji}</div>`;
+                }
+
+                // タイトル
+                if (message.title) {
+                    htmlContent += `<h2 style="color: #00ffff; text-align: center; font-size: 24px; margin-bottom: 10px; text-shadow: 0 0 10px rgba(0, 255, 255, 0.8);">${message.title}</h2>`;
+                }
+
+                // サブタイトル
+                if (message.subtitle) {
+                    htmlContent += `<p style="color: #aaa; text-align: center; font-size: 14px; margin-bottom: 20px;">${message.subtitle}</p>`;
+                }
+
+                // 本文テキスト（改行を<br>に変換）
+                htmlContent += `<div style="text-align: center; line-height: 2; margin-top: 20px;">${message.text.replace(/\n/g, '<br>')}</div>`;
+
+                textElement.innerHTML = htmlContent;
 
                 // 最後のメッセージの場合、ボタンテキストを変更
                 if (currentOpeningIndex === openingMessages.length - 1) {
-                    buttonElement.textContent = '冒険を始める →';
+                    buttonElement.textContent = '物語を始める →';
                 } else {
                     buttonElement.textContent = '次へ →';
                 }
@@ -1460,8 +1518,6 @@
             magicSystem.learnMagic('fire_bolt');
 
             gameStarted = true;
-            // 初期メッセージが表示されているのでフラグを立てる
-            isMessageShown = true;
             updateMapInfo();
             gameLoop();
 
