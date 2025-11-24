@@ -2043,11 +2043,8 @@
             } else if (key === 'Enter') {
                 // 決定キー: ENTERのみ（Spaceは除外）
                 const selectedOption = options[menuSelectedIndex];
-                console.log('[Menu] ENTER pressed, selectedIndex:', menuSelectedIndex, 'option:', selectedOption ? selectedOption.dataset.menu : 'undefined');
                 if (selectedOption) {
                     executeMenuOption(selectedOption.dataset.menu);
-                } else {
-                    console.error('[Menu] selectedOption is undefined!');
                 }
             } else if (key === 'x' || key === 'X' || key === 'Escape') {
                 // キャンセルキー: X / Escape
@@ -2413,9 +2410,7 @@
 
         function setupBattleCommands() {
             const commands = document.querySelectorAll('.command-item');
-            console.log('[Battle] setupBattleCommands called, found', commands.length, 'commands');
             commands.forEach((cmd, index) => {
-                console.log('[Battle] Command', index, ':', cmd.dataset.command);
                 cmd.classList.remove('selected');
                 if (index === battleSystem.selectedCommand) {
                     cmd.classList.add('selected');
