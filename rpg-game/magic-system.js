@@ -151,6 +151,14 @@ class MagicSystem {
 
     // 魔法を習得
     learnMagic(magicId, character) {
+        console.log('[DEBUG] learnMagic called with:', { magicId, character });
+
+        if (!character) {
+            console.error('[ERROR] learnMagic called without character parameter!');
+            console.trace();
+            return false;
+        }
+
         const magic = this.magicDatabase[magicId];
         if (!magic) {
             console.error('Unknown magic:', magicId);
