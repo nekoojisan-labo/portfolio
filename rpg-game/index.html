@@ -1536,6 +1536,8 @@
         }
 
         function startGame() {
+            console.log('[DEBUG] startGame() called');
+
             // オープニングのキーボードハンドラーを削除
             if (openingKeyHandler) {
                 document.removeEventListener('keydown', openingKeyHandler);
@@ -1548,15 +1550,64 @@
             document.getElementById('gameUI').style.display = 'block';
             document.getElementById('mapInfo').style.display = 'block';
 
+            console.log('[DEBUG] Initializing systems...');
+
             // システム初期化
-            itemSystem = new ItemSystem();
-            equipmentSystem = new EquipmentSystem();
-            magicSystem = new MagicSystem();
-            battleSystem = new BattleSystem();
-            mapSystem = new MapSystem();
-            bgmSystem = new BGMSystem();
-            partySystem = new PartySystem();
-            storyEventSystem = new StoryEventSystem();
+            try {
+                itemSystem = new ItemSystem();
+                console.log('[DEBUG] ✓ ItemSystem initialized');
+            } catch (e) {
+                console.error('[ERROR] ItemSystem failed:', e);
+            }
+
+            try {
+                equipmentSystem = new EquipmentSystem();
+                console.log('[DEBUG] ✓ EquipmentSystem initialized');
+            } catch (e) {
+                console.error('[ERROR] EquipmentSystem failed:', e);
+            }
+
+            try {
+                magicSystem = new MagicSystem();
+                console.log('[DEBUG] ✓ MagicSystem initialized');
+            } catch (e) {
+                console.error('[ERROR] MagicSystem failed:', e);
+            }
+
+            try {
+                battleSystem = new BattleSystem();
+                console.log('[DEBUG] ✓ BattleSystem initialized');
+            } catch (e) {
+                console.error('[ERROR] BattleSystem failed:', e);
+            }
+
+            try {
+                mapSystem = new MapSystem();
+                console.log('[DEBUG] ✓ MapSystem initialized');
+            } catch (e) {
+                console.error('[ERROR] MapSystem failed:', e);
+            }
+
+            try {
+                bgmSystem = new BGMSystem();
+                console.log('[DEBUG] ✓ BGMSystem initialized');
+            } catch (e) {
+                console.error('[ERROR] BGMSystem failed:', e);
+            }
+
+            try {
+                partySystem = new PartySystem();
+                console.log('[DEBUG] ✓ PartySystem initialized');
+            } catch (e) {
+                console.error('[ERROR] PartySystem failed:', e);
+            }
+
+            try {
+                storyEventSystem = new StoryEventSystem();
+                console.log('[DEBUG] ✓ StoryEventSystem initialized');
+            } catch (e) {
+                console.error('[ERROR] StoryEventSystem failed:', e);
+            }
 
             // デバッグ用: 初期アイテムを追加
             itemSystem.addItem('heal_potion', 3);
@@ -1601,10 +1652,11 @@
             window.partySystem = partySystem;
             window.storyEventSystem = storyEventSystem;
             window.storyFlags = storyFlags;
-            
-            // デバッグ用: 初期魔法を習得
-            magicSystem.learnMagic('heal');
-            magicSystem.learnMagic('fire_bolt');
+
+            // デバッグ用: 初期魔法を習得（プレイヤーオブジェクトを渡す）
+            // 注: この行は削除（上でplayerに習得済み）
+            // magicSystem.learnMagic('heal', player);
+            // magicSystem.learnMagic('fire_bolt', player);
 
             gameStarted = true;
             updateMapInfo();
@@ -2756,11 +2808,22 @@
         window.updateUI = updateUI;
         window.setupBattleCommands = setupBattleCommands;
 
+        let gameLoopCounter = 0;
         function gameLoop() {
             if (!battleSystem.inBattle) {
+                // デバッグ: 最初の数フレームだけログ出力
+                if (gameLoopCounter < 3) {
+                    console.log('[DEBUG] gameLoop frame', gameLoopCounter, 'mapSystem:', mapSystem ? 'OK' : 'NULL');
+                    gameLoopCounter++;
+                }
+
                 // マップ描画
-                mapSystem.drawCurrentMap(ctx, canvas);
-                mapSystem.drawNPCs(ctx, storyFlags);
+                if (mapSystem && mapSystem.drawCurrentMap) {
+                    mapSystem.drawCurrentMap(ctx, canvas);
+                    mapSystem.drawNPCs(ctx, storyFlags);
+                } else {
+                    console.error('[ERROR] mapSystem or drawCurrentMap is undefined');
+                }
 
                 // プレイヤー描画と更新
                 drawPlayer();
