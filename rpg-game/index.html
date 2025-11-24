@@ -2040,10 +2040,12 @@
                     menuSelectedIndex = currentRow * cols;
                 }
                 updateMenuSelection();
-            } else if (key === 'Enter' || key === ' ') {
+            } else if (key === 'Enter') {
+                // 決定キー: ENTERのみ（Spaceは除外）
                 const selectedOption = options[menuSelectedIndex];
                 executeMenuOption(selectedOption.dataset.menu);
             } else if (key === 'x' || key === 'X' || key === 'Escape') {
+                // キャンセルキー: X / Escape
                 closeMenu();
             }
         }
@@ -2052,20 +2054,22 @@
             switch(menuType) {
                 case 'status':
                     // ステータス確認（現在の表示を維持）
-                    // 何もしない - ステータスは既に表示されている
+                    // 何もしない - ステータスは既にメインメニューで表示されている
                     break;
                 case 'items':
+                    // アイテムメニューを開く
                     openItemMenu();
                     break;
                 case 'equipment':
+                    // 装備メニューを開く
                     openEquipmentMenu();
                     break;
                 case 'kamui':
-                    // メニューを閉じてからメッセージを表示
-                    closeMenu();
-                    showMessage('神威機能は開発中です');
+                    // 神威メニュー（戦闘中のみ使用可能なのでフィールドでは何もしない）
+                    // 何もしない - カムイは戦闘中に使用
                     break;
                 case 'close':
+                    // メニューを閉じる
                     closeMenu();
                     break;
             }
@@ -2244,10 +2248,12 @@
             } else if (key === 'ArrowDown' || key === 's' || key === 'S') {
                 itemSelectedIndex = (itemSelectedIndex + 1) % inventory.length;
                 updateItemList();
-            } else if (key === 'Enter' || key === ' ') {
+            } else if (key === 'Enter') {
+                // 決定キー: ENTERのみ
                 const selectedItem = inventory[itemSelectedIndex];
                 useItemFromMenu(selectedItem.id);
             } else if (key === 'Escape' || key === 'x' || key === 'X') {
+                // キャンセルキー: X / Escape
                 closeItemMenu();
             }
         }
@@ -2701,10 +2707,12 @@
             } else if (key === 'ArrowDown' || key === 's' || key === 'S') {
                 equipmentSelectedIndex = (equipmentSelectedIndex + 1) % inventory.length;
                 updateEquipmentDisplay();
-            } else if (key === 'Enter' || key === ' ') {
+            } else if (key === 'Enter') {
+                // 決定キー: ENTERのみ
                 const selectedEquipment = inventory[equipmentSelectedIndex];
                 equipFromMenu(selectedEquipment.id);
             } else if (key === 'Escape' || key === 'x' || key === 'X') {
+                // キャンセルキー: X / Escape
                 closeEquipmentMenu();
             }
         }
