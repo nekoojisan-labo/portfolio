@@ -163,6 +163,13 @@ class StoryEventSystem {
                 if (partySystem && window.CHARACTER_DATA) {
                     const akari = { ...window.CHARACTER_DATA.akari };
                     partySystem.addMember(akari);
+
+                    // アカリの初期習得スキル
+                    if (window.magicSystem) {
+                        window.magicSystem.learnMagic('heal', akari);
+                        window.magicSystem.learnMagic('mega_heal', akari);
+                        console.log('✅ アカリが初期スキルを習得: heal, mega_heal');
+                    }
                 }
                 console.log('✅ Chapter 1 started - Akari joined the party');
             }
