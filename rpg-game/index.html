@@ -1162,13 +1162,15 @@
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        
-        // デバッグ用: URLパラメータで自動開始
+
+        // デバッグ用: URLパラメータで自動開始（一時的に無効化）
+        /*
         if (window.location.search.includes('autostart')) {
             setTimeout(() => {
                 startGame();
             }, 1000);
         }
+        */
         
         // ゲームシステム
         let battleSystem = null;
