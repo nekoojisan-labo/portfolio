@@ -2043,7 +2043,9 @@
             } else if (key === 'Enter') {
                 // 決定キー: ENTERのみ（Spaceは除外）
                 const selectedOption = options[menuSelectedIndex];
-                executeMenuOption(selectedOption.dataset.menu);
+                if (selectedOption) {
+                    executeMenuOption(selectedOption.dataset.menu);
+                }
             } else if (key === 'x' || key === 'X' || key === 'Escape') {
                 // キャンセルキー: X / Escape
                 closeMenu();
@@ -2413,7 +2415,7 @@
                 if (index === battleSystem.selectedCommand) {
                     cmd.classList.add('selected');
                 }
-                
+
                 // クリックイベントを設定
                 cmd.onclick = () => {
                     console.log('Command clicked:', cmd.dataset.command, 'waiting:', battleSystem.waitingForCommand);
