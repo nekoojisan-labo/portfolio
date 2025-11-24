@@ -414,19 +414,23 @@
             border-radius: 5px;
             padding: 15px;
             margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
         }
-        
+
         .menu-stat-row {
             display: flex;
             justify-content: space-between;
-            margin: 8px 0;
             font-size: 14px;
         }
         
         .menu-options {
-            display: flex;
-            flex-direction: column;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 10px;
+            max-width: 600px;
+            margin: 0 auto;
         }
         
         .menu-option {
@@ -939,7 +943,7 @@
                     <div class="menu-option" data-menu="kamui">神威</div>
                     <div class="menu-option" data-menu="close">閉じる</div>
                 </div>
-                <div class="menu-close">←→でキャラ切替 / ↑↓で選択 / ENTERで決定 / Xキーで閉じる</div>
+                <div class="menu-close">Q/Eでキャラ切替 / ↑↓←→で選択 / ENTERで決定 / Xキーで閉じる</div>
             </div>
         </div>
         
@@ -1151,15 +1155,25 @@
         let menuSelectedIndex = 0;
         let itemSelectedIndex = 0;
         let equipmentSelectedIndex = 0;
-        
+        let isMessageShown = false;
+
         document.addEventListener('keydown', (e) => {
+            // セリフ（メッセージ）が表示されている場合、決定キーのみ受け付ける
+            if (isMessageShown) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    clearMessage();
+                }
+                e.preventDefault();
+                return;
+            }
+
             // ショップが開いている場合
             if (window.gameShop && window.gameShop.isShopOpen) {
                 // ショップのキーボード操作は後で実装
                 e.preventDefault();
                 return;
             }
-            
+
             // 装備メニューが開いている場合
             const equipmentMenuOverlay = document.getElementById('equipmentMenuOverlay');
             if (equipmentMenuOverlay && equipmentMenuOverlay.classList.contains('active')) {
@@ -1167,7 +1181,7 @@
                 e.preventDefault();
                 return;
             }
-            
+
             // アイテムメニューが開いている場合
             const itemMenuOverlay = document.getElementById('itemMenuOverlay');
             if (itemMenuOverlay && itemMenuOverlay.classList.contains('active')) {
@@ -1175,7 +1189,7 @@
                 e.preventDefault();
                 return;
             }
-            
+
             // メニューが開いている場合
             const menuOverlay = document.getElementById('menuOverlay');
             if (menuOverlay && menuOverlay.classList.contains('active')) {
@@ -1183,7 +1197,7 @@
                 e.preventDefault();
                 return;
             }
-            
+
             // 戦闘中
             if (battleSystem && battleSystem.inBattle) {
                 handleBattleInput(e.key);
@@ -1443,8 +1457,10 @@
             // デバッグ用: 初期魔法を習得
             magicSystem.learnMagic('heal');
             magicSystem.learnMagic('fire_bolt');
-            
+
             gameStarted = true;
+            // 初期メッセージが表示されているのでフラグを立てる
+            isMessageShown = true;
             updateMapInfo();
             gameLoop();
 
@@ -1784,9 +1800,11 @@
         
         function handleMenuInput(key) {
             const options = document.querySelectorAll('#menuOptions .menu-option');
+            const cols = 2; // 2列グリッドレイアウト
+            const totalOptions = options.length;
 
-            // 左右キーでパーティメンバー切り替え
-            if (key === 'ArrowLeft' || key === 'a' || key === 'A') {
+            // Q/Eキーでパーティメンバー切り替え
+            if (key === 'q' || key === 'Q') {
                 const allMembers = [player];
                 if (window.partySystem) {
                     allMembers.push(...window.partySystem.getMembers());
@@ -1794,7 +1812,7 @@
                 selectedPartyMemberIndex = (selectedPartyMemberIndex - 1 + allMembers.length) % allMembers.length;
                 updatePartyTabs();
                 updateMenuStats();
-            } else if (key === 'ArrowRight' || key === 'd' || key === 'D') {
+            } else if (key === 'e' || key === 'E') {
                 const allMembers = [player];
                 if (window.partySystem) {
                     allMembers.push(...window.partySystem.getMembers());
@@ -1802,11 +1820,81 @@
                 selectedPartyMemberIndex = (selectedPartyMemberIndex + 1) % allMembers.length;
                 updatePartyTabs();
                 updateMenuStats();
-            } else if (key === 'ArrowUp' || key === 'w' || key === 'W') {
-                menuSelectedIndex = (menuSelectedIndex - 1 + options.length) % options.length;
+            }
+            // 2列グリッドナビゲーション
+            else if (key === 'ArrowUp' || key === 'w' || key === 'W') {
+                // 上の行へ移動
+                const currentRow = Math.floor(menuSelectedIndex / cols);
+                const currentCol = menuSelectedIndex % cols;
+                const newRow = currentRow - 1;
+                if (newRow >= 0) {
+                    const newIndex = newRow * cols + currentCol;
+                    if (newIndex < totalOptions) {
+                        menuSelectedIndex = newIndex;
+                    }
+                } else {
+                    // 一番上の行にいる場合、一番下の行へ
+                    const maxRow = Math.floor((totalOptions - 1) / cols);
+                    const newIndex = maxRow * cols + currentCol;
+                    if (newIndex < totalOptions) {
+                        menuSelectedIndex = newIndex;
+                    } else {
+                        // 最後の行に該当する列がない場合、最後のオプションへ
+                        menuSelectedIndex = totalOptions - 1;
+                    }
+                }
                 updateMenuSelection();
             } else if (key === 'ArrowDown' || key === 's' || key === 'S') {
-                menuSelectedIndex = (menuSelectedIndex + 1) % options.length;
+                // 下の行へ移動
+                const currentRow = Math.floor(menuSelectedIndex / cols);
+                const currentCol = menuSelectedIndex % cols;
+                const maxRow = Math.floor((totalOptions - 1) / cols);
+                const newRow = currentRow + 1;
+                if (newRow <= maxRow) {
+                    const newIndex = newRow * cols + currentCol;
+                    if (newIndex < totalOptions) {
+                        menuSelectedIndex = newIndex;
+                    } else {
+                        // 下の行に該当する列がない場合、最後のオプションへ
+                        menuSelectedIndex = totalOptions - 1;
+                    }
+                } else {
+                    // 一番下の行にいる場合、一番上の行へ
+                    const newIndex = currentCol;
+                    if (newIndex < totalOptions) {
+                        menuSelectedIndex = newIndex;
+                    } else {
+                        menuSelectedIndex = 0;
+                    }
+                }
+                updateMenuSelection();
+            } else if (key === 'ArrowLeft' || key === 'a' || key === 'A') {
+                // 左の列へ移動
+                const currentRow = Math.floor(menuSelectedIndex / cols);
+                const currentCol = menuSelectedIndex % cols;
+                if (currentCol > 0) {
+                    menuSelectedIndex = currentRow * cols + (currentCol - 1);
+                } else {
+                    // 一番左の列にいる場合、右の列へ
+                    const newIndex = currentRow * cols + (cols - 1);
+                    if (newIndex < totalOptions) {
+                        menuSelectedIndex = newIndex;
+                    }
+                }
+                updateMenuSelection();
+            } else if (key === 'ArrowRight' || key === 'd' || key === 'D') {
+                // 右の列へ移動
+                const currentRow = Math.floor(menuSelectedIndex / cols);
+                const currentCol = menuSelectedIndex % cols;
+                if (currentCol < cols - 1) {
+                    const newIndex = currentRow * cols + (currentCol + 1);
+                    if (newIndex < totalOptions) {
+                        menuSelectedIndex = newIndex;
+                    }
+                } else {
+                    // 一番右の列にいる場合、左の列へ
+                    menuSelectedIndex = currentRow * cols;
+                }
                 updateMenuSelection();
             } else if (key === 'Enter' || key === ' ') {
                 const selectedOption = options[menuSelectedIndex];
@@ -2176,7 +2264,15 @@
         }
 
         function showMessage(text) {
-            document.getElementById('messageBox').textContent = text;
+            const messageBox = document.getElementById('messageBox');
+            messageBox.textContent = text;
+            isMessageShown = true;
+        }
+
+        function clearMessage() {
+            const messageBox = document.getElementById('messageBox');
+            messageBox.textContent = '';
+            isMessageShown = false;
         }
 
         function updateUI() {
