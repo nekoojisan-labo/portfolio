@@ -58,6 +58,7 @@
             font-size: 14px;
             color: #ffffff;
             pointer-events: auto;
+            z-index: 100;
         }
 
         .status-bar {
@@ -782,9 +783,32 @@
 
         /* スマートフォン向け: ボタンを大きく、操作しやすく */
         @media (max-width: 800px) {
+            /* UIオーバーレイを縮小してコンパクト化 */
+            .ui-overlay {
+                height: 100px;
+                padding: 8px;
+                font-size: 12px;
+            }
+
+            .status-bar {
+                margin-bottom: 6px;
+            }
+
+            .hp-bar, .mp-bar {
+                width: 100px;
+                height: 10px;
+            }
+
+            .message-box {
+                min-height: 30px;
+                padding: 4px;
+                font-size: 11px;
+            }
+
+            /* タッチコントローラーをUIの上に配置 */
             .on-screen-controller {
                 padding: 0 15px;
-                bottom: 15px;
+                bottom: 110px; /* UIオーバーレイ100px + マージン10px */
             }
 
             .dpad-container {
@@ -828,13 +852,118 @@
                 height: 58px;
                 font-size: 13px;
             }
+
+            /* 戦闘画面のUI調整 */
+            .battle-commands {
+                bottom: 120px; /* コントローラーの上に配置 */
+                left: 5px;
+                width: 180px;
+                padding: 8px;
+                font-size: 12px;
+            }
+
+            .battle-message {
+                height: 60px;
+                padding: 8px;
+                font-size: 12px;
+            }
+
+            .battle-status {
+                display: none; /* 小画面では非表示（battlePartyStatusで代替） */
+            }
+
+            #battlePartyStatus {
+                bottom: 120px; /* コントローラーの上に配置 */
+                right: 5px;
+                font-size: 11px;
+            }
+
+            /* マップ情報と操作説明を小さく */
+            .map-info {
+                font-size: 11px;
+                padding: 8px;
+            }
+
+            .controls {
+                font-size: 10px;
+                padding: 8px;
+                max-width: 120px;
+            }
+
+            /* メニュー系のレスポンシブ対応 */
+            .menu-container {
+                min-width: 300px;
+                max-width: 90vw;
+                padding: 20px;
+            }
+
+            .menu-title {
+                font-size: 20px;
+            }
+
+            #kamuiSkillMenu {
+                min-width: auto !important;
+                width: 90vw !important;
+                max-width: 500px !important;
+                padding: 15px !important;
+            }
+
+            .kamui-skill-list {
+                grid-template-columns: 1fr !important; /* 1列表示 */
+                gap: 10px !important;
+            }
+
+            #kamuiSkillGrid {
+                grid-template-columns: 1fr !important; /* 1列表示 */
+                gap: 10px !important;
+            }
+
+            .kamui-skill-item {
+                padding: 10px;
+            }
+
+            .kamui-skill-item .skill-icon {
+                font-size: 36px;
+            }
+
+            .kamui-skill-item .skill-name {
+                font-size: 16px;
+            }
         }
 
         /* さらに小さい画面用（iPhone SE など） */
         @media (max-width: 400px) {
+            /* UIオーバーレイをさらに縮小 */
+            .ui-overlay {
+                height: 85px;
+                padding: 6px;
+                font-size: 11px;
+            }
+
+            .status-bar {
+                margin-bottom: 4px;
+                flex-wrap: wrap;
+            }
+
+            .status-bar > div {
+                font-size: 10px;
+            }
+
+            .hp-bar, .mp-bar {
+                width: 90px;
+                height: 8px;
+            }
+
+            .message-box {
+                min-height: 25px;
+                padding: 3px;
+                font-size: 10px;
+            }
+
+            /* タッチコントローラーの位置調整 */
             .on-screen-controller {
                 padding: 0 10px;
-                bottom: 10px;
+                bottom: 95px; /* UIオーバーレイ85px + マージン10px */
             }
 
             .dpad-container {
@@ -877,6 +1006,87 @@
 
             .action-buttons {
                 gap: 8px;
+            }
+
+            /* 戦闘画面のUI調整（小画面） */
+            .battle-commands {
+                bottom: 105px; /* コントローラーの上に配置 */
+                left: 3px;
+                width: 160px;
+                padding: 6px;
+                font-size: 11px;
+            }
+
+            .command-item {
+                padding: 6px;
+            }
+
+            .battle-message {
+                height: 50px;
+                padding: 6px;
+                font-size: 11px;
+            }
+
+            #battlePartyStatus {
+                bottom: 105px; /* コントローラーの上に配置 */
+                right: 3px;
+                font-size: 10px;
+            }
+
+            .enemy-sprite {
+                font-size: 48px; /* 敵キャラを小さく */
+            }
+
+            .enemy-name {
+                font-size: 13px;
+            }
+
+            /* マップ情報と操作説明をさらに小さく */
+            .map-info {
+                font-size: 10px;
+                padding: 6px;
+                min-width: 100px;
+            }
+
+            .controls {
+                display: none; /* 極小画面では非表示 */
+            }
+
+            /* メニュー系のレスポンシブ対応（小画面） */
+            .menu-container {
+                min-width: 280px;
+                max-width: 95vw;
+                padding: 15px;
+            }
+
+            .menu-title {
+                font-size: 18px;
+            }
+
+            .menu-stats {
+                font-size: 11px;
+            }
+
+            #kamuiSkillMenu {
+                width: 95vw !important;
+                max-width: 350px !important;
+                padding: 10px !important;
+            }
+
+            #kamuiSkillMenu > div:first-child {
+                font-size: 18px !important; /* タイトルサイズ調整 */
+            }
+
+            .kamui-skill-item .skill-icon {
+                font-size: 32px;
+            }
+
+            .kamui-skill-item .skill-name {
+                font-size: 14px;
+            }
+
+            .kamui-skill-item .skill-description {
+                font-size: 11px;
             }
         }
     </style>
