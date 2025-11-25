@@ -1687,7 +1687,7 @@
             // 初期マップのBGM再生
             const initialMap = mapSystem.maps[mapSystem.currentMap];
             if (initialMap && initialMap.bgm) {
-                bgmSystem.play(initialMap.bgm, true);
+                bgmSystem.changeFieldBGM(initialMap.bgm);
             }
 
             // チャプター1開始イベントを自動再生

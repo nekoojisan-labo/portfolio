@@ -469,10 +469,10 @@ class BattleSystem {
             return;
         }
 
-        const kamuiSkills = window.magicSystem.getLearnedKamuiMagic(member);
+        const kamuiSkills = window.magicSystem.getLearnedMagic(member);
 
         if (kamuiSkills.length === 0) {
-            this.addBattleLog(`${member.name}は カムイスキルを 習得していない！`);
+            this.addBattleLog(`${member.name}は スキルを 習得していない！`);
             setTimeout(callback, 1000);
             return;
         }
