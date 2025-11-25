@@ -40,7 +40,17 @@ class BattleSystem {
                 gold: 20,
                 type: 'drone',
                 skills: ['scan', 'alert'],
-                description: '監視ドローン。常に周囲を警戒している。'
+                description: '監視ドローン。常に周囲を警戒している。',
+                dropTable: [
+                    { id: 'heal_potion', rate: 0.3 },
+                    { id: 'energy_core', rate: 0.15 }
+                ],
+                aiPattern: {
+                    lowHpThreshold: 0.3,
+                    lowHpAction: 'defend',
+                    normalAction: 'attack',
+                    skillChance: 0.2
+                }
             },
             cerberus: {
                 name: 'ケルベロス',
@@ -54,7 +64,18 @@ class BattleSystem {
                 gold: 50,
                 type: 'mecha',
                 skills: ['bite', 'howl', 'rush'],
-                description: '三つ首の機械狼。高い攻撃力を持つ。'
+                description: '三つ首の機械狼。高い攻撃力を持つ。',
+                dropTable: [
+                    { id: 'heal_potion', rate: 0.25 },
+                    { id: 'mega_heal_potion', rate: 0.1 },
+                    { id: 'iron_sword', rate: 0.05 }
+                ],
+                aiPattern: {
+                    lowHpThreshold: 0.25,
+                    lowHpAction: 'attack',
+                    normalAction: 'attack',
+                    skillChance: 0.4
+                }
             },
             dustGolem: {
                 name: 'ダスト・ゴーレム',
@@ -68,7 +89,18 @@ class BattleSystem {
                 gold: 45,
                 type: 'construct',
                 skills: ['slam', 'guard'],
-                description: 'スクラップから生まれた巨人。防御力が高い。'
+                description: 'スクラップから生まれた巨人。防御力が高い。',
+                dropTable: [
+                    { id: 'heal_potion', rate: 0.2 },
+                    { id: 'iron_helmet', rate: 0.08 },
+                    { id: 'leather_armor', rate: 0.06 }
+                ],
+                aiPattern: {
+                    lowHpThreshold: 0.4,
+                    lowHpAction: 'defend',
+                    normalAction: 'attack',
+                    skillChance: 0.25
+                }
             },
             alraune: {
                 name: 'アルラウネ',
@@ -82,7 +114,18 @@ class BattleSystem {
                 gold: 40,
                 type: 'hybrid',
                 skills: ['drain', 'entangle', 'spore'],
-                description: '植物と機械の融合体。特殊攻撃を使う。'
+                description: '植物と機械の融合体。特殊攻撃を使う。',
+                dropTable: [
+                    { id: 'mega_heal_potion', rate: 0.2 },
+                    { id: 'energy_core', rate: 0.25 },
+                    { id: 'full_heal_potion', rate: 0.05 }
+                ],
+                aiPattern: {
+                    lowHpThreshold: 0.3,
+                    lowHpAction: 'skill',
+                    normalAction: 'attack',
+                    skillChance: 0.35
+                }
             },
             deusMachina: {
                 name: 'デウス・マキナ',
@@ -96,7 +139,18 @@ class BattleSystem {
                 gold: 60,
                 type: 'android',
                 skills: ['laserBeam', 'barrier', 'analyze'],
-                description: 'アークの精鋭機械兵。バランスが良い。'
+                description: 'アークの精鋭機械兵。バランスが良い。',
+                dropTable: [
+                    { id: 'mega_heal_potion', rate: 0.25 },
+                    { id: 'mega_energy_core', rate: 0.15 },
+                    { id: 'plasma_blade', rate: 0.03 }
+                ],
+                aiPattern: {
+                    lowHpThreshold: 0.3,
+                    lowHpAction: 'skill',
+                    normalAction: 'attack',
+                    skillChance: 0.3
+                }
             },
             // ボスエネミー
             corrupted_drone_boss: {
@@ -113,7 +167,18 @@ class BattleSystem {
                 boss: true,
                 skills: ['omega_laser', 'emp_pulse', 'repair_protocol'],
                 description: 'アークの監視システムが暴走した巨大ドローン。強力なレーザー攻撃を放つ。',
-                bossId: 'corrupted_drone_boss'
+                bossId: 'corrupted_drone_boss',
+                dropTable: [
+                    { id: 'full_heal_potion', rate: 0.8 },
+                    { id: 'elixir', rate: 0.5 },
+                    { id: 'plasma_blade', rate: 0.3 }
+                ],
+                aiPattern: {
+                    lowHpThreshold: 0.25,
+                    lowHpAction: 'skill',
+                    normalAction: 'attack',
+                    skillChance: 0.6
+                }
             },
             rogue_ai_core: {
                 name: '暴走AIコア',
@@ -129,7 +194,18 @@ class BattleSystem {
                 boss: true,
                 skills: ['data_storm', 'system_hack', 'firewall'],
                 description: 'アークのコアシステムの一部。圧倒的な計算能力で攻撃する。',
-                bossId: 'rogue_ai_core'
+                bossId: 'rogue_ai_core',
+                dropTable: [
+                    { id: 'elixir', rate: 1.0 },
+                    { id: 'kamui_katana', rate: 0.5 },
+                    { id: 'cyber_armor', rate: 0.4 }
+                ],
+                aiPattern: {
+                    lowHpThreshold: 0.2,
+                    lowHpAction: 'skill',
+                    normalAction: 'skill',
+                    skillChance: 0.8
+                }
             }
         };
         
@@ -688,30 +764,75 @@ class BattleSystem {
     // 敵のターン
     enemyTurn(player) {
         console.log('enemyTurn called');
-        
+
+        // 敵のAI行動決定
+        const action = this.determineEnemyAction();
+
+        switch (action) {
+            case 'attack':
+                this.enemyAttack(player);
+                break;
+            case 'defend':
+                this.enemyDefend(player);
+                break;
+            case 'skill':
+                this.enemySkillAttack(player);
+                break;
+            default:
+                this.enemyAttack(player);
+        }
+    }
+
+    // 敵の行動を決定
+    determineEnemyAction() {
+        if (!this.currentEnemy || !this.currentEnemy.aiPattern) {
+            return 'attack';
+        }
+
+        const hpRatio = this.currentEnemy.currentHp / this.currentEnemy.maxHp;
+        const aiPattern = this.currentEnemy.aiPattern;
+
+        // HP閾値以下の場合、低HP時の行動
+        if (hpRatio <= aiPattern.lowHpThreshold) {
+            return aiPattern.lowHpAction;
+        }
+
+        // スキル使用判定
+        if (aiPattern.skillChance && Math.random() < aiPattern.skillChance) {
+            return 'skill';
+        }
+
+        return aiPattern.normalAction || 'attack';
+    }
+
+    // 敵の通常攻撃
+    enemyAttack(player) {
         const baseDamage = this.currentEnemy.attack;
         const variance = Math.floor(Math.random() * 3);
         let damage = Math.max(1, baseDamage + variance - Math.floor((player.defense || 5) / 2));
-        
+
+        // パーティメンバーからランダムにターゲットを選択
+        const allMembers = this.getPartyMembers();
+        const target = allMembers[Math.floor(Math.random() * allMembers.length)];
+
         // 防御中はダメージ半減
-        if (player.defending) {
+        if (target.defending) {
             damage = Math.floor(damage / 2);
             this.addBattleLog(`${this.currentEnemy.name}の こうげき！`);
-            this.addBattleLog(`カイトは ぼうぎょしている！`);
-            player.defending = false; // 防御状態をリセット
+            this.addBattleLog(`${target.name}は ぼうぎょしている！`);
+            target.defending = false;
         } else {
             this.addBattleLog(`${this.currentEnemy.name}の こうげき！`);
         }
-        
-        player.hp = Math.max(0, player.hp - damage);
-        this.addBattleLog(`カイトに ${Math.floor(damage)}の ダメージ！`);
-        
+
+        target.hp = Math.max(0, target.hp - damage);
+        this.addBattleLog(`${target.name}に ${Math.floor(damage)}の ダメージ！`);
+
         this.showDamageEffect(damage, false);
         this.updateBattleUI();
-        
-        if (player.hp <= 0) {
-            player.hp = 0;
-            this.updateBattleUI();
+
+        // パーティ全滅チェック
+        if (this.checkPartyWipeout()) {
             setTimeout(() => this.gameOver(), 1500);
         } else {
             // 次のターンのコマンド選択に戻る
@@ -720,6 +841,54 @@ class BattleSystem {
                 this.startPlayerTurn();
             }, 1500);
         }
+    }
+
+    // 敵の防御
+    enemyDefend(player) {
+        this.addBattleLog(`${this.currentEnemy.name}は みをまもっている！`);
+        this.currentEnemy.defending = true;
+
+        // 次のターンへ
+        setTimeout(() => {
+            this.turnCount++;
+            this.startPlayerTurn();
+        }, 1500);
+    }
+
+    // 敵のスキル攻撃
+    enemySkillAttack(player) {
+        const skillDamage = Math.floor(this.currentEnemy.attack * 1.5);
+        const variance = Math.floor(Math.random() * 5);
+        const damage = Math.max(1, skillDamage + variance - Math.floor((player.defense || 5) / 3));
+
+        // パーティメンバーからランダムにターゲットを選択
+        const allMembers = this.getPartyMembers();
+        const target = allMembers[Math.floor(Math.random() * allMembers.length)];
+
+        this.addBattleLog(`${this.currentEnemy.name}の とくしゅこうげき！`);
+
+        target.hp = Math.max(0, target.hp - damage);
+        this.addBattleLog(`${target.name}に ${Math.floor(damage)}の ダメージ！`);
+
+        this.showDamageEffect(damage, false, true);
+        this.updateBattleUI();
+
+        // パーティ全滅チェック
+        if (this.checkPartyWipeout()) {
+            setTimeout(() => this.gameOver(), 1500);
+        } else {
+            // 次のターンのコマンド選択に戻る
+            setTimeout(() => {
+                this.turnCount++;
+                this.startPlayerTurn();
+            }, 1500);
+        }
+    }
+
+    // パーティ全滅チェック
+    checkPartyWipeout() {
+        const allMembers = this.getPartyMembers();
+        return allMembers.every(member => member.hp <= 0);
     }
     
     // 戦闘勝利
@@ -759,9 +928,42 @@ class BattleSystem {
                 member.exp = (member.exp || 0) + expGained;
             });
 
+            // ドロップアイテム判定
+            const droppedItems = this.processItemDrops();
+            if (droppedItems.length > 0) {
+                droppedItems.forEach(item => {
+                    this.addBattleLog(`${item.name}を てにいれた！`);
+                });
+            }
+
             // レベルアップ処理を順番に実行
             this.processLevelUps(allMembers, 0);
         }, 1000);
+    }
+
+    // ドロップアイテム処理
+    processItemDrops() {
+        const droppedItems = [];
+
+        if (!this.currentEnemy || !this.currentEnemy.dropTable || !window.itemSystem) {
+            return droppedItems;
+        }
+
+        this.currentEnemy.dropTable.forEach(dropEntry => {
+            const roll = Math.random();
+            if (roll < dropEntry.rate) {
+                // ドロップ成功
+                const success = window.itemSystem.addItem(dropEntry.id, 1);
+                if (success) {
+                    const itemData = window.itemSystem.itemDatabase[dropEntry.id];
+                    if (itemData) {
+                        droppedItems.push(itemData);
+                    }
+                }
+            }
+        });
+
+        return droppedItems;
     }
 
     // レベルアップ処理を順番に実行
