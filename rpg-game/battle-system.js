@@ -725,76 +725,146 @@ class BattleSystem {
     // 戦闘勝利
     battleVictory(player) {
         this.waitingForCommand = false;
-        
+
         // コマンドを非表示に
         const commands = document.getElementById('battleCommands');
         if (commands) {
             commands.style.display = 'none';
         }
-        
+
         // 勝利メッセージ
         this.addBattleLog(`${this.currentEnemy.name}を たおした！`);
-        
+
         // 経験値とゴールド獲得
         const expGained = this.currentEnemy.exp || 10;
         const goldGained = this.currentEnemy.gold || 5;
-        
+
         // リザルト表示
         setTimeout(() => {
             this.addBattleLog(`せんとうに しょうり！`);
-            
-            // 経験値付与
-            player.exp = (player.exp || 0) + expGained;
             this.addBattleLog(`${expGained} の けいけんちを かくとく！`);
-            
-            // ゴールド付与
+
+            // ゴールド付与（プレイヤーのみ）
             player.gold = (player.gold || 0) + goldGained;
             this.addBattleLog(`${goldGained} ゴールドを てにいれた！`);
-            
-            // レベルアップチェック
-            const expNeeded = player.level * 100;
-            if (player.exp >= expNeeded) {
-                setTimeout(() => {
-                    player.level++;
-                    
-                    // 基本ステータスを上昇
-                    player.baseMaxHp = (player.baseMaxHp || 100) + 20;
-                    player.baseMaxMp = (player.baseMaxMp || 50) + 10;
-                    player.baseAttack = (player.baseAttack || 10) + 3;
-                    player.baseDefense = (player.baseDefense || 5) + 2;
-                    
-                    // 装備込みのステータスを再計算
-                    if (window.equipmentSystem) {
-                        window.equipmentSystem.recalculatePlayerStats(player);
-                    } else {
-                        player.maxHp = player.baseMaxHp;
-                        player.maxMp = player.baseMaxMp;
-                        player.attack = player.baseAttack;
-                        player.defense = player.baseDefense;
-                    }
-                    
-                    // HP/MPを全回復
-                    player.hp = player.maxHp;
-                    player.mp = player.maxMp;
-                    
-                    this.addBattleLog(`レベルアップ！`);
-                    this.addBattleLog(`レベル ${player.level} になった！`);
-                    this.addBattleLog(`さいだいHPが ${player.maxHp} になった！`);
-                    this.addBattleLog(`さいだいMPが ${player.maxMp} になった！`);
-                    
-                    // UIを更新
-                    if (window.updateUI) {
-                        window.updateUI();
-                    }
-                    
-                    // 戦闘終了
-                    setTimeout(() => this.endBattle(true), 2000);
-                }, 1000);
-            } else {
-                // レベルアップしない場合は戦闘終了
-                setTimeout(() => this.endBattle(true), 2000);
+
+            // 全パーティメンバーに経験値を配分
+            const allMembers = [player];
+            if (window.partySystem) {
+                allMembers.push(...window.partySystem.getMembers());
             }
+
+            // 各メンバーに経験値付与
+            allMembers.forEach(member => {
+                member.exp = (member.exp || 0) + expGained;
+            });
+
+            // レベルアップ処理を順番に実行
+            this.processLevelUps(allMembers, 0);
         }, 1000);
+    }
+
+    // レベルアップ処理を順番に実行
+    processLevelUps(members, index) {
+        if (index >= members.length) {
+            // 全員のレベルアップ処理完了
+            setTimeout(() => this.endBattle(true), 1500);
+            return;
+        }
+
+        const member = members[index];
+        const characterId = member.characterId || 'kaito';
+        const expCurve = window.CHARACTER_GROWTH?.[characterId]?.expCurve || 'normal';
+        const expNeeded = window.calculateExpNeeded ? window.calculateExpNeeded(member.level, expCurve) : member.level * 100;
+
+        if (member.exp >= expNeeded) {
+            setTimeout(() => {
+                this.levelUpCharacter(member);
+                // 次のメンバーのレベルアップチェック
+                this.processLevelUps(members, index);
+            }, 1000);
+        } else {
+            // 次のメンバーへ
+            this.processLevelUps(members, index + 1);
+        }
+    }
+
+    // キャラクターのレベルアップ処理
+    levelUpCharacter(character) {
+        const characterId = character.characterId || 'kaito';
+        const oldLevel = character.level;
+        character.level++;
+
+        // ステータス成長（ランダム幅付き）
+        const hpGain = window.calculateStatGrowth ? window.calculateStatGrowth(characterId, 'hp') : 20;
+        const mpGain = window.calculateStatGrowth ? window.calculateStatGrowth(characterId, 'mp') : 10;
+        const attackGain = window.calculateStatGrowth ? window.calculateStatGrowth(characterId, 'attack') : 3;
+        const defenseGain = window.calculateStatGrowth ? window.calculateStatGrowth(characterId, 'defense') : 2;
+        const magicGain = window.calculateStatGrowth ? window.calculateStatGrowth(characterId, 'magic') : 2;
+        const speedGain = window.calculateStatGrowth ? window.calculateStatGrowth(characterId, 'speed') : 1;
+
+        // 基本ステータスを上昇
+        character.baseMaxHp = (character.baseMaxHp || character.maxHp) + hpGain;
+        character.baseMaxMp = (character.baseMaxMp || character.maxMp) + mpGain;
+        character.baseAttack = (character.baseAttack || character.attack) + attackGain;
+        character.baseDefense = (character.baseDefense || character.defense) + defenseGain;
+        character.baseMagic = (character.baseMagic || character.magic || 0) + magicGain;
+        character.baseSpeed = (character.baseSpeed || character.speed || 5) + speedGain;
+
+        // 装備込みのステータスを再計算（プレイヤーのみ）
+        if (character === window.player && window.equipmentSystem) {
+            window.equipmentSystem.recalculatePlayerStats(character);
+        } else {
+            character.maxHp = character.baseMaxHp;
+            character.maxMp = character.baseMaxMp;
+            character.attack = character.baseAttack;
+            character.defense = character.baseDefense;
+            character.magic = character.baseMagic;
+            character.speed = character.baseSpeed;
+        }
+
+        // HP/MPを全回復
+        character.hp = character.maxHp;
+        character.mp = character.maxMp;
+
+        // レベルアップメッセージ
+        this.addBattleLog(`${character.name}が レベルアップ！`);
+        this.addBattleLog(`レベル ${character.level} になった！`);
+        this.addBattleLog(`HP+${hpGain} MP+${mpGain} 攻撃+${attackGain} 防御+${defenseGain}`);
+
+        // 新規スキル習得チェック
+        this.checkSkillLearning(character, oldLevel);
+
+        // UIを更新
+        if (window.updateUI) {
+            window.updateUI();
+        }
+    }
+
+    // スキル習得チェック
+    checkSkillLearning(character, oldLevel) {
+        const characterId = character.characterId || 'kaito';
+        const skillLearning = window.CHARACTER_GROWTH?.[characterId]?.skillLearning;
+
+        if (!skillLearning || !window.magicSystem) return;
+
+        const newLevel = character.level;
+
+        // レベル範囲内のスキルを習得
+        for (let level = oldLevel + 1; level <= newLevel; level++) {
+            const skills = skillLearning[level];
+            if (skills && Array.isArray(skills)) {
+                skills.forEach(skillId => {
+                    const learned = window.magicSystem.learnMagic(skillId, character);
+                    if (learned) {
+                        const magic = window.magicSystem.magicDatabase[skillId];
+                        if (magic) {
+                            this.addBattleLog(`${character.name}は ${magic.name}を おぼえた！`);
+                        }
+                    }
+                });
+            }
+        }
     }
     
     // 防御
