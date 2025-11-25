@@ -136,6 +136,15 @@ class BGMSystem {
             return;
         }
 
+        // 既存のaudioが存在する場合は完全に停止して破棄
+        if (this.audio) {
+            console.log(`[BGM] Stopping previous audio before loading new track`);
+            this.audio.pause();
+            this.audio.currentTime = 0;
+            this.audio.src = '';
+            this.audio = null;
+        }
+
         try {
             console.log(`[BGM] Loading: ${track.path}`);
             this.audio = new Audio(track.path);

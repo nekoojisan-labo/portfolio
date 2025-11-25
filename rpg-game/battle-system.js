@@ -437,8 +437,18 @@ class BattleSystem {
             return;
         }
 
+        console.log('[DEBUG] memberKamui called with:', {
+            magicId,
+            memberName: member.name,
+            memberMp: member.mp,
+            enemyName: this.currentEnemy ? this.currentEnemy.name : 'none',
+            inBattle: true
+        });
+
         // 魔法システムから使用
         const result = window.magicSystem.useMagic(magicId, member, this.currentEnemy, true);
+
+        console.log('[DEBUG] useMagic result:', result);
 
         if (!result.success) {
             this.addBattleLog(result.message);
