@@ -60,6 +60,7 @@ const CHARACTER_DATA = {
         id: 'akari',
         name: 'アカリ',
         level: 1,
+        exp: 0,  // 経験値を追加
         hp: 80,
         maxHp: 80,
         mp: 60,
@@ -77,6 +78,7 @@ const CHARACTER_DATA = {
         id: 'riku',
         name: 'リク',
         level: 1,
+        exp: 0,  // 経験値を追加
         hp: 120,
         maxHp: 120,
         mp: 30,
@@ -94,6 +96,7 @@ const CHARACTER_DATA = {
         id: 'yami',
         name: 'ヤミ',
         level: 1,
+        exp: 0,  // 経験値を追加
         hp: 70,
         maxHp: 70,
         mp: 80,

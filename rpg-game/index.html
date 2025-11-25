@@ -1687,7 +1687,7 @@
             // 初期マップのBGM再生
             const initialMap = mapSystem.maps[mapSystem.currentMap];
             if (initialMap && initialMap.bgm) {
-                bgmSystem.play(initialMap.bgm, true);
+                bgmSystem.changeFieldBGM(initialMap.bgm);
             }
 
             // チャプター1開始イベントを自動再生
@@ -2220,19 +2220,22 @@
                 document.getElementById('menuDefense').textContent = member.defense || 5;
             }
 
-            // 経験値とゴールドはプレイヤーのみ
+            // 経験値は全キャラクター表示、ゴールドはプレイヤーのみ
             const expRow = document.getElementById('menuExpRow');
             const goldRow = document.getElementById('menuGoldRow');
+
+            // 経験値は全キャラクターに表示
+            expRow.style.display = 'flex';
+            const currentExp = member.exp || 0;
+            const expNeeded = member.level * 100; // レベル × 100が必要経験値
+            document.getElementById('menuExp').textContent = currentExp;
+            document.getElementById('menuExpNeeded').textContent = expNeeded;
+
+            // ゴールドはプレイヤーのみ表示
             if (member === player) {
-                expRow.style.display = 'flex';
                 goldRow.style.display = 'flex';
-                const currentExp = player.exp || 0;
-                const expNeeded = player.level * 100; // レベル × 100が必要経験値
-                document.getElementById('menuExp').textContent = currentExp;
-                document.getElementById('menuExpNeeded').textContent = expNeeded;
                 document.getElementById('menuGold').textContent = player.gold || 0;
             } else {
-                expRow.style.display = 'none';
                 goldRow.style.display = 'none';
             }
 
@@ -2838,8 +2841,11 @@
         let kamuiSelectedIndex = 0;
 
         function openKamuiMenu() {
+            console.log('[DEBUG] openKamuiMenu called');
             closeMenu();
             const kamuiMenuOverlay = document.getElementById('kamuiMenuOverlay');
+            console.log('[DEBUG] kamuiMenuOverlay:', kamuiMenuOverlay);
+
             if (kamuiMenuOverlay) {
                 kamuiMenuOverlay.classList.add('active');
                 kamuiSelectedIndex = 0;
@@ -2850,10 +2856,13 @@
                     allMembers.push(...window.partySystem.getMembers());
                 }
                 const currentMember = allMembers[selectedPartyMemberIndex] || player;
+                console.log('[DEBUG] Current member for Kamui:', currentMember.name);
                 document.getElementById('kamuiCharacterName').textContent = currentMember.name || 'カイト';
 
                 updateKamuiSkillDisplay();
-                console.log('Kamui menu opened');
+                console.log('✅ Kamui menu opened');
+            } else {
+                console.error('[ERROR] kamuiMenuOverlay not found!');
             }
         }
 
@@ -2866,8 +2875,15 @@
         }
 
         function updateKamuiSkillDisplay() {
+            console.log('[DEBUG] updateKamuiSkillDisplay called');
             const skillGrid = document.getElementById('kamuiSkillGrid');
-            if (!skillGrid || !window.magicSystem) return;
+            console.log('[DEBUG] skillGrid:', skillGrid);
+            console.log('[DEBUG] magicSystem:', window.magicSystem);
+
+            if (!skillGrid || !window.magicSystem) {
+                console.error('[ERROR] skillGrid or magicSystem not found!');
+                return;
+            }
 
             // 現在のキャラクターの習得スキルを取得
             const allMembers = [player];
@@ -2875,9 +2891,12 @@
                 allMembers.push(...window.partySystem.getMembers());
             }
             const currentMember = allMembers[selectedPartyMemberIndex] || player;
+            console.log('[DEBUG] Getting learned skills for:', currentMember.name);
             const learnedSkills = magicSystem.getLearnedMagic(currentMember);
+            console.log('[DEBUG] Learned skills:', learnedSkills);
 
             if (!learnedSkills || Object.keys(learnedSkills).length === 0) {
+                console.log('[DEBUG] No skills learned, showing empty message');
                 skillGrid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #888;">習得している神威スキルがありません</div>';
                 return;
             }
