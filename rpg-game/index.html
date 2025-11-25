@@ -59,6 +59,8 @@
             color: #ffffff;
             pointer-events: auto;
             z-index: 100;
+            /* フィールド画面では非表示（メニューで確認可能） */
+            display: none !important;
         }
 
         .status-bar {
@@ -107,18 +109,47 @@
             border-radius: 5px;
             padding: 10px;
             font-size: 12px;
+            /* タッチデバイスでは非表示（コントローラーで直感的に操作可能） */
+        }
+
+        /* タッチデバイスでは操作説明を非表示 */
+        @media (hover: none) and (pointer: coarse) {
+            .controls {
+                display: none;
+            }
         }
 
         .map-info {
             position: absolute;
             top: 10px;
             left: 10px;
-            background: rgba(0, 0, 0, 0.8);
-            border: 2px solid #0f3460;
-            border-radius: 5px;
-            padding: 10px;
-            font-size: 12px;
-            min-width: 150px;
+            background: rgba(0, 0, 0, 0.85);
+            border: 2px solid #00ffff;
+            border-radius: 8px;
+            padding: 12px 15px;
+            font-size: 14px;
+            min-width: 180px;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+            backdrop-filter: blur(5px);
+            z-index: 200;
+        }
+
+        .map-info strong {
+            color: #00ffff;
+            font-size: 16px;
+            text-shadow: 0 0 8px rgba(0, 255, 255, 0.5);
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .map-info .map-details {
+            font-size: 11px;
+            color: #aaa;
+            line-height: 1.6;
+        }
+
+        .map-info .map-details > div {
+            margin: 3px 0;
         }
 
         /* Battle Screen Styles (サイバーパンク × ドラクエ風) */
@@ -644,7 +675,7 @@
         /* オンスクリーンコントローラー（モバイル用） */
         .on-screen-controller {
             position: fixed;
-            bottom: 20px;
+            bottom: 15px;
             left: 0;
             right: 0;
             display: flex; /* 常に表示 */
@@ -653,7 +684,7 @@
             padding: 0 20px;
             pointer-events: none;
             z-index: 10000;
-            opacity: 0.85; /* 半透明にして邪魔にならないように */
+            opacity: 0.75; /* 半透明でマップが見やすく */
         }
 
         .dpad-container {
@@ -783,32 +814,11 @@
 
         /* スマートフォン向け: ボタンを大きく、操作しやすく */
         @media (max-width: 800px) {
-            /* UIオーバーレイを縮小してコンパクト化 */
-            .ui-overlay {
-                height: 100px;
-                padding: 8px;
-                font-size: 12px;
-            }
-
-            .status-bar {
-                margin-bottom: 6px;
-            }
-
-            .hp-bar, .mp-bar {
-                width: 100px;
-                height: 10px;
-            }
-
-            .message-box {
-                min-height: 30px;
-                padding: 4px;
-                font-size: 11px;
-            }
-
-            /* タッチコントローラーをUIの上に配置 */
+            /* タッチコントローラーを画面下部に配置（UIオーバーレイは非表示なので） */
             .on-screen-controller {
                 padding: 0 15px;
-                bottom: 110px; /* UIオーバーレイ100px + マージン10px */
+                bottom: 15px;
+                opacity: 0.7; /* マップが見やすいように透明度を上げる */
             }
 
             .dpad-container {
@@ -878,16 +888,21 @@
                 font-size: 11px;
             }
 
-            /* マップ情報と操作説明を小さく */
+            /* マップ情報を見やすく最適化 */
             .map-info {
-                font-size: 11px;
-                padding: 8px;
+                font-size: 13px;
+                padding: 10px 12px;
+                min-width: 160px;
+                background: rgba(0, 0, 0, 0.9);
             }
 
-            .controls {
+            .map-info strong {
+                font-size: 15px;
+                margin-bottom: 6px;
+            }
+
+            .map-info .map-details {
                 font-size: 10px;
-                padding: 8px;
-                max-width: 120px;
             }
 
             /* メニュー系のレスポンシブ対応 */
@@ -933,37 +948,11 @@
 
         /* さらに小さい画面用（iPhone SE など） */
         @media (max-width: 400px) {
-            /* UIオーバーレイをさらに縮小 */
-            .ui-overlay {
-                height: 85px;
-                padding: 6px;
-                font-size: 11px;
-            }
-
-            .status-bar {
-                margin-bottom: 4px;
-                flex-wrap: wrap;
-            }
-
-            .status-bar > div {
-                font-size: 10px;
-            }
-
-            .hp-bar, .mp-bar {
-                width: 90px;
-                height: 8px;
-            }
-
-            .message-box {
-                min-height: 25px;
-                padding: 3px;
-                font-size: 10px;
-            }
-
             /* タッチコントローラーの位置調整 */
             .on-screen-controller {
                 padding: 0 10px;
-                bottom: 95px; /* UIオーバーレイ85px + マージン10px */
+                bottom: 12px;
+                opacity: 0.65; /* さらに透明に */
             }
 
             .dpad-container {
@@ -1041,15 +1030,21 @@
                 font-size: 13px;
             }
 
-            /* マップ情報と操作説明をさらに小さく */
+            /* マップ情報を小画面でも見やすく */
             .map-info {
-                font-size: 10px;
-                padding: 6px;
-                min-width: 100px;
+                font-size: 12px;
+                padding: 8px 10px;
+                min-width: 140px;
+                background: rgba(0, 0, 0, 0.92);
             }
 
-            .controls {
-                display: none; /* 極小画面では非表示 */
+            .map-info strong {
+                font-size: 13px;
+                margin-bottom: 5px;
+            }
+
+            .map-info .map-details {
+                font-size: 9px;
             }
 
             /* メニュー系のレスポンシブ対応（小画面） */
@@ -1115,10 +1110,10 @@
         </div>
 
         <div class="map-info" id="mapInfo" style="display: none;">
-            <div><strong id="mapName">新宿 - 中央区画</strong></div>
-            <div style="font-size: 10px; color: #aaa; margin-top: 5px;">
-                <div>歩数: <span id="stepCount">0</span></div>
-                <div>遭遇率: <span id="encounterRate">中</span></div>
+            <strong id="mapName">新宿 - 中央区画</strong>
+            <div class="map-details">
+                <div>📍 歩数: <span id="stepCount">0</span></div>
+                <div>⚔️ 遭遇率: <span id="encounterRate">中</span></div>
             </div>
         </div>
 
