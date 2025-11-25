@@ -310,16 +310,27 @@ class BattleSystem {
         if (!this.currentEnemy.currentMp) {
             this.currentEnemy.currentMp = this.currentEnemy.mp;
         }
-        
+
+        // ステータス異常を初期化
+        this.currentEnemy.statusAilments = {};
+
         this.selectedCommand = 0;
         this.battleLog = [];
         this.turnCount = 1;
         this.waitingForCommand = false; // 初期状態では待機しない
-        
+
         // 戦闘画面表示
         this.showBattleScreen();
         this.addBattleLog(`${enemy.name}が あらわれた！`);
-        
+
+        // パーティメンバーのステータス異常をクリア
+        const allMembers = this.getPartyMembers();
+        allMembers.forEach(member => {
+            if (!member.statusAilments) {
+                member.statusAilments = {};
+            }
+        });
+
         // 最初のターンのコマンド表示
         setTimeout(() => {
             this.startPlayerTurn();
@@ -389,6 +400,21 @@ class BattleSystem {
         }
 
         const currentMember = partyMembers[this.currentMemberIndex];
+
+        // ステータス異常チェック
+        const ailmentResult = this.checkStatusAilmentBeforeAction(currentMember);
+
+        if (ailmentResult.skipAction) {
+            // 行動不能の場合、自動的に次のメンバーへ
+            this.partyCommands[this.currentMemberIndex] = {
+                member: currentMember,
+                command: 'skip'
+            };
+            this.currentMemberIndex++;
+            this.showNextMemberCommand();
+            return;
+        }
+
         this.addBattleLog(`${currentMember.name || 'カイト'}の こうどう`);
 
         this.waitingForCommand = true;
@@ -486,13 +512,24 @@ class BattleSystem {
     memberAttack(member, callback) {
         const baseDamage = member.attack || 10;
         const variance = Math.floor(Math.random() * 5) - 2;
-        const damage = Math.max(1, baseDamage + variance - Math.floor(this.currentEnemy.defense / 2));
+        let damage = Math.max(1, baseDamage + variance - Math.floor(this.currentEnemy.defense / 2));
+
+        // クリティカル判定
+        const criticalResult = this.checkCritical(member, this.currentEnemy);
+        const isCritical = criticalResult.isCritical;
+
+        if (isCritical) {
+            damage = Math.floor(damage * criticalResult.multiplier);
+            this.addBattleLog(`${member.name}の こうげき！`);
+            this.addBattleLog(`かいしんの いちげき！`);
+        } else {
+            this.addBattleLog(`${member.name}の こうげき！`);
+        }
 
         this.currentEnemy.currentHp = Math.max(0, this.currentEnemy.currentHp - damage);
-        this.addBattleLog(`${member.name}の こうげき！`);
         this.addBattleLog(`${this.currentEnemy.name}に ${Math.floor(damage)}の ダメージ！`);
 
-        this.showDamageEffect(damage, true);
+        this.showDamageEffect(damage, true, isCritical);
         this.updateBattleUI();
 
         // 敵が倒れたかチェック
@@ -503,6 +540,102 @@ class BattleSystem {
         } else {
             setTimeout(callback, 1500);
         }
+    }
+
+    // クリティカル判定
+    checkCritical(attacker, target) {
+        let critRate = 0.05; // 基本クリティカル率 5%
+
+        // 速度による補正
+        const attackerSpeed = attacker.speed || attacker.baseSpeed || 5;
+        const targetSpeed = target.speed || 5;
+
+        if (attackerSpeed >= targetSpeed * 2) {
+            critRate += 0.10; // 速度が2倍以上なら +10%
+        } else if (attackerSpeed >= targetSpeed * 1.5) {
+            critRate += 0.05; // 速度が1.5倍以上なら +5%
+        }
+
+        const isCritical = Math.random() < critRate;
+        const multiplier = isCritical ? 1.5 + Math.random() * 0.5 : 1.0; // 1.5x ~ 2.0x
+
+        return { isCritical, multiplier, critRate };
+    }
+
+    // ステータス異常を付与
+    applyStatusAilment(target, ailmentType, duration = 3) {
+        if (!target.statusAilments) {
+            target.statusAilments = {};
+        }
+
+        target.statusAilments[ailmentType] = duration;
+
+        const ailmentNames = {
+            poison: 'どく',
+            paralysis: 'まひ',
+            confusion: 'こんらん',
+            sleep: 'ねむり',
+            curse: 'のろい'
+        };
+
+        this.addBattleLog(`${target.name}は ${ailmentNames[ailmentType]}になった！`);
+    }
+
+    // 行動前のステータス異常チェック
+    checkStatusAilmentBeforeAction(character) {
+        if (!character.statusAilments) {
+            return { skipAction: false };
+        }
+
+        // 睡眠チェック
+        if (character.statusAilments.sleep > 0) {
+            this.addBattleLog(`${character.name}は ねむっている...`);
+            return { skipAction: true };
+        }
+
+        // 麻痺チェック（50%確率で行動不能）
+        if (character.statusAilments.paralysis > 0) {
+            if (Math.random() < 0.5) {
+                this.addBattleLog(`${character.name}は しびれて うごけない！`);
+                return { skipAction: true };
+            }
+        }
+
+        // 混乱チェック（後で攻撃時に処理）
+        return { skipAction: false };
+    }
+
+    // ターン終了時のステータス異常処理
+    processStatusAilmentsEndTurn(character) {
+        if (!character.statusAilments) return;
+
+        // 毒ダメージ
+        if (character.statusAilments.poison > 0) {
+            const poisonDamage = Math.floor(character.maxHp * 0.1);
+            character.hp = Math.max(0, character.hp - poisonDamage);
+            this.addBattleLog(`${character.name}は どくの ダメージを うけた！`);
+            this.addBattleLog(`${character.name}に ${poisonDamage}の ダメージ！`);
+        }
+
+        // ステータス異常の持続ターンを減らす
+        Object.keys(character.statusAilments).forEach(ailment => {
+            character.statusAilments[ailment]--;
+            if (character.statusAilments[ailment] <= 0) {
+                delete character.statusAilments[ailment];
+
+                const ailmentNames = {
+                    poison: 'どく',
+                    paralysis: 'まひ',
+                    confusion: 'こんらん',
+                    sleep: 'ねむり',
+                    curse: 'のろい'
+                };
+
+                this.addBattleLog(`${character.name}の ${ailmentNames[ailment]}が なおった！`);
+            }
+        });
+
+        this.updateBattleUI();
     }
 
     // メンバーのカムイ
@@ -835,10 +968,12 @@ class BattleSystem {
         if (this.checkPartyWipeout()) {
             setTimeout(() => this.gameOver(), 1500);
         } else {
-            // 次のターンのコマンド選択に戻る
+            // パーティメンバーのステータス異常処理
             setTimeout(() => {
-                this.turnCount++;
-                this.startPlayerTurn();
+                this.processAllMembersStatusAilments(() => {
+                    this.turnCount++;
+                    this.startPlayerTurn();
+                });
             }, 1500);
         }
     }
@@ -871,18 +1006,52 @@ class BattleSystem {
         this.addBattleLog(`${target.name}に ${Math.floor(damage)}の ダメージ！`);
 
         this.showDamageEffect(damage, false, true);
+
+        // ステータス異常付与判定（30%確率）
+        if (Math.random() < 0.3) {
+            const ailments = ['poison', 'paralysis', 'sleep'];
+            const randomAilment = ailments[Math.floor(Math.random() * ailments.length)];
+            this.applyStatusAilment(target, randomAilment, 3);
+        }
+
         this.updateBattleUI();
 
         // パーティ全滅チェック
         if (this.checkPartyWipeout()) {
             setTimeout(() => this.gameOver(), 1500);
         } else {
-            // 次のターンのコマンド選択に戻る
+            // パーティメンバーのステータス異常処理
             setTimeout(() => {
-                this.turnCount++;
-                this.startPlayerTurn();
+                this.processAllMembersStatusAilments(() => {
+                    this.turnCount++;
+                    this.startPlayerTurn();
+                });
             }, 1500);
         }
+    }
+
+    // 全メンバーのステータス異常処理
+    processAllMembersStatusAilments(callback) {
+        const allMembers = this.getPartyMembers();
+        let index = 0;
+
+        const processNext = () => {
+            if (index >= allMembers.length) {
+                callback();
+                return;
+            }
+
+            this.processStatusAilmentsEndTurn(allMembers[index]);
+            index++;
+
+            if (index < allMembers.length) {
+                setTimeout(processNext, 500);
+            } else {
+                callback();
+            }
+        };
+
+        processNext();
     }
 
     // パーティ全滅チェック
@@ -945,20 +1114,40 @@ class BattleSystem {
     processItemDrops() {
         const droppedItems = [];
 
-        if (!this.currentEnemy || !this.currentEnemy.dropTable || !window.itemSystem) {
+        if (!this.currentEnemy || !this.currentEnemy.dropTable) {
             return droppedItems;
         }
 
         this.currentEnemy.dropTable.forEach(dropEntry => {
             const roll = Math.random();
             if (roll < dropEntry.rate) {
-                // ドロップ成功
-                const success = window.itemSystem.addItem(dropEntry.id, 1);
-                if (success) {
-                    const itemData = window.itemSystem.itemDatabase[dropEntry.id];
-                    if (itemData) {
+                // アイテムかチェック
+                if (window.itemSystem && window.itemSystem.itemDatabase[dropEntry.id]) {
+                    const success = window.itemSystem.addItem(dropEntry.id, 1);
+                    if (success) {
+                        const itemData = window.itemSystem.itemDatabase[dropEntry.id];
                         droppedItems.push(itemData);
                     }
+                }
+                // 装備品かチェック
+                else if (window.equipmentSystem && window.equipmentSystem.equipmentDatabase[dropEntry.id]) {
+                    // 装備品をプレイヤーのインベントリに追加
+                    if (!window.player.equipmentInventory) {
+                        window.player.equipmentInventory = [];
+                    }
+
+                    const equipData = window.equipmentSystem.equipmentDatabase[dropEntry.id];
+                    window.player.equipmentInventory.push({
+                        id: dropEntry.id,
+                        ...equipData
+                    });
+
+                    droppedItems.push({
+                        name: equipData.name,
+                        emoji: equipData.emoji
+                    });
+
+                    console.log(`装備品ドロップ: ${equipData.name}`);
                 }
             }
         });
