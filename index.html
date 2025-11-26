@@ -3,713 +3,1071 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="" />
-    <link
-      rel="stylesheet"
-      as="style"
-      onload="this.rel='stylesheet'"
-      href="https://fonts.googleapis.com/css2?display=swap&amp;family=Inter%3Awght%40300%3B400%3B500%3B700%3B900&amp;family=Noto+Sans+JP%3Awght%40300%3B400%3B500%3B700%3B900"
-    />
 
-    <title>nekoronomikon-LABO - 創造的なデジタル体験を</title>
-    <meta name="description" content="ゲーム開発、AI活用、動画制作のポートフォリオサイト。おみくじアプリ、タワーディフェンスゲーム、GPTsカスタムなど様々な作品をご紹介します。">
-    <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64," />
+    <!-- SEO -->
+    <title>nekoronomikon-LABO | AI × Art × Code Creator</title>
+    <meta name="description" content="AIコーディング、ジェネラティブアート、ゲーム開発。分類不能な創作を続けるクリエイターポートフォリオ。">
+    <meta property="og:title" content="nekoronomikon-LABO | AI × Art × Code Creator">
+    <meta property="og:description" content="AIコーディング、ジェネラティブアート、ゲーム開発。分類不能な創作を続けるクリエイターポートフォリオ。">
+    <meta property="og:type" content="website">
 
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+JP:wght@300;400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
         theme: {
           extend: {
             colors: {
-              primary: '#00E5FF',
-              'primary-dark': '#00B8D4',
-              'bg-primary': '#0F172A',
-              'bg-secondary': '#1E293B',
-              'bg-tertiary': '#334155',
-              'text-primary': '#F1F5F9',
-              'text-secondary': '#94A3B8'
+              'deep-black': '#0A0A0F',
+              'midnight': '#12121A',
+              'neon-cyan': '#00F5FF',
+              'electric-magenta': '#FF00E5',
+              'gold': '#FFD700',
+              'light-gray': '#EAEAEA',
+              'muted-gray': '#8B8B9A',
+              'terminal-green': '#39D353',
             },
             fontFamily: {
-              'ja': ['Noto Sans JP', 'Inter', 'sans-serif']
+              'grotesk': ['Space Grotesk', 'sans-serif'],
+              'inter': ['Inter', 'sans-serif'],
+              'jp': ['Noto Sans JP', 'sans-serif'],
+              'mono': ['JetBrains Mono', 'monospace'],
             }
           }
         }
       }
     </script>
+
+    <!-- GSAP -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <style>
+      /* Base styles */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'Noto Sans JP', 'Inter', sans-serif;
+        background-color: #0A0A0F;
+        color: #EAEAEA;
+        line-height: 1.9;
+        overflow-x: hidden;
+      }
+
+      /* Glitch effect */
+      .glitch {
+        position: relative;
+      }
+
+      .glitch::before,
+      .glitch::after {
+        content: attr(data-text);
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+      }
+
+      .glitch::before {
+        color: #00F5FF;
+        animation: glitch-1 0.3s infinite linear alternate-reverse;
+      }
+
+      .glitch::after {
+        color: #FF00E5;
+        animation: glitch-2 0.3s infinite linear alternate-reverse;
+      }
+
+      .glitch:hover::before,
+      .glitch:hover::after {
+        opacity: 0.8;
+      }
+
+      @keyframes glitch-1 {
+        0% { clip-path: inset(20% 0 60% 0); transform: translate(-2px, 2px); }
+        20% { clip-path: inset(60% 0 20% 0); transform: translate(2px, -2px); }
+        40% { clip-path: inset(40% 0 40% 0); transform: translate(-1px, 1px); }
+        60% { clip-path: inset(80% 0 10% 0); transform: translate(1px, -1px); }
+        80% { clip-path: inset(10% 0 80% 0); transform: translate(-2px, 2px); }
+        100% { clip-path: inset(50% 0 30% 0); transform: translate(2px, -2px); }
+      }
+
+      @keyframes glitch-2 {
+        0% { clip-path: inset(60% 0 20% 0); transform: translate(2px, -2px); }
+        20% { clip-path: inset(20% 0 60% 0); transform: translate(-2px, 2px); }
+        40% { clip-path: inset(80% 0 10% 0); transform: translate(1px, -1px); }
+        60% { clip-path: inset(40% 0 40% 0); transform: translate(-1px, 1px); }
+        80% { clip-path: inset(30% 0 50% 0); transform: translate(2px, -2px); }
+        100% { clip-path: inset(70% 0 20% 0); transform: translate(-2px, 2px); }
+      }
+
+      /* Particle canvas */
+      #particle-canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+      }
+
+      /* Scanline effect */
+      .scanline {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .scanline::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 2px,
+          rgba(0, 0, 0, 0.1) 2px,
+          rgba(0, 0, 0, 0.1) 4px
+        );
+        pointer-events: none;
+        opacity: 0.3;
+      }
+
+      /* Gradient text */
+      .gradient-text {
+        background: linear-gradient(135deg, #00F5FF 0%, #FF00E5 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      /* Neon glow */
+      .neon-cyan {
+        text-shadow: 0 0 10px #00F5FF, 0 0 20px #00F5FF, 0 0 30px #00F5FF;
+      }
+
+      .neon-magenta {
+        text-shadow: 0 0 10px #FF00E5, 0 0 20px #FF00E5, 0 0 30px #FF00E5;
+      }
+
+      /* Card hover border animation */
+      .card-border {
+        position: relative;
+        background: #12121A;
+        border-radius: 12px;
+        overflow: hidden;
+      }
+
+      .card-border::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border: 1px solid transparent;
+        border-radius: 12px;
+        transition: border-color 0.3s ease;
+      }
+
+      .card-border:hover::before {
+        border-color: #00F5FF;
+        animation: borderDraw 0.5s ease forwards;
+      }
+
+      @keyframes borderDraw {
+        0% { clip-path: inset(0 100% 100% 0); }
+        25% { clip-path: inset(0 0 100% 0); }
+        50% { clip-path: inset(0 0 0 0); }
+        100% { clip-path: inset(0 0 0 0); }
+      }
+
+      /* Filter tabs */
+      .filter-tab {
+        position: relative;
+        padding: 8px 16px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 12px;
+        color: #8B8B9A;
+        cursor: pointer;
+        transition: color 0.3s ease;
+      }
+
+      .filter-tab::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background: #00F5FF;
+        transition: width 0.3s ease;
+      }
+
+      .filter-tab:hover,
+      .filter-tab.active {
+        color: #00F5FF;
+      }
+
+      .filter-tab.active::after,
+      .filter-tab:hover::after {
+        width: 100%;
+      }
+
+      /* Scroll indicator */
+      .scroll-indicator {
+        animation: bounce 2s infinite;
+      }
+
+      @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+        40% { transform: translateY(-10px); }
+        60% { transform: translateY(-5px); }
+      }
+
+      /* Typing effect */
+      .typing {
+        overflow: hidden;
+        border-right: 2px solid #00F5FF;
+        white-space: nowrap;
+        animation: typing 3s steps(30) forwards, blink 0.75s step-end infinite;
+      }
+
+      @keyframes typing {
+        from { width: 0; }
+        to { width: 100%; }
+      }
+
+      @keyframes blink {
+        50% { border-color: transparent; }
+      }
+
+      /* Orbit animation */
+      .orbit {
+        animation: orbit 20s linear infinite;
+      }
+
+      @keyframes orbit {
+        from { transform: rotate(0deg) translateX(150px) rotate(0deg); }
+        to { transform: rotate(360deg) translateX(150px) rotate(-360deg); }
+      }
+
+      /* Counter animation */
+      .counter {
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: #0A0A0F;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, #00F5FF, #FF00E5);
+        border-radius: 4px;
+      }
+
+      /* Button gradient animation */
+      .btn-gradient {
+        background: linear-gradient(135deg, #00F5FF 0%, #FF00E5 100%);
+        background-size: 200% 200%;
+        transition: background-position 0.5s ease;
+      }
+
+      .btn-gradient:hover {
+        background-position: 100% 100%;
+      }
+
+      /* Card image grayscale effect */
+      .card-image {
+        filter: grayscale(100%);
+        transition: filter 0.3s ease;
+      }
+
+      .card-border:hover .card-image {
+        filter: grayscale(0%);
+      }
+
+      /* Fade up animation */
+      .fade-up {
+        opacity: 0;
+        transform: translateY(30px);
+        transition: opacity 0.6s ease, transform 0.6s ease;
+      }
+
+      .fade-up.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* Noise texture overlay */
+      .noise::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+        opacity: 0.03;
+        pointer-events: none;
+      }
+
+      /* Aurora gradient background */
+      .aurora-bg {
+        background: linear-gradient(180deg, #0A0A0F 0%, #1A0A2E 50%, #0A0A0F 100%);
+      }
+
+      /* Mobile menu */
+      .mobile-menu {
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+      }
+
+      .mobile-menu.open {
+        transform: translateX(0);
+      }
+    </style>
   </head>
-  <body class="font-ja">
-    <div class="relative min-h-screen bg-bg-primary overflow-x-hidden">
-      <!-- Header -->
-      <header class="fixed top-0 w-full bg-bg-primary/90 backdrop-blur-lg border-b border-bg-tertiary/50 z-50">
-        <div class="max-w-6xl mx-auto px-6 py-4">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <div class="w-8 h-8 bg-gradient-to-r from-primary to-primary-dark rounded-lg flex items-center justify-center">
-                <svg viewBox="0 0 24 24" fill="none" class="w-5 h-5 text-white">
-                  <path d="M12 2L15.09 8.26L22 9L17 14L18.18 21L12 17.77L5.82 21L7 14L2 9L8.91 8.26L12 2Z" fill="currentColor"/>
-                </svg>
-              </div>
-              <h1 class="text-text-primary text-xl font-bold">ポートフォリオ</h1>
-            </div>
-            <nav class="hidden md:flex items-center gap-8">
-              <a href="#about" class="text-text-secondary hover:text-primary transition-colors duration-300">自己紹介</a>
-              <a href="#portfolio" class="text-text-secondary hover:text-primary transition-colors duration-300">作品</a>
-              <a href="#contact" class="text-text-secondary hover:text-primary transition-colors duration-300">お問い合わせ</a>
-            </nav>
-            <button id="mobile-menu-btn" class="md:hidden text-text-primary p-2">
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-              </svg>
-            </button>
-          </div>
-        </div>
-        <!-- Mobile Menu -->
-        <div id="mobile-menu" class="hidden md:hidden bg-bg-secondary border-t border-bg-tertiary/50">
-          <div class="px-6 py-4 space-y-4">
-            <a href="#about" class="block text-text-secondary hover:text-primary transition-colors duration-300">自己紹介</a>
-            <a href="#portfolio" class="block text-text-secondary hover:text-primary transition-colors duration-300">作品</a>
-            <a href="#contact" class="block text-text-secondary hover:text-primary transition-colors duration-300">お問い合わせ</a>
-          </div>
-        </div>
-      </header>
 
-      <!-- Hero Section -->
-      <section class="pt-20 min-h-screen flex items-center justify-center relative overflow-hidden">
-        <div class="absolute inset-0 bg-gradient-to-br from-bg-primary via-bg-secondary to-bg-primary"></div>
-        <div class="absolute inset-0 opacity-10">
-          <div class="absolute top-1/4 left-1/4 w-32 h-32 bg-primary rounded-full blur-3xl animate-pulse"></div>
-          <div class="absolute bottom-1/4 right-1/4 w-48 h-48 bg-primary-dark rounded-full blur-3xl animate-pulse delay-1000"></div>
-        </div>
-        <div class="relative z-10 max-w-4xl mx-auto px-6 text-center">
-          <div class="mb-8">
-            <h1 class="text-5xl md:text-7xl font-bold text-text-primary mb-6 leading-tight">
-              創造的な
-              <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-dark">
-                デジタル体験
-              </span>
-              を
-            </h1>
-            <p class="text-xl md:text-2xl text-text-secondary mb-8 leading-relaxed">
-              ゲーム開発からAI活用まで、<br class="md:hidden">
-              技術と創造性を組み合わせた作品をお届けします
-            </p>
-          </div>
-          <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="#portfolio" class="px-8 py-4 bg-gradient-to-r from-primary to-primary-dark text-white font-bold rounded-lg hover:shadow-lg hover:shadow-primary/25 transition-all duration-300 transform hover:scale-105">
-              作品を見る
-            </a>
-            <a href="#contact" class="px-8 py-4 border-2 border-primary text-primary font-bold rounded-lg hover:bg-primary hover:text-white transition-all duration-300">
-              お問い合わせ
-            </a>
-          </div>
-        </div>
-      </section>
+  <body>
+    <!-- Header -->
+    <header class="fixed top-0 w-full z-50 bg-deep-black/80 backdrop-blur-lg border-b border-midnight">
+      <div class="max-w-6xl mx-auto px-6 py-4">
+        <div class="flex items-center justify-between">
+          <a href="#" class="font-grotesk text-xl font-bold text-light-gray hover:text-neon-cyan transition-colors">
+            nekoronomikon<span class="text-neon-cyan">-LABO</span>
+          </a>
 
-      <!-- About Section -->
-      <section id="about" class="py-20 bg-bg-secondary">
-        <div class="max-w-6xl mx-auto px-6">
-          <div class="text-center mb-16">
-            <h2 class="text-4xl md:text-5xl font-bold text-text-primary mb-6">自己紹介</h2>
-            <div class="w-24 h-1 bg-gradient-to-r from-primary to-primary-dark mx-auto"></div>
+          <nav class="hidden md:flex items-center gap-8">
+            <a href="#about" class="font-mono text-sm text-muted-gray hover:text-neon-cyan transition-colors">_about</a>
+            <a href="#works" class="font-mono text-sm text-muted-gray hover:text-neon-cyan transition-colors">_works</a>
+            <a href="#process" class="font-mono text-sm text-muted-gray hover:text-neon-cyan transition-colors">_process</a>
+            <a href="#connect" class="font-mono text-sm text-muted-gray hover:text-neon-cyan transition-colors">_connect</a>
+          </nav>
+
+          <button id="mobile-menu-btn" class="md:hidden text-light-gray p-2" aria-label="メニュー">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mobile Menu -->
+      <div id="mobile-menu" class="mobile-menu fixed top-0 right-0 w-64 h-full bg-midnight border-l border-deep-black md:hidden">
+        <div class="p-6">
+          <button id="mobile-menu-close" class="absolute top-4 right-4 text-light-gray">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+          <nav class="mt-12 space-y-6">
+            <a href="#about" class="block font-mono text-muted-gray hover:text-neon-cyan transition-colors">_about</a>
+            <a href="#works" class="block font-mono text-muted-gray hover:text-neon-cyan transition-colors">_works</a>
+            <a href="#process" class="block font-mono text-muted-gray hover:text-neon-cyan transition-colors">_process</a>
+            <a href="#connect" class="block font-mono text-muted-gray hover:text-neon-cyan transition-colors">_connect</a>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <!-- Section 1: Immersive Hero -->
+    <section id="hero" class="relative min-h-screen flex items-center justify-center overflow-hidden">
+      <canvas id="particle-canvas"></canvas>
+
+      <div class="absolute inset-0 bg-gradient-to-b from-deep-black via-transparent to-deep-black z-10"></div>
+
+      <div class="relative z-20 text-center px-6">
+        <h1 class="font-grotesk text-6xl md:text-8xl font-bold mb-2">
+          <span class="glitch block" data-text="nekoronomikon">nekoronomikon</span>
+        </h1>
+        <h2 class="font-grotesk text-3xl md:text-5xl font-semibold text-neon-cyan mb-8">LABO</h2>
+
+        <div class="mb-8">
+          <p class="font-inter text-lg text-muted-gray mb-2">Art × AI × Code</p>
+          <p class="font-inter text-xl text-light-gray">Create the Uncategorized.</p>
+          <p class="font-inter text-lg text-muted-gray mt-2">― 分類不能を創る</p>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-4 justify-center mb-16">
+          <a href="#works" class="btn-gradient px-8 py-4 rounded-lg font-bold text-white hover:shadow-lg hover:shadow-neon-cyan/25 transition-all">
+            作品を見る
+          </a>
+          <a href="#connect" class="px-8 py-4 border-2 border-neon-cyan text-neon-cyan rounded-lg font-bold hover:bg-neon-cyan/10 transition-all">
+            コンタクト
+          </a>
+        </div>
+      </div>
+
+      <!-- Status Bar -->
+      <div class="absolute bottom-8 left-0 right-0 z-20 px-6">
+        <div class="max-w-4xl mx-auto">
+          <p class="font-mono text-xs text-neon-cyan text-center md:text-left">
+            [STATUS: CREATING] // LOCATION: TOKYO // STACK: AI, ART, CODE
+          </p>
+        </div>
+      </div>
+
+      <!-- Scroll Indicator -->
+      <div class="absolute bottom-24 left-1/2 transform -translate-x-1/2 z-20 scroll-indicator">
+        <div class="flex flex-col items-center gap-2">
+          <span class="font-mono text-xs text-muted-gray">SCROLL TO EXPLORE</span>
+          <div class="w-px h-8 bg-gradient-to-b from-neon-cyan to-transparent"></div>
+          <div class="w-2 h-2 rounded-full bg-neon-cyan animate-pulse"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 2: About / Philosophy -->
+    <section id="about" class="py-32 aurora-bg noise relative">
+      <div class="max-w-6xl mx-auto px-6">
+        <div class="text-center mb-16 fade-up">
+          <h2 class="font-grotesk text-4xl md:text-5xl font-bold glitch mb-2" data-text="ABOUT">ABOUT</h2>
+          <p class="font-mono text-sm text-neon-cyan">_philosophy</p>
+        </div>
+
+        <div class="max-w-3xl mx-auto text-center mb-16 fade-up">
+          <p class="font-jp text-2xl md:text-3xl text-light-gray leading-relaxed mb-8">
+            技術は手段。目的は、まだ誰も見たことのない「何か」を作ること。
+          </p>
+
+          <div class="text-lg text-muted-gray leading-loose">
+            <p class="mb-4">AIコーディング、ジェネラティブアート、インタラクティブ体験。</p>
+            <p class="mb-4">私はこれらを「道具」として、人の感情を動かす作品を作っています。<br>ゲーム、映像、ツール、そして名前のつかないもの。</p>
+            <p>「これは何のジャンル？」と聞かれたら、<br>「まだない」と答えたい。</p>
           </div>
-          <div class="grid md:grid-cols-2 gap-12 items-center">
-            <div class="order-2 md:order-1">
-              <div class="prose prose-lg text-text-secondary leading-relaxed">
-                <p class="mb-6">
-                  こんにちは！私は技術と創造性を組み合わせて、人々に新しい体験を提供することに情熱を注いでいるクリエイターです。
-                </p>
-                <p class="mb-6">
-                  ゲーム開発、AI技術の活用、動画制作など、幅広い分野で活動しています。特に、ユーザーが楽しみながら学べるインタラクティブなコンテンツの制作を得意としています。
-                </p>
-                <p class="mb-6">
-                  常に新しい技術にチャレンジし、それらを使って実用的で魅力的な作品を生み出すことを心がけています。
-                </p>
-                <div class="flex flex-wrap gap-3 mt-8">
-                  <span class="px-4 py-2 bg-bg-tertiary text-text-primary rounded-lg text-sm">ゲーム開発</span>
-                  <span class="px-4 py-2 bg-bg-tertiary text-text-primary rounded-lg text-sm">AI活用</span>
-                  <span class="px-4 py-2 bg-bg-tertiary text-text-primary rounded-lg text-sm">動画制作</span>
-                  <span class="px-4 py-2 bg-bg-tertiary text-text-primary rounded-lg text-sm">Web開発</span>
-                </div>
-              </div>
+        </div>
+
+        <!-- Skill Orbit -->
+        <div class="relative h-80 md:h-96 flex items-center justify-center fade-up">
+          <div class="absolute w-64 h-64 md:w-80 md:h-80 border border-midnight rounded-full"></div>
+          <div class="absolute w-48 h-48 md:w-56 md:h-56 border border-midnight rounded-full"></div>
+
+          <div class="z-10 w-20 h-20 bg-midnight rounded-full flex items-center justify-center border border-neon-cyan">
+            <span class="font-mono text-xs text-neon-cyan">CREATOR</span>
+          </div>
+
+          <div class="absolute skill-orbit" style="animation: orbit 25s linear infinite;">
+            <div class="bg-midnight px-3 py-2 rounded-lg border border-electric-magenta">
+              <span class="font-mono text-xs text-electric-magenta">AI Generation</span>
             </div>
-            <div class="order-1 md:order-2 flex justify-center">
-              <div class="relative">
-                <div class="w-80 h-80 bg-gradient-to-br from-primary/20 to-primary-dark/20 rounded-full p-4">
-                  <div class="w-full h-full rounded-full overflow-hidden border-4 border-primary/30">
-                    <img 
-                      src="./profile.jpg" 
-                      alt="プロフィール画像 - クリエイターとして活動中" 
-                      class="w-full h-full object-cover"
-                      loading="lazy"
-                    />
-                  </div>
-                </div>
-                <div class="absolute top-4 right-4 w-8 h-8 bg-primary rounded-full animate-bounce"></div>
-                <div class="absolute bottom-8 left-8 w-6 h-6 bg-primary-dark rounded-full animate-pulse"></div>
-              </div>
+          </div>
+
+          <div class="absolute skill-orbit" style="animation: orbit 25s linear infinite; animation-delay: -5s;">
+            <div class="bg-midnight px-3 py-2 rounded-lg border border-neon-cyan">
+              <span class="font-mono text-xs text-neon-cyan">Vibe Coding</span>
+            </div>
+          </div>
+
+          <div class="absolute skill-orbit" style="animation: orbit 25s linear infinite; animation-delay: -10s;">
+            <div class="bg-midnight px-3 py-2 rounded-lg border border-gold">
+              <span class="font-mono text-xs text-gold">Game Dev</span>
+            </div>
+          </div>
+
+          <div class="absolute skill-orbit" style="animation: orbit 25s linear infinite; animation-delay: -15s;">
+            <div class="bg-midnight px-3 py-2 rounded-lg border border-terminal-green">
+              <span class="font-mono text-xs text-terminal-green">Video</span>
+            </div>
+          </div>
+
+          <div class="absolute skill-orbit" style="animation: orbit 25s linear infinite; animation-delay: -20s;">
+            <div class="bg-midnight px-3 py-2 rounded-lg border border-light-gray">
+              <span class="font-mono text-xs text-light-gray">Prompt Eng.</span>
             </div>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <!-- Portfolio Section -->
-      <section id="portfolio" class="py-20 bg-bg-primary">
-        <div class="max-w-6xl mx-auto px-6">
-          <div class="text-center mb-16">
-            <h2 class="text-4xl md:text-5xl font-bold text-text-primary mb-6">ポートフォリオ</h2>
-            <div class="w-24 h-1 bg-gradient-to-r from-primary to-primary-dark mx-auto mb-4"></div>
-            <p class="text-xl text-text-secondary">これまでに制作した主な作品をご紹介します</p>
-          </div>
-          
-          <!-- Games & Apps -->
-          <div class="mb-16">
-            <h3 class="text-2xl font-bold text-text-primary mb-8 text-center">ゲーム・アプリケーション</h3>
-            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              <!-- おみくじアプリ -->
-              <div class="group bg-bg-secondary rounded-xl overflow-hidden hover:transform hover:scale-105 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10">
-                <div class="aspect-video bg-gradient-to-br from-primary/20 to-primary-dark/20 flex items-center justify-center">
-                  <div class="text-center">
-                    <div class="text-6xl mb-4">⛩️</div>
-                    <p class="text-text-secondary text-sm">かわいいおみくじ</p>
-                  </div>
-                </div>
-                <div class="p-6">
-                  <h4 class="text-xl font-bold text-text-primary mb-3">かわいいおみくじ</h4>
-                  <p class="text-text-secondary mb-4">和風でかわいらしいデザインのおみくじアプリ。願望・健康・仕事・恋愛・学問・金運・旅行・失物・争事の9つのジャンルで今日の運勢を占えます。</p>
-                  <div class="flex gap-2 mb-4">
-                    <span class="px-3 py-1 bg-bg-tertiary text-text-primary rounded-lg text-xs">JavaScript</span>
-                    <span class="px-3 py-1 bg-bg-tertiary text-text-primary rounded-lg text-xs">CSS3</span>
-                    <span class="px-3 py-1 bg-bg-tertiary text-text-primary rounded-lg text-xs">HTML5</span>
-                  </div>
-                  <div class="flex gap-3">
-                    <a href="kawaii-omikuji/index.html" target="_blank" rel="noopener noreferrer" class="inline-block px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors duration-300 flex items-center gap-2">
-                      <span>アプリを試す</span>
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                      </svg>
-                    </a>
-                    <a href="https://github.com/nekoojisan-labo/kawaii-omikuji" target="_blank" rel="noopener noreferrer" class="inline-block px-6 py-2 border-2 border-primary text-primary rounded-lg hover:bg-primary hover:text-white transition-colors duration-300 flex items-center gap-2">
-                      <span>コード</span>
-                      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 0C5.374 0 0 5.373 0 12 0 17.302 3.438 21.8 8.207 23.387c.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
-                      </svg>
-                    </a>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- タワーディフェンスゲーム -->
-              <div class="group bg-bg-secondary rounded-xl overflow-hidden hover:transform hover:scale-105 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10">
-                <div class="aspect-video bg-gradient-to-br from-primary-dark/20 to-primary/20 flex items-center justify-center">
-                  <div class="text-center">
-                    <div class="text-6xl mb-4">🐱</div>
-                    <p class="text-text-secondary text-sm">にゃんこタワー</p>
-                  </div>
-                </div>
-                <div class="p-6">
-                  <h4 class="text-xl font-bold text-text-primary mb-3">にゃんこタワー ～お菓子の国の大冒険～</h4>
-                  <p class="text-text-secondary mb-4">お菓子の国を舞台にしたかわいらしいタワーディフェンスゲーム。ネコや動物たちを配置して敵の攻撃から拠点を守る戦略ゲームです。</p>
-                  <div class="flex gap-2 mb-4">
-                    <span class="px-3 py-1 bg-bg-tertiary text-text-primary rounded-lg text-xs">JavaScript</span>
-                    <span class="px-3 py-1 bg-bg-tertiary text-text-primary rounded-lg text-xs">HTML5</span>
-                    <span class="px-3 py-1 bg-bg-tertiary text-text-primary rounded-lg text-xs">ゲームデザイン</span>
-                  </div>
-                  <div class="flex gap-3">
-                    <a href="./nyanko-tower/" target="_blank" class="inline-block px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-2">
-                      <span>ゲームをプレイ</span>
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                      </svg>
-                    </a>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- RPGゲーム -->
-              <div class="group bg-bg-secondary rounded-xl overflow-hidden hover:transform hover:scale-105 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10">
-                <div class="aspect-video bg-gradient-to-br from-purple-600/20 to-blue-600/20 flex items-center justify-center">
-                  <div class="text-center">
-                    <div class="text-6xl mb-4">⚔️</div>
-                    <p class="text-text-secondary text-sm">RPGゲーム</p>
-                  </div>
-                </div>
-                <div class="p-6">
-                  <h4 class="text-xl font-bold text-text-primary mb-3">デウス・コード 八百万の神託</h4>
-                  <p class="text-text-secondary mb-4">AIが支配する近未来の新宿を舞台に、日本神話の神々の力を宿した「依人」たちが戦う現代神話RPG。神威システムとピクセルアートで表現された冒険が楽しめます。</p>
-                  <div class="flex gap-2 mb-4">
-                    <span class="px-3 py-1 bg-bg-tertiary text-text-primary rounded-lg text-xs">HTML5 Canvas</span>
-                    <span class="px-3 py-1 bg-bg-tertiary text-text-primary rounded-lg text-xs">JavaScript</span>
-                    <span class="px-3 py-1 bg-bg-tertiary text-text-primary rounded-lg text-xs">日本神話</span>
-                  </div>
-                  <div class="flex gap-3">
-                    <a href="./rpg-game/" target="_blank" class="inline-block px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-2">
-                      <span>ゲームをプレイ</span>
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                      </svg>
-                    </a>
-                    <a href="https://github.com/nekoojisan-labo/deus-code-gdd" target="_blank" rel="noopener noreferrer" class="inline-block px-6 py-2 bg-bg-tertiary text-text-primary rounded-lg hover:bg-primary/10 transition-colors flex items-center gap-2">
-                      <span>設計書を見る</span>
-                      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-                      </svg>
-                    </a>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- ぷよぷよ風パズルゲーム -->
-              <div class="group bg-bg-secondary rounded-xl overflow-hidden hover:transform hover:scale-105 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10">
-                <div class="aspect-video bg-gradient-to-br from-pink-500/20 to-purple-500/20 flex items-center justify-center">
-                  <div class="text-center">
-                    <div class="text-6xl mb-4">🎮</div>
-                    <p class="text-text-secondary text-sm">パズルゲーム</p>
-                  </div>
-                </div>
-                <div class="p-6">
-                  <h4 class="text-xl font-bold text-text-primary mb-3">ぷよぷよ風パズルゲーム</h4>
-                  <p class="text-text-secondary mb-4">カラフルなぷよを4つ以上つなげて消すクラシックなパズルゲーム。連鎖を決めてハイスコアを狙おう！美しいエフェクトと直感的な操作で楽しめます。</p>
-                  <div class="flex gap-2 mb-4">
-                    <span class="px-3 py-1 bg-bg-tertiary text-text-primary rounded-lg text-xs">HTML5 Canvas</span>
-                    <span class="px-3 py-1 bg-bg-tertiary text-text-primary rounded-lg text-xs">JavaScript</span>
-                    <span class="px-3 py-1 bg-bg-tertiary text-text-primary rounded-lg text-xs">パズル</span>
-                  </div>
-                  <div class="flex gap-3">
-                    <a href="./puyo-puzzle-game/" target="_blank" class="inline-block px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors flex items-center gap-2">
-                      <span>ゲームをプレイ</span>
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                      </svg>
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <!-- AI Guide Section -->
-          <div class="mb-16">
-            <h3 class="text-2xl font-bold text-text-primary mb-8 text-center">AIガイド・教育コンテンツ</h3>
-            <div class="grid md:grid-cols-2 gap-8">
-              <!-- NOTE ガイド -->
-              <div class="group bg-bg-secondary rounded-xl overflow-hidden hover:transform hover:scale-105 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10">
-                <div class="aspect-video bg-gradient-to-br from-green-500/20 to-blue-500/20 flex items-center justify-center">
-                  <div class="text-center">
-                    <div class="text-5xl mb-4">📝</div>
-                    <p class="text-text-secondary text-sm">NOTEガイド</p>
-                  </div>
-                </div>
-                <div class="p-6">
-                  <h4 class="text-xl font-bold text-text-primary mb-3">AI活用の基礎設計思考</h4>
-                  <p class="text-text-secondary mb-4">プロンプトエンジニアリングの前に必要な「設計準備」の考え方。プログラマー的思考でAI活用を効率化する教育コンテンツです。</p>
-                  <div class="flex gap-2 mb-4">
-                    <span class="px-3 py-1 bg-bg-tertiary text-text-primary rounded-lg text-xs">プロンプト設計</span>
-                    <span class="px-3 py-1 bg-bg-tertiary text-text-primary rounded-lg text-xs">思考法</span>
-                    <span class="px-3 py-1 bg-bg-tertiary text-text-primary rounded-lg text-xs">教育</span>
-                  </div>
-                  <a href="https://note.com/nekoojisan37/n/n64bd493a5dcb?sub_rt=share_sb" target="_blank" rel="noopener noreferrer" class="inline-block px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors duration-300 flex items-center gap-2">
-                    <span>NOTEで読む</span>
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                    </svg>
-                  </a>
-                </div>
-              </div>
-              
-              <!-- Brain コンテンツ -->
-              <div class="group bg-bg-secondary rounded-xl overflow-hidden hover:transform hover:scale-105 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10">
-                <div class="aspect-video bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
-                  <div class="text-center">
-                    <div class="text-5xl mb-4">🧠</div>
-                    <p class="text-text-secondary text-sm">Brainコンテンツ</p>
-                  </div>
-                </div>
-                <div class="p-6">
-                  <h4 class="text-xl font-bold text-text-primary mb-3">プログラミング学習ガイド</h4>
-                  <p class="text-text-secondary mb-4">「ゼロから始めるバイブコーディング」をはじめとする、プログラミング学習やAI活用のためのHOW TOガイドを販売しています。</p>
-                  <div class="flex gap-2 mb-4">
-                    <span class="px-3 py-1 bg-bg-tertiary text-text-primary rounded-lg text-xs">プログラミング</span>
-                    <span class="px-3 py-1 bg-bg-tertiary text-text-primary rounded-lg text-xs">学習ガイド</span>
-                    <span class="px-3 py-1 bg-bg-tertiary text-text-primary rounded-lg text-xs">HOW TO</span>
-                  </div>
-                  <a href="https://brain-market.com/u/nekoojisan/a/b0MzN0IjMgoTZsNWa0JXY" target="_blank" rel="noopener noreferrer" class="inline-block px-6 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors duration-300 flex items-center gap-2">
-                    <span>Brainで見る</span>
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                    </svg>
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Videos Section -->
-          <div>
-            <h3 class="text-2xl font-bold text-text-primary mb-8 text-center">動画・メディア制作</h3>
-            <div class="bg-bg-secondary rounded-xl p-8 text-center">
-              <svg class="w-16 h-16 text-primary mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-              </svg>
-              <h4 class="text-xl font-bold text-text-primary mb-3">動画コンテンツ制作</h4>
-              <p class="text-text-secondary mb-6">教育動画、プロモーション映像、チュートリアル動画など、様々なジャンルの動画制作を手がけています。企画から編集まで一貫してサポートします。</p>
-              <div class="flex flex-wrap gap-2 justify-center mb-6">
-                <span class="px-3 py-1 bg-bg-tertiary text-text-primary rounded-lg text-xs">Adobe Premiere</span>
-                <span class="px-3 py-1 bg-bg-tertiary text-text-primary rounded-lg text-xs">After Effects</span>
-                <span class="px-3 py-1 bg-bg-tertiary text-text-primary rounded-lg text-xs">Motion Graphics</span>
-              </div>
-              <a href="#contact" class="inline-block px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors duration-300">制作依頼はこちら</a>
-            </div>
-          </div>
+    <!-- Section 3: Works Gallery -->
+    <section id="works" class="py-32 bg-deep-black">
+      <div class="max-w-6xl mx-auto px-6">
+        <div class="text-center mb-12 fade-up">
+          <h2 class="font-grotesk text-4xl md:text-5xl font-bold glitch mb-2" data-text="WORKS">WORKS</h2>
+          <p class="font-mono text-sm text-neon-cyan">_selected projects</p>
         </div>
-      </section>
 
-      <!-- Contact Section -->
-      <section id="contact" class="py-20 bg-bg-secondary">
-        <div class="max-w-4xl mx-auto px-6">
-          <div class="text-center mb-16">
-            <h2 class="text-4xl md:text-5xl font-bold text-text-primary mb-6">お問い合わせ</h2>
-            <div class="w-24 h-1 bg-gradient-to-r from-primary to-primary-dark mx-auto mb-4"></div>
-            <p class="text-xl text-text-secondary">お気軽にご連絡ください</p>
-          </div>
-          
-          <div class="grid md:grid-cols-2 gap-12">
-            <!-- Contact Info -->
-            <div>
-              <h3 class="text-2xl font-bold text-text-primary mb-6">連絡方法</h3>
-              <div class="space-y-6">
-                <!-- Email Form -->
-                <div class="flex items-start gap-4 p-4 bg-bg-primary rounded-lg hover:bg-bg-tertiary/50 transition-colors duration-300">
-                  <div class="flex-shrink-0 w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center">
-                    <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                    </svg>
-                  </div>
-                  <div>
-                    <h4 class="text-lg font-semibold text-text-primary mb-2">メールでのお問い合わせ</h4>
-                    <p class="text-text-secondary mb-2">お仕事の依頼やご質問は右のフォームからお送りください</p>
-                    <p class="text-primary text-sm">→ メッセージフォームをご利用ください</p>
-                  </div>
-                </div>
-                
-                <!-- LINE -->
-                <div class="flex items-start gap-4 p-4 bg-bg-primary rounded-lg hover:bg-bg-tertiary/50 transition-colors duration-300">
-                  <div class="flex-shrink-0 w-12 h-12 bg-green-500/20 rounded-lg flex items-center justify-center">
-                    <svg class="w-6 h-6 text-green-400" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63.349 0 .631.285.631.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/>
-                    </svg>
-                  </div>
-                  <div>
-                    <h4 class="text-lg font-semibold text-text-primary mb-2">公式LINE</h4>
-                    <p class="text-text-secondary mb-2">お気軽にチャットでご相談ください</p>
-                    <a href="https://lin.ee/ZEFpQNd" target="_blank" rel="noopener noreferrer" class="inline-block px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors duration-300 flex items-center gap-2">
-                      <span>友達追加</span>
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                      </svg>
-                    </a>
-                  </div>
-                </div>
-                
-                <!-- Response Time -->
-                <div class="bg-bg-primary rounded-lg p-4">
-                  <div class="flex items-center gap-3 mb-2">
-                    <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <h4 class="text-lg font-semibold text-text-primary">返信時間</h4>
-                  </div>
-                  <p class="text-text-secondary">通常24時間以内にご返信いたします</p>
-                </div>
-              </div>
-            </div>
-            
-            <!-- Contact Form -->
-            <div>
-              <h3 class="text-2xl font-bold text-text-primary mb-6">メッセージを送る</h3>
-              <form class="space-y-6" id="contact-form">
-                <div>
-                  <label for="name" class="block text-text-primary font-medium mb-2">お名前 *</label>
-                  <input type="text" id="name" name="name" required 
-                         class="w-full px-4 py-3 bg-bg-primary border border-bg-tertiary rounded-lg text-text-primary placeholder-text-secondary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300" 
-                         placeholder="お名前を入力してください">
-                </div>
-                
-                <div>
-                  <label for="email" class="block text-text-primary font-medium mb-2">メールアドレス *</label>
-                  <input type="email" id="email" name="email" required 
-                         class="w-full px-4 py-3 bg-bg-primary border border-bg-tertiary rounded-lg text-text-primary placeholder-text-secondary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300" 
-                         placeholder="your@email.com">
-                </div>
-                
-                <div>
-                  <label for="subject" class="block text-text-primary font-medium mb-2">件名</label>
-                  <input type="text" id="subject" name="subject" 
-                         class="w-full px-4 py-3 bg-bg-primary border border-bg-tertiary rounded-lg text-text-primary placeholder-text-secondary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300" 
-                         placeholder="お問い合わせの件名">
-                </div>
-                
-                <div>
-                  <label for="message" class="block text-text-primary font-medium mb-2">メッセージ *</label>
-                  <textarea id="message" name="message" rows="5" required 
-                            class="w-full px-4 py-3 bg-bg-primary border border-bg-tertiary rounded-lg text-text-primary placeholder-text-secondary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-300 resize-vertical" 
-                            placeholder="お問い合わせ内容を詳しくお書きください"></textarea>
-                </div>
-                
-                <button type="submit" id="submit-btn"
-                        class="w-full px-8 py-4 bg-gradient-to-r from-primary to-primary-dark text-white font-bold rounded-lg hover:shadow-lg hover:shadow-primary/25 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
-                  <span id="submit-text" class="flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
-                    </svg>
-                    メッセージを送信
-                  </span>
-                  <span id="submit-loading" class="hidden flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                    </svg>
-                    送信中...
-                  </span>
-                </button>
-              </form>
-            </div>
-          </div>
+        <!-- Filter Tabs -->
+        <div class="flex flex-wrap justify-center gap-2 mb-12 fade-up">
+          <button class="filter-tab active" data-filter="all">[ALL]</button>
+          <button class="filter-tab" data-filter="games">[GAMES]</button>
+          <button class="filter-tab" data-filter="ai">[AI/TOOLS]</button>
+          <button class="filter-tab" data-filter="video">[VIDEO]</button>
+          <button class="filter-tab" data-filter="guide">[GUIDE]</button>
         </div>
-      </section>
-      
-      <!-- Back to Top Button -->
-      <button id="back-to-top" class="fixed bottom-8 right-8 w-12 h-12 bg-primary hover:bg-primary-dark text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110 opacity-0 pointer-events-none">
-        <svg class="w-6 h-6 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
-        </svg>
-      </button>
 
-      <!-- Footer -->
-      <footer class="bg-bg-primary border-t border-bg-tertiary/50 py-12">
-        <div class="max-w-6xl mx-auto px-6">
-          <div class="grid md:grid-cols-3 gap-8">
-            <div>
-              <div class="flex items-center gap-3 mb-4">
-                <div class="w-8 h-8 bg-gradient-to-r from-primary to-primary-dark rounded-lg flex items-center justify-center">
-                  <svg viewBox="0 0 24 24" fill="none" class="w-5 h-5 text-white">
-                    <path d="M12 2L15.09 8.26L22 9L17 14L18.18 21L12 17.77L5.82 21L7 14L2 9L8.91 8.26L12 2Z" fill="currentColor"/>
-                  </svg>
-                </div>
-                <h3 class="text-text-primary text-lg font-bold">ポートフォリオ</h3>
+        <!-- Works Grid -->
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6" id="works-grid">
+
+          <!-- にゃんこタワー -->
+          <div class="card-border fade-up work-card" data-category="games">
+            <div class="aspect-video bg-gradient-to-br from-electric-magenta/20 to-neon-cyan/20 flex items-center justify-center scanline relative overflow-hidden">
+              <div class="text-6xl card-image">🐱</div>
+            </div>
+            <div class="p-6">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="font-mono text-xs text-electric-magenta">[GAME]</span>
+                <span class="font-mono text-xs text-muted-gray">2024</span>
               </div>
-              <p class="text-text-secondary leading-relaxed">
-                技術と創造性を組み合わせて、新しいデジタル体験を創造しています。
-              </p>
+              <h3 class="font-grotesk text-xl font-bold text-light-gray mb-2">にゃんこタワー</h3>
+              <p class="text-sm text-muted-gray mb-4">お菓子の国を舞台にしたタワーディフェンス。AIで生成した世界観とキャラクターたち。</p>
+              <div class="flex flex-wrap gap-2 mb-4">
+                <span class="font-mono text-xs px-2 py-1 bg-deep-black rounded text-muted-gray">JavaScript</span>
+                <span class="font-mono text-xs px-2 py-1 bg-deep-black rounded text-muted-gray">AI Art</span>
+              </div>
+              <a href="./nyanko-tower/" target="_blank" class="inline-flex items-center gap-2 text-neon-cyan font-mono text-sm hover:underline">
+                VIEW PROJECT →
+              </a>
             </div>
-            
-            <div>
-              <h4 class="text-text-primary font-bold mb-4">サイトマップ</h4>
-              <ul class="space-y-2">
-                <li><a href="#about" class="text-text-secondary hover:text-primary transition-colors duration-300">自己紹介</a></li>
-                <li><a href="#portfolio" class="text-text-secondary hover:text-primary transition-colors duration-300">ポートフォリオ</a></li>
-                <li><a href="#contact" class="text-text-secondary hover:text-primary transition-colors duration-300">お問い合わせ</a></li>
-              </ul>
+          </div>
+
+          <!-- RPGゲーム -->
+          <div class="card-border fade-up work-card" data-category="games">
+            <div class="aspect-video bg-gradient-to-br from-purple-600/20 to-blue-600/20 flex items-center justify-center scanline relative overflow-hidden">
+              <div class="text-6xl card-image">⚔️</div>
             </div>
-            
-            <div>
-              <h4 class="text-text-primary font-bold mb-4">SNS・リンク</h4>
+            <div class="p-6">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="font-mono text-xs text-electric-magenta">[GAME]</span>
+                <span class="font-mono text-xs text-neon-cyan">[AI]</span>
+                <span class="font-mono text-xs text-muted-gray">2024</span>
+              </div>
+              <h3 class="font-grotesk text-xl font-bold text-light-gray mb-2">デウス・コード 八百万の神託</h3>
+              <p class="text-sm text-muted-gray mb-4">コード0行で作ったVibe Coding RPG。日本神話 × 近未来の世界観。</p>
+              <div class="flex flex-wrap gap-2 mb-4">
+                <span class="font-mono text-xs px-2 py-1 bg-deep-black rounded text-muted-gray">Vibe Coding</span>
+                <span class="font-mono text-xs px-2 py-1 bg-deep-black rounded text-muted-gray">Claude</span>
+              </div>
               <div class="flex gap-4">
-                <a href="#" class="w-10 h-10 bg-bg-secondary hover:bg-bg-tertiary rounded-lg flex items-center justify-center text-text-secondary hover:text-primary transition-all duration-300">
-                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
-                  </svg>
+                <a href="./rpg-game/" target="_blank" class="inline-flex items-center gap-2 text-neon-cyan font-mono text-sm hover:underline">
+                  PLAY →
                 </a>
-                <a href="#" class="w-10 h-10 bg-bg-secondary hover:bg-bg-tertiary rounded-lg flex items-center justify-center text-text-secondary hover:text-primary transition-all duration-300">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9"></path>
-                  </svg>
-                </a>
-                <a href="#" class="w-10 h-10 bg-bg-secondary hover:bg-bg-tertiary rounded-lg flex items-center justify-center text-text-secondary hover:text-primary transition-all duration-300">
-                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 0C5.374 0 0 5.373 0 12 0 17.302 3.438 21.8 8.207 23.387c.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
-                  </svg>
+                <a href="https://github.com/nekoojisan-labo/deus-code-gdd" target="_blank" class="inline-flex items-center gap-2 text-muted-gray font-mono text-sm hover:text-light-gray">
+                  GDD →
                 </a>
               </div>
             </div>
           </div>
-          
-          <div class="border-t border-bg-tertiary/50 mt-8 pt-8 text-center">
-            <p class="text-text-secondary">
-              &copy; 2024 ポートフォリオ. All rights reserved.
-            </p>
+
+          <!-- おみくじ -->
+          <div class="card-border fade-up work-card" data-category="games">
+            <div class="aspect-video bg-gradient-to-br from-red-600/20 to-orange-600/20 flex items-center justify-center scanline relative overflow-hidden">
+              <div class="text-6xl card-image">⛩️</div>
+            </div>
+            <div class="p-6">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="font-mono text-xs text-gold">[APP]</span>
+                <span class="font-mono text-xs text-muted-gray">2024</span>
+              </div>
+              <h3 class="font-grotesk text-xl font-bold text-light-gray mb-2">かわいいおみくじ</h3>
+              <p class="text-sm text-muted-gray mb-4">和風でかわいらしいデザインのおみくじアプリ。9つのジャンルで運勢を占う。</p>
+              <div class="flex flex-wrap gap-2 mb-4">
+                <span class="font-mono text-xs px-2 py-1 bg-deep-black rounded text-muted-gray">JavaScript</span>
+                <span class="font-mono text-xs px-2 py-1 bg-deep-black rounded text-muted-gray">CSS3</span>
+              </div>
+              <a href="./kawaii-omikuji/" target="_blank" class="inline-flex items-center gap-2 text-neon-cyan font-mono text-sm hover:underline">
+                VIEW PROJECT →
+              </a>
+            </div>
+          </div>
+
+          <!-- ぷよパズル -->
+          <div class="card-border fade-up work-card" data-category="games">
+            <div class="aspect-video bg-gradient-to-br from-pink-500/20 to-purple-500/20 flex items-center justify-center scanline relative overflow-hidden">
+              <div class="text-6xl card-image">🎮</div>
+            </div>
+            <div class="p-6">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="font-mono text-xs text-electric-magenta">[GAME]</span>
+                <span class="font-mono text-xs text-muted-gray">2024</span>
+              </div>
+              <h3 class="font-grotesk text-xl font-bold text-light-gray mb-2">ぷよぷよ風パズル</h3>
+              <p class="text-sm text-muted-gray mb-4">カラフルなぷよを4つ以上つなげて消すクラシックパズル。連鎖でハイスコア！</p>
+              <div class="flex flex-wrap gap-2 mb-4">
+                <span class="font-mono text-xs px-2 py-1 bg-deep-black rounded text-muted-gray">Canvas</span>
+                <span class="font-mono text-xs px-2 py-1 bg-deep-black rounded text-muted-gray">JavaScript</span>
+              </div>
+              <a href="./puyo-puzzle-game/" target="_blank" class="inline-flex items-center gap-2 text-neon-cyan font-mono text-sm hover:underline">
+                PLAY →
+              </a>
+            </div>
+          </div>
+
+          <!-- NOTE ガイド -->
+          <div class="card-border fade-up work-card" data-category="guide">
+            <div class="aspect-video bg-gradient-to-br from-terminal-green/20 to-blue-500/20 flex items-center justify-center scanline relative overflow-hidden">
+              <div class="text-6xl card-image">📝</div>
+            </div>
+            <div class="p-6">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="font-mono text-xs text-terminal-green">[GUIDE]</span>
+                <span class="font-mono text-xs text-muted-gray">NOTE</span>
+              </div>
+              <h3 class="font-grotesk text-xl font-bold text-light-gray mb-2">AI活用の基礎設計思考</h3>
+              <p class="text-sm text-muted-gray mb-4">プロンプトエンジニアリングの前に必要な「設計準備」の考え方。</p>
+              <div class="flex flex-wrap gap-2 mb-4">
+                <span class="font-mono text-xs px-2 py-1 bg-deep-black rounded text-muted-gray">Prompt</span>
+                <span class="font-mono text-xs px-2 py-1 bg-deep-black rounded text-muted-gray">思考法</span>
+              </div>
+              <a href="https://note.com/nekoojisan37/n/n64bd493a5dcb?sub_rt=share_sb" target="_blank" class="inline-flex items-center gap-2 text-terminal-green font-mono text-sm hover:underline">
+                READ ON NOTE →
+              </a>
+            </div>
+          </div>
+
+          <!-- Brain コンテンツ -->
+          <div class="card-border fade-up work-card" data-category="guide">
+            <div class="aspect-video bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center scanline relative overflow-hidden">
+              <div class="text-6xl card-image">🧠</div>
+            </div>
+            <div class="p-6">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="font-mono text-xs text-electric-magenta">[GUIDE]</span>
+                <span class="font-mono text-xs text-muted-gray">BRAIN</span>
+              </div>
+              <h3 class="font-grotesk text-xl font-bold text-light-gray mb-2">ゼロから始めるバイブコーディング</h3>
+              <p class="text-sm text-muted-gray mb-4">プログラミング学習やAI活用のためのHOW TOガイド。</p>
+              <div class="flex flex-wrap gap-2 mb-4">
+                <span class="font-mono text-xs px-2 py-1 bg-deep-black rounded text-muted-gray">学習</span>
+                <span class="font-mono text-xs px-2 py-1 bg-deep-black rounded text-muted-gray">HOW TO</span>
+              </div>
+              <a href="https://brain-market.com/u/nekoojisan/a/b0MzN0IjMgoTZsNWa0JXY" target="_blank" class="inline-flex items-center gap-2 text-electric-magenta font-mono text-sm hover:underline">
+                VIEW ON BRAIN →
+              </a>
+            </div>
+          </div>
+
+          <!-- 動画制作 -->
+          <div class="card-border fade-up work-card" data-category="video">
+            <div class="aspect-video bg-gradient-to-br from-red-500/20 to-yellow-500/20 flex items-center justify-center scanline relative overflow-hidden">
+              <div class="text-6xl card-image">🎬</div>
+            </div>
+            <div class="p-6">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="font-mono text-xs text-gold">[VIDEO]</span>
+                <span class="font-mono text-xs text-muted-gray">PRODUCTION</span>
+              </div>
+              <h3 class="font-grotesk text-xl font-bold text-light-gray mb-2">映像制作ポートフォリオ</h3>
+              <p class="text-sm text-muted-gray mb-4">プロモーション、教育動画など。企画から編集まで一貫サポート。</p>
+              <div class="flex flex-wrap gap-2 mb-4">
+                <span class="font-mono text-xs px-2 py-1 bg-deep-black rounded text-muted-gray">Premiere</span>
+                <span class="font-mono text-xs px-2 py-1 bg-deep-black rounded text-muted-gray">After Effects</span>
+              </div>
+              <a href="#connect" class="inline-flex items-center gap-2 text-gold font-mono text-sm hover:underline">
+                CONTACT FOR DETAILS →
+              </a>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 4: Process -->
+    <section id="process" class="py-32 bg-midnight noise relative">
+      <div class="max-w-6xl mx-auto px-6">
+        <div class="text-center mb-16 fade-up">
+          <h2 class="font-grotesk text-4xl md:text-5xl font-bold glitch mb-2" data-text="PROCESS">PROCESS</h2>
+          <p class="font-mono text-sm text-neon-cyan">_how the magic happens</p>
+        </div>
+
+        <!-- Terminal Style Process -->
+        <div class="max-w-2xl mx-auto mb-16 fade-up">
+          <div class="bg-[#0D1117] rounded-lg border border-midnight overflow-hidden">
+            <div class="flex items-center gap-2 px-4 py-3 bg-deep-black border-b border-midnight">
+              <div class="w-3 h-3 rounded-full bg-red-500"></div>
+              <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+              <div class="w-3 h-3 rounded-full bg-green-500"></div>
+              <span class="font-mono text-xs text-muted-gray ml-2">terminal</span>
+            </div>
+            <div class="p-6 font-mono text-sm">
+              <p class="text-terminal-green mb-2">$ claude --init "新しいアイデア"</p>
+              <p class="text-muted-gray mb-1">> Analyzing concept...</p>
+              <p class="text-muted-gray mb-1">> Generating structure...</p>
+              <p class="text-muted-gray mb-1">> Vibe coding activated...</p>
+              <p class="text-muted-gray mb-2">> Testing & iterating...</p>
+              <p class="text-terminal-green mb-2">[████████████████] 100%</p>
+              <p class="text-gold">OUTPUT: Something new.</p>
+            </div>
           </div>
         </div>
-      </footer>
-      
-      <script>
-        // Mobile menu toggle
-        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-        const mobileMenu = document.getElementById('mobile-menu');
-        
-        mobileMenuBtn.addEventListener('click', () => {
-          mobileMenu.classList.toggle('hidden');
-        });
-        
-        // Smooth scrolling for navigation links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-          anchor.addEventListener('click', function (e) {
-            e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-              target.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
-              });
-              // Close mobile menu if open
-              mobileMenu.classList.add('hidden');
-            }
+
+        <!-- 3 Steps -->
+        <div class="grid md:grid-cols-3 gap-8">
+          <div class="card-border p-6 fade-up">
+            <div class="font-grotesk text-4xl font-bold text-neon-cyan mb-4">01</div>
+            <h3 class="font-grotesk text-xl font-bold text-light-gray mb-3">CONCEPT</h3>
+            <p class="text-muted-gray">アイデアの種をAIと対話しながら育てる。プロンプトエンジニアリングで可能性を探索。</p>
+          </div>
+
+          <div class="card-border p-6 fade-up">
+            <div class="font-grotesk text-4xl font-bold text-electric-magenta mb-4">02</div>
+            <h3 class="font-grotesk text-xl font-bold text-light-gray mb-3">VIBE CODING</h3>
+            <p class="text-muted-gray">コードを書くのではなく、AIに「こうしたい」を伝える。Claude、Cursorとの協働で高速プロトタイプ。</p>
+          </div>
+
+          <div class="card-border p-6 fade-up">
+            <div class="font-grotesk text-4xl font-bold text-gold mb-4">03</div>
+            <h3 class="font-grotesk text-xl font-bold text-light-gray mb-3">POLISH</h3>
+            <p class="text-muted-gray">動くものを磨き上げる。ユーザー体験と美しさを両立させる最終調整。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 5: Stats -->
+    <section class="py-24 bg-deep-black relative">
+      <div class="absolute inset-0 h-px top-0 bg-gradient-to-r from-transparent via-neon-cyan to-electric-magenta"></div>
+
+      <div class="max-w-6xl mx-auto px-6">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+          <div class="fade-up">
+            <div class="font-grotesk text-5xl md:text-6xl font-bold text-gold counter" data-target="50">0</div>
+            <div class="font-mono text-xs text-muted-gray mt-2">PROJECTS+</div>
+          </div>
+
+          <div class="fade-up">
+            <div class="font-grotesk text-5xl md:text-6xl font-bold text-gold counter" data-target="10000">0</div>
+            <div class="font-mono text-xs text-muted-gray mt-2">VIEWS+</div>
+          </div>
+
+          <div class="fade-up">
+            <div class="font-grotesk text-5xl md:text-6xl font-bold text-gold counter" data-target="3">0</div>
+            <div class="font-mono text-xs text-muted-gray mt-2">PLATFORMS</div>
+          </div>
+
+          <div class="fade-up">
+            <div class="font-grotesk text-5xl md:text-6xl font-bold text-gold">∞</div>
+            <div class="font-mono text-xs text-muted-gray mt-2">POSSIBILITIES</div>
+          </div>
+        </div>
+
+        <!-- Platform Links -->
+        <div class="flex justify-center gap-6 mt-12 fade-up">
+          <a href="https://www.youtube.com/@nekoojisan37" target="_blank" class="w-12 h-12 bg-midnight rounded-lg flex items-center justify-center text-muted-gray hover:text-red-500 hover:bg-red-500/10 transition-all" aria-label="YouTube">
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+            </svg>
+          </a>
+
+          <a href="https://x.com/nekoronomikon" target="_blank" class="w-12 h-12 bg-midnight rounded-lg flex items-center justify-center text-muted-gray hover:text-light-gray hover:bg-light-gray/10 transition-all" aria-label="X (Twitter)">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+            </svg>
+          </a>
+
+          <a href="https://www.threads.net/@nekoojisan37" target="_blank" class="w-12 h-12 bg-midnight rounded-lg flex items-center justify-center text-muted-gray hover:text-light-gray hover:bg-light-gray/10 transition-all" aria-label="Threads">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.29 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164 1.43 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.801-1.063-.689-1.685-1.74-1.752-2.96-.065-1.182.408-2.256 1.332-3.023.869-.722 2.053-1.086 3.455-1.086h.003c.584.003 1.143.058 1.668.165.11-.68.183-1.363.183-1.955 0-.522-.048-1.125-.16-1.681l2.002-.399c.15.749.224 1.53.224 2.323 0 .794-.096 1.665-.28 2.592 1.2.5 2.199 1.253 2.877 2.27.847 1.268 1.282 2.848 1.178 4.297-.152 2.122-1.205 3.996-2.962 5.272-1.56 1.132-3.538 1.755-5.877 1.852h-.274zm-.995-9.97c-.92 0-1.692.2-2.232.58-.463.324-.68.74-.65 1.237.037.596.346 1.09.896 1.43.55.34 1.263.472 2.009.437.99-.047 1.768-.385 2.315-1.006.403-.458.691-1.074.86-1.838-.422-.123-.888-.21-1.395-.28-.606-.08-1.206-.12-1.803-.12v-.44z"/>
+            </svg>
+          </a>
+
+          <a href="https://note.com/nekoojisan37" target="_blank" class="w-12 h-12 bg-midnight rounded-lg flex items-center justify-center text-muted-gray hover:text-terminal-green hover:bg-terminal-green/10 transition-all" aria-label="NOTE">
+            <span class="font-mono text-sm font-bold">NOTE</span>
+          </a>
+        </div>
+      </div>
+
+      <div class="absolute inset-0 h-px bottom-0 top-auto bg-gradient-to-r from-electric-magenta via-neon-cyan to-transparent"></div>
+    </section>
+
+    <!-- Section 6: Connect -->
+    <section id="connect" class="py-32 aurora-bg noise relative">
+      <div class="max-w-4xl mx-auto px-6">
+        <div class="text-center mb-16 fade-up">
+          <h2 class="font-grotesk text-4xl md:text-5xl font-bold glitch mb-2" data-text="CONNECT">CONNECT</h2>
+          <p class="font-mono text-sm text-neon-cyan">_let's create something</p>
+        </div>
+
+        <div class="text-center mb-12 fade-up">
+          <p class="text-xl md:text-2xl text-light-gray leading-relaxed mb-4">
+            新しいプロジェクト、<br>
+            コラボレーション、<br>
+            または「これ作れる？」というご相談。
+          </p>
+          <p class="text-muted-gray">どんなことでもお気軽に。</p>
+        </div>
+
+        <!-- Dual CTA -->
+        <div class="flex flex-col sm:flex-row gap-4 justify-center mb-12 fade-up">
+          <a href="mailto:mp.store.contact.information@gmail.com" class="btn-gradient px-10 py-5 rounded-lg font-bold text-white text-center hover:shadow-lg hover:shadow-neon-cyan/25 transition-all flex items-center justify-center gap-2">
+            <span>📨</span> メッセージを送る
+          </a>
+          <a href="https://lin.ee/ZEFpQNd" target="_blank" class="px-10 py-5 border-2 border-neon-cyan text-neon-cyan rounded-lg font-bold hover:bg-neon-cyan/10 transition-all text-center flex items-center justify-center gap-2">
+            <span>💬</span> LINEで相談
+          </a>
+        </div>
+
+        <!-- Status -->
+        <div class="text-center fade-up">
+          <p class="font-mono text-sm text-terminal-green mb-2">[AVAILABILITY: OPEN FOR PROJECTS]</p>
+          <p class="font-mono text-xs text-muted-gray">Response time: ~24h</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 bg-deep-black border-t border-midnight">
+      <div class="max-w-6xl mx-auto px-6 text-center">
+        <p class="font-grotesk text-lg text-light-gray mb-4">nekoronomikon-LABO</p>
+        <p class="font-mono text-xs text-muted-gray mb-2">© 2024 All rights reserved.</p>
+        <p id="easter-egg" class="font-mono text-xs text-muted-gray cursor-pointer hover:text-neon-cyan transition-colors">
+          Built with AI + Passion
+        </p>
+      </div>
+    </footer>
+
+    <!-- Back to Top -->
+    <button id="back-to-top" class="fixed bottom-8 right-8 w-12 h-12 bg-midnight border border-neon-cyan rounded-full flex items-center justify-center text-neon-cyan opacity-0 pointer-events-none transition-all hover:bg-neon-cyan hover:text-deep-black z-50" aria-label="トップへ戻る">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+      </svg>
+    </button>
+
+    <script>
+      // Particle Animation
+      class ParticleSystem {
+        constructor(canvas) {
+          this.canvas = canvas;
+          this.ctx = canvas.getContext('2d');
+          this.particles = [];
+          this.mouse = { x: null, y: null };
+          this.resize();
+          this.init();
+          this.animate();
+
+          window.addEventListener('resize', () => this.resize());
+          window.addEventListener('mousemove', (e) => {
+            this.mouse.x = e.clientX;
+            this.mouse.y = e.clientY;
           });
-        });
-        
-        // Back to top button
-        const backToTopBtn = document.getElementById('back-to-top');
-        
-        window.addEventListener('scroll', () => {
-          if (window.pageYOffset > 300) {
-            backToTopBtn.classList.remove('opacity-0', 'pointer-events-none');
-            backToTopBtn.classList.add('opacity-100');
-          } else {
-            backToTopBtn.classList.add('opacity-0', 'pointer-events-none');
-            backToTopBtn.classList.remove('opacity-100');
+        }
+
+        resize() {
+          this.canvas.width = window.innerWidth;
+          this.canvas.height = window.innerHeight;
+        }
+
+        init() {
+          const particleCount = Math.min(100, Math.floor(window.innerWidth / 20));
+          for (let i = 0; i < particleCount; i++) {
+            this.particles.push({
+              x: Math.random() * this.canvas.width,
+              y: Math.random() * this.canvas.height,
+              vx: (Math.random() - 0.5) * 0.5,
+              vy: (Math.random() - 0.5) * 0.5,
+              size: Math.random() * 2 + 1,
+              color: Math.random() > 0.5 ? '#00F5FF' : '#FF00E5'
+            });
           }
-        });
-        
-        backToTopBtn.addEventListener('click', () => {
-          window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
+        }
+
+        animate() {
+          this.ctx.fillStyle = 'rgba(10, 10, 15, 0.1)';
+          this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+          this.particles.forEach((p, i) => {
+            // Mouse interaction
+            if (this.mouse.x && this.mouse.y) {
+              const dx = this.mouse.x - p.x;
+              const dy = this.mouse.y - p.y;
+              const dist = Math.sqrt(dx * dx + dy * dy);
+              if (dist < 150) {
+                p.x -= dx * 0.02;
+                p.y -= dy * 0.02;
+              }
+            }
+
+            // Move
+            p.x += p.vx;
+            p.y += p.vy;
+
+            // Wrap around
+            if (p.x < 0) p.x = this.canvas.width;
+            if (p.x > this.canvas.width) p.x = 0;
+            if (p.y < 0) p.y = this.canvas.height;
+            if (p.y > this.canvas.height) p.y = 0;
+
+            // Draw particle
+            this.ctx.beginPath();
+            this.ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            this.ctx.fillStyle = p.color;
+            this.ctx.fill();
+
+            // Draw connections
+            this.particles.slice(i + 1).forEach(p2 => {
+              const dx = p.x - p2.x;
+              const dy = p.y - p2.y;
+              const dist = Math.sqrt(dx * dx + dy * dy);
+
+              if (dist < 120) {
+                this.ctx.beginPath();
+                this.ctx.moveTo(p.x, p.y);
+                this.ctx.lineTo(p2.x, p2.y);
+                this.ctx.strokeStyle = `rgba(0, 245, 255, ${0.1 * (1 - dist / 120)})`;
+                this.ctx.stroke();
+              }
+            });
           });
+
+          requestAnimationFrame(() => this.animate());
+        }
+      }
+
+      // Initialize particle system
+      const canvas = document.getElementById('particle-canvas');
+      new ParticleSystem(canvas);
+
+      // Mobile menu
+      const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+      const mobileMenuClose = document.getElementById('mobile-menu-close');
+      const mobileMenu = document.getElementById('mobile-menu');
+
+      mobileMenuBtn.addEventListener('click', () => {
+        mobileMenu.classList.add('open');
+      });
+
+      mobileMenuClose.addEventListener('click', () => {
+        mobileMenu.classList.remove('open');
+      });
+
+      mobileMenu.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => {
+          mobileMenu.classList.remove('open');
         });
-        
-        // Contact form handling
-        const contactForm = document.getElementById('contact-form');
-        const submitBtn = document.getElementById('submit-btn');
-        const submitText = document.getElementById('submit-text');
-        const submitLoading = document.getElementById('submit-loading');
-        
-        contactForm.addEventListener('submit', function(e) {
+      });
+
+      // Smooth scroll
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
           e.preventDefault();
-          
-          // Show loading state
-          submitBtn.disabled = true;
-          submitText.classList.add('hidden');
-          submitLoading.classList.remove('hidden');
-          
-          // Get form data
-          const formData = new FormData(this);
-          const name = formData.get('name');
-          const email = formData.get('email');
-          const subject = formData.get('subject') || 'ポートフォリオサイトからのお問い合わせ';
-          const message = formData.get('message');
-          
-          // Simple validation
-          if (!name || !email || !message) {
-            alert('必須項目を入力してください。');
-            resetSubmitButton();
-            return;
+          const target = document.querySelector(this.getAttribute('href'));
+          if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
           }
-          
-          // Email validation
-          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-          if (!emailRegex.test(email)) {
-            alert('正しいメールアドレスを入力してください。');
-            resetSubmitButton();
-            return;
-          }
-          
-          // Simulate processing time
-          setTimeout(() => {
-            // Create mailto link with form data
-            const mailtoSubject = encodeURIComponent(subject);
-            const mailtoBody = encodeURIComponent(
-              `お名前: ${name}\n` +
-              `メールアドレス: ${email}\n` +
-              `件名: ${subject}\n\n` +
-              `メッセージ:\n${message}\n\n` +
-              `---\n` +
-              `ポートフォリオサイトからの送信`
-            );
-            
-            const mailtoLink = `mailto:mp.store.contact.information@gmail.com?subject=${mailtoSubject}&body=${mailtoBody}`;
-            
-            // Open email client
-            window.location.href = mailtoLink;
-            
-            // Show success message
-            setTimeout(() => {
-              alert('メールクライアントを開きました。送信ボタンを押してメッセージを送信してください。\n\nメールクライアントが開かない場合は、LINEでのお問い合わせもご利用ください。');
-              this.reset();
-              resetSubmitButton();
-            }, 500);
-          }, 1000);
         });
-        
-        function resetSubmitButton() {
-          submitBtn.disabled = false;
-          submitText.classList.remove('hidden');
-          submitLoading.classList.add('hidden');
+      });
+
+      // Back to top button
+      const backToTop = document.getElementById('back-to-top');
+      window.addEventListener('scroll', () => {
+        if (window.scrollY > 500) {
+          backToTop.classList.remove('opacity-0', 'pointer-events-none');
+          backToTop.classList.add('opacity-100');
+        } else {
+          backToTop.classList.add('opacity-0', 'pointer-events-none');
+          backToTop.classList.remove('opacity-100');
         }
-        
-        // Intersection Observer for scroll animations
-        const observerOptions = {
-          threshold: 0.1,
-          rootMargin: '0px 0px -50px 0px'
-        };
-        
-        const observer = new IntersectionObserver((entries) => {
-          entries.forEach(entry => {
-            if (entry.isIntersecting) {
-              entry.target.classList.add('animate-fadeIn');
+      });
+
+      backToTop.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+
+      // Filter tabs
+      const filterTabs = document.querySelectorAll('.filter-tab');
+      const workCards = document.querySelectorAll('.work-card');
+
+      filterTabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          filterTabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+
+          const filter = tab.dataset.filter;
+
+          workCards.forEach(card => {
+            if (filter === 'all' || card.dataset.category === filter) {
+              card.style.display = 'block';
+              setTimeout(() => card.style.opacity = '1', 10);
+            } else {
+              card.style.opacity = '0';
+              setTimeout(() => card.style.display = 'none', 300);
             }
           });
-        }, observerOptions);
-        
-        // Observe all sections
-        document.querySelectorAll('section').forEach(section => {
-          observer.observe(section);
         });
-      </script>
-      
-      <style>
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(30px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .animate-fadeIn {
-          animation: fadeIn 0.6s ease-out forwards;
-        }
-        
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-          width: 8px;
-        }
-        
-        ::-webkit-scrollbar-track {
-          background: #1E293B;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-          background: #00E5FF;
-          border-radius: 4px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-          background: #00B8D4;
-        }
-        
-        /* Custom focus styles */
-        button:focus,
-        input:focus,
-        textarea:focus {
-          outline: 2px solid #00E5FF;
-          outline-offset: 2px;
-        }
-      </style>
-    </div>
+      });
+
+      // Scroll animations with GSAP
+      gsap.registerPlugin(ScrollTrigger);
+
+      // Fade up animations
+      document.querySelectorAll('.fade-up').forEach(el => {
+        gsap.fromTo(el,
+          { opacity: 0, y: 30 },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.6,
+            scrollTrigger: {
+              trigger: el,
+              start: 'top 85%',
+              toggleActions: 'play none none none'
+            }
+          }
+        );
+      });
+
+      // Counter animation
+      const counters = document.querySelectorAll('.counter');
+      counters.forEach(counter => {
+        const target = parseInt(counter.dataset.target);
+
+        ScrollTrigger.create({
+          trigger: counter,
+          start: 'top 85%',
+          onEnter: () => {
+            gsap.to(counter, {
+              innerHTML: target,
+              duration: 2,
+              ease: 'power2.out',
+              snap: { innerHTML: 1 },
+              onUpdate: function() {
+                counter.innerHTML = Math.floor(this.targets()[0].innerHTML).toLocaleString();
+              }
+            });
+          }
+        });
+      });
+
+      // Easter egg
+      document.getElementById('easter-egg').addEventListener('click', () => {
+        console.log("🐱 You found me. Let's create something amazing.");
+        alert("🐱 You found the easter egg! Let's create something amazing together.");
+      });
+
+      // Glitch effect on scroll
+      const glitchElements = document.querySelectorAll('.glitch');
+      glitchElements.forEach(el => {
+        ScrollTrigger.create({
+          trigger: el,
+          start: 'top 80%',
+          onEnter: () => {
+            el.style.animation = 'none';
+            setTimeout(() => {
+              el.style.animation = '';
+            }, 300);
+          }
+        });
+      });
+    </script>
   </body>
 </html>
