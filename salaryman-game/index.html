@@ -612,16 +612,21 @@
             invincible: false
         };
 
+        // Cyberpunk ambient particles
+        let ambientParticles = [];
+        let dustParticles = [];
+        let neonLights = [];
+
         function initThree() {
             clock = new THREE.Clock();
 
-            // Scene
+            // Scene - Cyberpunk dark blue atmosphere
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x0a0a0f);
-            scene.fog = new THREE.FogExp2(0x0a0a0f, 0.025);
+            scene.background = new THREE.Color(0x0a1015);
+            scene.fog = new THREE.FogExp2(0x0a1520, 0.018);
 
             // Camera (TPS view)
-            camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 100);
+            camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 150);
             camera.position.set(0, 4.5, 7);
             camera.lookAt(0, 1, -5);
 
@@ -632,26 +637,56 @@
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             renderer.shadowMap.enabled = true;
             renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.2;
 
-            // Lights
-            const ambientLight = new THREE.AmbientLight(0x404060, 0.4);
+            // Cyberpunk Lighting Setup
+            // Dark blue ambient
+            const ambientLight = new THREE.AmbientLight(0x1a2a3a, 0.3);
             scene.add(ambientLight);
 
-            // Main directional light
-            const dirLight = new THREE.DirectionalLight(0xfff5e6, 0.6);
-            dirLight.position.set(5, 15, 5);
+            // Cool blue hemisphere light (sky/ground)
+            const hemiLight = new THREE.HemisphereLight(0x2a4a6a, 0x0a0a15, 0.4);
+            scene.add(hemiLight);
+
+            // Main directional light - cold white
+            const dirLight = new THREE.DirectionalLight(0xaabbcc, 0.4);
+            dirLight.position.set(5, 20, 5);
             dirLight.castShadow = true;
             dirLight.shadow.mapSize.width = 2048;
             dirLight.shadow.mapSize.height = 2048;
             dirLight.shadow.camera.near = 0.5;
-            dirLight.shadow.camera.far = 50;
+            dirLight.shadow.camera.far = 80;
             scene.add(dirLight);
 
-            // Station overhead lights
-            for (let i = 0; i < 15; i++) {
-                const light = new THREE.PointLight(0xffffcc, 0.4, 15);
-                light.position.set(0, 6, -i * 15);
+            // Warm orange/yellow accent lights (like in the reference image)
+            for (let i = 0; i < 20; i++) {
+                // Alternating warm and cool lights
+                const isWarm = i % 3 !== 0;
+                const color = isWarm ? 0xffaa44 : 0x44aaff;
+                const intensity = isWarm ? 0.8 : 0.5;
+
+                const light = new THREE.PointLight(color, intensity, 20);
+                light.position.set(
+                    (Math.random() - 0.5) * 12,
+                    5 + Math.random() * 3,
+                    -i * 12
+                );
                 scene.add(light);
+                neonLights.push({ light, baseIntensity: intensity, phase: Math.random() * Math.PI * 2 });
+            }
+
+            // Side accent lights - orange glow
+            for (let i = 0; i < 15; i++) {
+                const leftLight = new THREE.PointLight(0xff6622, 0.6, 12);
+                leftLight.position.set(-LANE_WIDTH * 2.5, 3, -i * 18);
+                scene.add(leftLight);
+                neonLights.push({ light: leftLight, baseIntensity: 0.6, phase: Math.random() * Math.PI * 2 });
+
+                const rightLight = new THREE.PointLight(0xff8833, 0.6, 12);
+                rightLight.position.set(LANE_WIDTH * 2.5, 3, -i * 18 - 9);
+                scene.add(rightLight);
+                neonLights.push({ light: rightLight, baseIntensity: 0.6, phase: Math.random() * Math.PI * 2 });
             }
 
             // Create scene elements
@@ -669,108 +704,316 @@
         }
 
         function createFloor() {
-            // Main floor
-            const floorGeo = new THREE.PlaneGeometry(30, 300);
+            // Main floor - dark industrial concrete
+            const floorGeo = new THREE.PlaneGeometry(40, 400);
             const floorMat = new THREE.MeshStandardMaterial({
-                color: 0x1a1a2e,
-                roughness: 0.9,
-                metalness: 0.1
+                color: 0x151820,
+                roughness: 0.95,
+                metalness: 0.05
             });
             floor = new THREE.Mesh(floorGeo, floorMat);
             floor.rotation.x = -Math.PI / 2;
-            floor.position.z = -100;
+            floor.position.z = -150;
             floor.receiveShadow = true;
             scene.add(floor);
 
-            // Lane markers
+            // Glowing lane markers (cyberpunk style)
             for (let i = -2; i <= 2; i++) {
-                const lineGeo = new THREE.PlaneGeometry(0.1, 300);
+                const lineGeo = new THREE.PlaneGeometry(0.08, 400);
                 const lineMat = new THREE.MeshBasicMaterial({
-                    color: 0x3a3a5e,
+                    color: 0x335577,
                     transparent: true,
-                    opacity: 0.5
+                    opacity: 0.6
                 });
                 const line = new THREE.Mesh(lineGeo, lineMat);
                 line.rotation.x = -Math.PI / 2;
-                line.position.set(i * LANE_WIDTH + LANE_WIDTH / 2, 0.01, -100);
+                line.position.set(i * LANE_WIDTH + LANE_WIDTH / 2, 0.02, -150);
                 scene.add(line);
             }
 
-            // Tile pattern
-            for (let z = 0; z < 50; z++) {
+            // Industrial metal floor tiles with grime
+            for (let z = 0; z < 70; z++) {
                 for (let x = -2; x <= 2; x++) {
-                    if ((x + z) % 2 === 0) {
-                        const tileGeo = new THREE.PlaneGeometry(LANE_WIDTH - 0.1, 5.9);
-                        const tileMat = new THREE.MeshStandardMaterial({
-                            color: 0x252540,
-                            roughness: 0.8
-                        });
-                        const tile = new THREE.Mesh(tileGeo, tileMat);
-                        tile.rotation.x = -Math.PI / 2;
-                        tile.position.set(x * LANE_WIDTH, 0.005, -z * 6);
-                        scene.add(tile);
-                    }
+                    const isHighlight = (x + z) % 4 === 0;
+                    const tileGeo = new THREE.PlaneGeometry(LANE_WIDTH - 0.15, 5.7);
+                    const tileMat = new THREE.MeshStandardMaterial({
+                        color: isHighlight ? 0x1a2530 : 0x12181f,
+                        roughness: 0.85,
+                        metalness: isHighlight ? 0.3 : 0.1
+                    });
+                    const tile = new THREE.Mesh(tileGeo, tileMat);
+                    tile.rotation.x = -Math.PI / 2;
+                    tile.position.set(x * LANE_WIDTH, 0.01, -z * 6);
+                    scene.add(tile);
                 }
+            }
+
+            // Yellow warning stripes on edges
+            for (let z = 0; z < 70; z++) {
+                if (z % 2 === 0) {
+                    const stripeGeo = new THREE.PlaneGeometry(0.3, 2.5);
+                    const stripeMat = new THREE.MeshBasicMaterial({ color: 0xffaa00 });
+
+                    const leftStripe = new THREE.Mesh(stripeGeo, stripeMat);
+                    leftStripe.rotation.x = -Math.PI / 2;
+                    leftStripe.position.set(-LANE_WIDTH * 2.6, 0.02, -z * 6);
+                    scene.add(leftStripe);
+
+                    const rightStripe = new THREE.Mesh(stripeGeo, stripeMat);
+                    rightStripe.rotation.x = -Math.PI / 2;
+                    rightStripe.position.set(LANE_WIDTH * 2.6, 0.02, -z * 6);
+                    scene.add(rightStripe);
+                }
+            }
+
+            // Puddle reflections (scattered)
+            for (let i = 0; i < 30; i++) {
+                const puddleGeo = new THREE.PlaneGeometry(
+                    1 + Math.random() * 2,
+                    0.5 + Math.random() * 1.5
+                );
+                const puddleMat = new THREE.MeshStandardMaterial({
+                    color: 0x2a4a6a,
+                    roughness: 0.1,
+                    metalness: 0.9,
+                    transparent: true,
+                    opacity: 0.4
+                });
+                const puddle = new THREE.Mesh(puddleGeo, puddleMat);
+                puddle.rotation.x = -Math.PI / 2;
+                puddle.position.set(
+                    (Math.random() - 0.5) * 12,
+                    0.015,
+                    -Math.random() * 200
+                );
+                scene.add(puddle);
             }
         }
 
         function createWalls() {
-            // Left wall
-            const wallGeo = new THREE.BoxGeometry(2, 8, 300);
-            const wallMat = new THREE.MeshStandardMaterial({ color: 0x2d2d4a });
+            // Industrial walls - dark metal panels
+            const wallGeo = new THREE.BoxGeometry(3, 12, 400);
+            const wallMat = new THREE.MeshStandardMaterial({
+                color: 0x1a2028,
+                roughness: 0.7,
+                metalness: 0.4
+            });
 
             const leftWall = new THREE.Mesh(wallGeo, wallMat);
-            leftWall.position.set(-LANE_WIDTH * 3, 4, -100);
+            leftWall.position.set(-LANE_WIDTH * 3.2, 6, -150);
             scene.add(leftWall);
 
             const rightWall = new THREE.Mesh(wallGeo, wallMat);
-            rightWall.position.set(LANE_WIDTH * 3, 4, -100);
+            rightWall.position.set(LANE_WIDTH * 3.2, 6, -150);
             scene.add(rightWall);
 
-            // Pillars
-            for (let i = 0; i < 20; i++) {
-                const pillarGeo = new THREE.BoxGeometry(0.8, 8, 0.8);
-                const pillarMat = new THREE.MeshStandardMaterial({ color: 0x4a4a6a });
+            // Industrial pillars with detail
+            for (let i = 0; i < 30; i++) {
+                // Main pillar - H-beam style
+                const pillarGeo = new THREE.BoxGeometry(0.6, 10, 0.6);
+                const pillarMat = new THREE.MeshStandardMaterial({
+                    color: 0x2a3540,
+                    roughness: 0.6,
+                    metalness: 0.5
+                });
 
                 const leftPillar = new THREE.Mesh(pillarGeo, pillarMat);
-                leftPillar.position.set(-LANE_WIDTH * 2.3, 4, -i * 15);
+                leftPillar.position.set(-LANE_WIDTH * 2.4, 5, -i * 12);
                 leftPillar.castShadow = true;
                 scene.add(leftPillar);
 
                 const rightPillar = new THREE.Mesh(pillarGeo, pillarMat);
-                rightPillar.position.set(LANE_WIDTH * 2.3, 4, -i * 15);
+                rightPillar.position.set(LANE_WIDTH * 2.4, 5, -i * 12);
                 rightPillar.castShadow = true;
                 scene.add(rightPillar);
+
+                // Cross beams
+                if (i % 2 === 0) {
+                    const beamGeo = new THREE.BoxGeometry(LANE_WIDTH * 5, 0.3, 0.3);
+                    const beamMat = new THREE.MeshStandardMaterial({
+                        color: 0x3a4550,
+                        metalness: 0.6
+                    });
+                    const beam = new THREE.Mesh(beamGeo, beamMat);
+                    beam.position.set(0, 9, -i * 12);
+                    scene.add(beam);
+                }
             }
 
-            // Ceiling panels with lights
-            for (let i = 0; i < 20; i++) {
-                const ceilingGeo = new THREE.BoxGeometry(14, 0.3, 4);
-                const ceilingMat = new THREE.MeshStandardMaterial({ color: 0x3a3a5a });
+            // Pipes along walls (cyberpunk industrial)
+            createPipes();
+
+            // Ceiling with exposed structure
+            for (let i = 0; i < 30; i++) {
+                // Main ceiling panel
+                const ceilingGeo = new THREE.BoxGeometry(16, 0.4, 6);
+                const ceilingMat = new THREE.MeshStandardMaterial({
+                    color: 0x1a2530,
+                    roughness: 0.8,
+                    metalness: 0.3
+                });
                 const ceiling = new THREE.Mesh(ceilingGeo, ceilingMat);
-                ceiling.position.set(0, 7.5, -i * 15);
+                ceiling.position.set(0, 10, -i * 12);
                 scene.add(ceiling);
 
-                // Light fixtures
-                const fixtureGeo = new THREE.BoxGeometry(2, 0.2, 0.5);
-                const fixtureMat = new THREE.MeshBasicMaterial({ color: 0xffffee });
-                const fixture = new THREE.Mesh(fixtureGeo, fixtureMat);
-                fixture.position.set(0, 7.3, -i * 15);
-                scene.add(fixture);
+                // Hanging industrial lights
+                if (i % 2 === 0) {
+                    const isWarm = i % 4 === 0;
+                    createHangingLight(0, 8, -i * 12, isWarm ? 0xffaa44 : 0x44aaff);
+                    createHangingLight(-4, 8.5, -i * 12 - 3, 0xff6622);
+                    createHangingLight(4, 8.5, -i * 12 - 3, 0xff6622);
+                }
             }
 
-            // Signs
-            createSign(-5, 5, -30, '出口', 0x00aa00);
-            createSign(5, 5, -60, 'トイレ →', 0x0066ff);
-            createSign(-5, 5, -90, '改札', 0xffaa00);
+            // Neon signs
+            createNeonSign(-6, 6, -25, 'EXIT', 0x00ff66);
+            createNeonSign(6, 6, -55, 'WC →', 0x00aaff);
+            createNeonSign(-6, 6, -85, '改札', 0xffaa00);
+            createNeonSign(0, 7, -120, 'ZONE-7', 0xff0066);
+
+            // Random cables and wires
+            createCables();
+
+            // Floating dust particles
+            createDustParticles();
         }
 
-        function createSign(x, y, z, text, color) {
-            const signGeo = new THREE.BoxGeometry(3, 1, 0.1);
-            const signMat = new THREE.MeshStandardMaterial({ color: color });
-            const sign = new THREE.Mesh(signGeo, signMat);
-            sign.position.set(x, y, z);
-            scene.add(sign);
+        function createPipes() {
+            const pipeColors = [0x3a4a5a, 0x4a3a30, 0x2a3a2a, 0x5a4a3a];
+
+            for (let side = -1; side <= 1; side += 2) {
+                for (let layer = 0; layer < 3; layer++) {
+                    const pipeGeo = new THREE.CylinderGeometry(0.15 + layer * 0.05, 0.15 + layer * 0.05, 400, 8);
+                    const pipeMat = new THREE.MeshStandardMaterial({
+                        color: pipeColors[layer % pipeColors.length],
+                        roughness: 0.5,
+                        metalness: 0.6
+                    });
+                    const pipe = new THREE.Mesh(pipeGeo, pipeMat);
+                    pipe.rotation.x = Math.PI / 2;
+                    pipe.position.set(
+                        side * (LANE_WIDTH * 2.8 + layer * 0.4),
+                        2 + layer * 1.5,
+                        -150
+                    );
+                    scene.add(pipe);
+                }
+
+                // Vertical pipes
+                for (let i = 0; i < 15; i++) {
+                    const vPipeGeo = new THREE.CylinderGeometry(0.1, 0.1, 8, 6);
+                    const vPipeMat = new THREE.MeshStandardMaterial({
+                        color: 0x4a5a6a,
+                        metalness: 0.5
+                    });
+                    const vPipe = new THREE.Mesh(vPipeGeo, vPipeMat);
+                    vPipe.position.set(
+                        side * LANE_WIDTH * 2.9,
+                        4,
+                        -i * 25 - Math.random() * 10
+                    );
+                    scene.add(vPipe);
+                }
+            }
+        }
+
+        function createHangingLight(x, y, z, color) {
+            // Wire
+            const wireGeo = new THREE.CylinderGeometry(0.02, 0.02, 2, 4);
+            const wireMat = new THREE.MeshBasicMaterial({ color: 0x333333 });
+            const wire = new THREE.Mesh(wireGeo, wireMat);
+            wire.position.set(x, y + 1, z);
+            scene.add(wire);
+
+            // Light housing
+            const housingGeo = new THREE.CylinderGeometry(0.3, 0.4, 0.5, 8);
+            const housingMat = new THREE.MeshStandardMaterial({
+                color: 0x2a2a2a,
+                metalness: 0.7
+            });
+            const housing = new THREE.Mesh(housingGeo, housingMat);
+            housing.position.set(x, y, z);
+            scene.add(housing);
+
+            // Light bulb glow
+            const bulbGeo = new THREE.SphereGeometry(0.15, 8, 8);
+            const bulbMat = new THREE.MeshBasicMaterial({
+                color: color,
+                transparent: true,
+                opacity: 0.9
+            });
+            const bulb = new THREE.Mesh(bulbGeo, bulbMat);
+            bulb.position.set(x, y - 0.3, z);
+            scene.add(bulb);
+        }
+
+        function createNeonSign(x, y, z, text, color) {
+            // Sign background
+            const bgGeo = new THREE.BoxGeometry(3.5, 1.2, 0.15);
+            const bgMat = new THREE.MeshStandardMaterial({
+                color: 0x0a0a0a,
+                roughness: 0.9
+            });
+            const bg = new THREE.Mesh(bgGeo, bgMat);
+            bg.position.set(x, y, z);
+            scene.add(bg);
+
+            // Neon glow border
+            const borderGeo = new THREE.BoxGeometry(3.6, 1.3, 0.1);
+            const borderMat = new THREE.MeshBasicMaterial({
+                color: color,
+                transparent: true,
+                opacity: 0.8
+            });
+            const border = new THREE.Mesh(borderGeo, borderMat);
+            border.position.set(x, y, z + 0.1);
+            scene.add(border);
+
+            // Add point light for glow effect
+            const glowLight = new THREE.PointLight(color, 0.5, 8);
+            glowLight.position.set(x, y, z + 1);
+            scene.add(glowLight);
+            neonLights.push({ light: glowLight, baseIntensity: 0.5, phase: Math.random() * Math.PI * 2 });
+        }
+
+        function createCables() {
+            for (let i = 0; i < 40; i++) {
+                const cableGeo = new THREE.CylinderGeometry(0.03, 0.03, 3 + Math.random() * 5, 4);
+                const cableMat = new THREE.MeshBasicMaterial({ color: 0x1a1a1a });
+                const cable = new THREE.Mesh(cableGeo, cableMat);
+                cable.position.set(
+                    (Math.random() - 0.5) * LANE_WIDTH * 5,
+                    8 + Math.random() * 2,
+                    -Math.random() * 300
+                );
+                cable.rotation.x = Math.random() * 0.5;
+                cable.rotation.z = Math.random() * Math.PI;
+                scene.add(cable);
+            }
+        }
+
+        function createDustParticles() {
+            for (let i = 0; i < 100; i++) {
+                const dustGeo = new THREE.BoxGeometry(0.03, 0.03, 0.03);
+                const dustMat = new THREE.MeshBasicMaterial({
+                    color: 0xaaaaaa,
+                    transparent: true,
+                    opacity: 0.3
+                });
+                const dust = new THREE.Mesh(dustGeo, dustMat);
+                dust.position.set(
+                    (Math.random() - 0.5) * 15,
+                    Math.random() * 8,
+                    -Math.random() * 100
+                );
+                scene.add(dust);
+                dustParticles.push({
+                    mesh: dust,
+                    speed: 0.002 + Math.random() * 0.005,
+                    amplitude: 0.5 + Math.random() * 1,
+                    phase: Math.random() * Math.PI * 2
+                });
+            }
         }
 
         function createPlayer() {
@@ -1204,12 +1447,38 @@
         function animate() {
             requestAnimationFrame(animate);
             const delta = clock.getDelta();
+            const time = clock.getElapsedTime();
 
             if (state.status === 'PLAYING') {
                 updateGame(delta);
             } else if (state.status === 'WIN') {
                 player.rotation.y += delta * 3;
             }
+
+            // Animate neon lights (flicker effect)
+            neonLights.forEach((neon, idx) => {
+                const flicker = Math.sin(time * 3 + neon.phase) * 0.2 +
+                               Math.sin(time * 7 + neon.phase * 2) * 0.1;
+                neon.light.intensity = neon.baseIntensity * (1 + flicker);
+
+                // Random flicker for some lights
+                if (idx % 5 === 0 && Math.random() < 0.01) {
+                    neon.light.intensity = neon.baseIntensity * 0.2;
+                }
+            });
+
+            // Animate dust particles
+            dustParticles.forEach((dust, idx) => {
+                dust.mesh.position.y += Math.sin(time * dust.speed * 100 + dust.phase) * 0.002;
+                dust.mesh.position.x += Math.sin(time * 0.5 + dust.phase) * 0.001;
+                dust.mesh.position.z += 0.02;
+
+                // Reset if too close
+                if (dust.mesh.position.z > 10) {
+                    dust.mesh.position.z = -100 - Math.random() * 50;
+                    dust.mesh.position.x = (Math.random() - 0.5) * 15;
+                }
+            });
 
             // Camera shake effect
             if (state.shakeIntensity > 0) {
