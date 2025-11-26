@@ -14,7 +14,7 @@
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -23,39 +23,21 @@
       theme: {
         extend: {
           colors: {
-            'void': '#050508',
-            'obsidian': '#0A0A0E',
-            'deep-space': '#0F0F15',
-            'neural': '#0066FF',
-            'synapse': '#8B5CF6',
-            'data-cyan': '#06B6D4',
-            'signal': '#F8FAFC',
-            'mist': '#64748B',
-            'border-dark': '#1E293B',
-            'terminal-bg': '#0D1117',
-            'terminal-green': '#39D353',
-            'terminal-blue': '#58A6FF',
-            'available-green': '#22C55E',
+            'primary': '#0A0A0A',
+            'secondary': '#111111',
+            'accent': '#00FF88',
+            'dark': '#050505',
           },
           fontFamily: {
-            'display': ['Inter', 'system-ui', 'sans-serif'],
-            'body': ['Inter', 'Noto Sans JP', 'system-ui', 'sans-serif'],
-            'mono': ['JetBrains Mono', 'SF Mono', 'monospace'],
+            'grotesk': ['Space Grotesk', 'sans-serif'],
+            'jp': ['Noto Sans JP', 'sans-serif'],
           },
         }
       }
     }
   </script>
 
-  <!-- GSAP -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
-
-  <!-- Three.js -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-
   <style>
-    /* Base */
     * {
       margin: 0;
       padding: 0;
@@ -67,956 +49,636 @@
     }
 
     body {
-      font-family: 'Inter', 'Noto Sans JP', system-ui, sans-serif;
-      background-color: #050508;
-      color: #F8FAFC;
-      line-height: 1.7;
-      overflow-x: hidden;
+      font-family: 'Noto Sans JP', sans-serif;
+      background-color: #0A0A0A;
+      color: #fff;
       cursor: none;
+      overflow-x: hidden;
+    }
+
+    ::selection {
+      background-color: #00FF88;
+      color: #000;
     }
 
     /* Custom Cursor */
-    .cursor {
-      width: 8px;
-      height: 8px;
-      background: #0066FF;
+    .cursor-ring {
+      width: 48px;
+      height: 48px;
+      border: 1px solid #00FF88;
       border-radius: 50%;
       position: fixed;
       pointer-events: none;
       z-index: 9999;
+      transition: transform 0.15s ease-out, width 0.2s, height 0.2s, background 0.2s;
       mix-blend-mode: difference;
-      transition: transform 0.15s ease, width 0.2s ease, height 0.2s ease;
     }
 
-    .cursor.hover {
-      width: 40px;
-      height: 40px;
-      background: rgba(0, 102, 255, 0.3);
-      border: 1px solid #0066FF;
-    }
-
-    /* Preloader */
-    #preloader {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: #050508;
-      z-index: 10000;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      transition: opacity 0.8s ease, visibility 0.8s ease;
-    }
-
-    #preloader.hidden {
-      opacity: 0;
-      visibility: hidden;
-    }
-
-    .loader-particles {
-      position: relative;
-      width: 120px;
-      height: 120px;
-    }
-
-    .loader-particle {
-      position: absolute;
-      width: 4px;
-      height: 4px;
-      background: #0066FF;
+    .cursor-dot {
+      width: 8px;
+      height: 8px;
+      background: #00FF88;
       border-radius: 50%;
-      animation: converge 2s ease-in-out infinite;
+      position: fixed;
+      pointer-events: none;
+      z-index: 9999;
+      transition: transform 0.1s ease-out;
     }
 
-    @keyframes converge {
-      0%, 100% { transform: translate(var(--x), var(--y)) scale(1); opacity: 0.3; }
-      50% { transform: translate(0, 0) scale(1.5); opacity: 1; }
-    }
-
-    .loader-text {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 12px;
-      color: #64748B;
-      margin-top: 40px;
-      letter-spacing: 0.1em;
-    }
-
-    .loader-progress {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 12px;
-      color: #64748B;
-      margin-top: 16px;
-    }
-
-    /* Three.js Canvas */
-    #hero-canvas {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 1;
-    }
-
-    /* Kinetic Typography */
-    .kinetic-char {
-      display: inline-block;
-      animation: kinetic 3s ease-in-out infinite;
-    }
-
-    @keyframes kinetic {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-2px); }
-    }
-
-    /* Glitch Effect */
-    .glitch {
-      position: relative;
-    }
-
-    .glitch::before,
-    .glitch::after {
-      content: attr(data-text);
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      opacity: 0;
-    }
-
-    .glitch::before { color: #0066FF; }
-    .glitch::after { color: #8B5CF6; }
-
-    .glitch.active::before {
-      animation: glitch-1 0.2s ease forwards;
-    }
-
-    .glitch.active::after {
-      animation: glitch-2 0.2s ease forwards;
-    }
-
-    @keyframes glitch-1 {
-      0% { opacity: 0.8; clip-path: inset(20% 0 60% 0); transform: translate(-3px, 0); }
-      100% { opacity: 0; clip-path: inset(0); transform: translate(0); }
-    }
-
-    @keyframes glitch-2 {
-      0% { opacity: 0.8; clip-path: inset(60% 0 20% 0); transform: translate(3px, 0); }
-      100% { opacity: 0; clip-path: inset(0); transform: translate(0); }
-    }
-
-    /* Scroll Indicator */
-    .scroll-indicator {
-      animation: float 2s ease-in-out infinite;
-    }
-
-    @keyframes float {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(8px); }
-    }
-
-    /* Horizontal Scroll */
-    .horizontal-scroll {
-      display: flex;
-      gap: 32px;
-      overflow-x: auto;
-      scroll-snap-type: x mandatory;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-      padding: 40px 0;
-    }
-
-    .horizontal-scroll::-webkit-scrollbar {
-      display: none;
-    }
-
-    .work-card {
-      flex: 0 0 70vw;
-      max-width: 900px;
-      scroll-snap-align: center;
+    .cursor-ring.hover {
+      transform: scale(1.5);
+      background-color: rgba(0, 255, 136, 0.1);
+      border-color: transparent;
     }
 
     @media (max-width: 768px) {
-      .work-card {
-        flex: 0 0 85vw;
+      body { cursor: auto; }
+      .cursor-ring, .cursor-dot { display: none; }
+    }
+
+    /* Text Stroke */
+    .text-stroke {
+      -webkit-text-stroke: 1px #fff;
+      color: transparent;
+    }
+
+    .text-stroke-gray {
+      -webkit-text-stroke: 1px #333;
+      color: transparent;
+    }
+
+    /* Animations */
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(100%);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
       }
     }
 
-    /* Card Hover Effects */
-    .card-hover {
-      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1),
-                  box-shadow 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    @keyframes fadeIn {
+      to { opacity: 1; }
     }
 
-    .card-hover:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 20px 40px rgba(0, 102, 255, 0.1);
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
     }
 
-    /* Gradient Button */
-    .btn-gradient {
-      background: linear-gradient(135deg, #0066FF 0%, #8B5CF6 100%);
-      background-size: 200% 200%;
-      transition: background-position 0.5s ease, box-shadow 0.3s ease;
+    .animate-slide-up {
+      animation: slideUp 0.8s ease-out forwards;
     }
 
-    .btn-gradient:hover {
-      background-position: 100% 100%;
-      box-shadow: 0 0 40px rgba(0, 102, 255, 0.3);
+    .animate-fade-in {
+      animation: fadeIn 1s ease-out forwards;
     }
 
-    /* Link Underline Animation */
-    .link-underline {
-      position: relative;
+    .animate-bounce-slow {
+      animation: bounce 2s ease-in-out infinite;
     }
 
-    .link-underline::after {
-      content: '';
-      position: absolute;
-      bottom: -2px;
-      left: 0;
-      width: 0;
-      height: 1px;
-      background: #F8FAFC;
-      transition: width 0.3s ease;
-    }
-
-    .link-underline:hover::after {
-      width: 100%;
-    }
-
-    /* Reveal Animation */
-    .reveal {
+    /* Fade In on Scroll */
+    .fade-in {
       opacity: 0;
       transform: translateY(30px);
+      transition: opacity 0.8s ease-out, transform 0.8s ease-out;
     }
 
-    .reveal.active {
+    .fade-in.visible {
       opacity: 1;
       transform: translateY(0);
-      transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
-                  transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    /* Slide In */
-    .slide-in {
-      opacity: 0;
-      transform: translateX(-30px);
+    /* Work Card Hover */
+    .work-card .view-btn {
+      transform: scale(0);
+      transition: transform 0.3s ease;
     }
 
-    .slide-in.active {
-      opacity: 1;
-      transform: translateX(0);
-      transition: opacity 0.6s ease, transform 0.6s ease;
+    .work-card:hover .view-btn {
+      transform: scale(1);
     }
 
-    /* Terminal Animation */
-    .terminal-line {
-      opacity: 0;
-      transform: translateY(10px);
+    .work-card:hover img {
+      transform: scale(1.1);
     }
 
-    .terminal-line.visible {
-      opacity: 1;
-      transform: translateY(0);
-      transition: opacity 0.3s ease, transform 0.3s ease;
-    }
-
-    /* Pulse Animation */
-    .pulse {
-      animation: pulse 2s ease-in-out infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
-
-    /* Orbit Animation */
-    .orbit-item {
+    /* Service Row Hover */
+    .service-row::before {
+      content: '';
       position: absolute;
-      animation: orbit var(--duration, 20s) linear infinite;
-      animation-delay: var(--delay, 0s);
-    }
-
-    @keyframes orbit {
-      from { transform: rotate(0deg) translateX(var(--radius, 120px)) rotate(0deg); }
-      to { transform: rotate(360deg) translateX(var(--radius, 120px)) rotate(-360deg); }
-    }
-
-    /* Custom Scrollbar */
-    ::-webkit-scrollbar {
+      left: 0;
+      top: 0;
       width: 4px;
+      height: 100%;
+      background: #00FF88;
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
     }
 
-    ::-webkit-scrollbar-track {
-      background: #050508;
+    .service-row:hover::before {
+      transform: translateX(0);
     }
 
-    ::-webkit-scrollbar-thumb {
-      background: #1E293B;
-      border-radius: 2px;
+    /* Noise Background */
+    .noise-bg {
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+      opacity: 0.15;
     }
 
-    ::-webkit-scrollbar-thumb:hover {
-      background: #0066FF;
+    /* Glow Effect */
+    .glow-green {
+      box-shadow: 0 0 60px rgba(0, 255, 136, 0.3);
     }
 
-    /* Reduced Motion */
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-      }
+    /* Interactive elements */
+    .interactive {
+      cursor: none;
     }
 
-    /* Mobile Cursor Fix */
-    @media (hover: none) {
-      body { cursor: auto; }
-      .cursor { display: none; }
+    @media (max-width: 768px) {
+      .interactive { cursor: pointer; }
     }
   </style>
 </head>
 
-<body>
+<body class="bg-primary min-h-screen">
   <!-- Custom Cursor -->
-  <div class="cursor" id="cursor"></div>
-
-  <!-- Preloader -->
-  <div id="preloader">
-    <div class="loader-particles">
-      <div class="loader-particle" style="--x: -50px; --y: -50px;"></div>
-      <div class="loader-particle" style="--x: 50px; --y: -50px; animation-delay: 0.2s;"></div>
-      <div class="loader-particle" style="--x: -50px; --y: 50px; animation-delay: 0.4s;"></div>
-      <div class="loader-particle" style="--x: 50px; --y: 50px; animation-delay: 0.6s;"></div>
-      <div class="loader-particle" style="--x: 0; --y: -60px; animation-delay: 0.8s;"></div>
-      <div class="loader-particle" style="--x: 0; --y: 60px; animation-delay: 1s;"></div>
-      <div class="loader-particle" style="--x: -60px; --y: 0; animation-delay: 1.2s;"></div>
-      <div class="loader-particle" style="--x: 60px; --y: 0; animation-delay: 1.4s;"></div>
-    </div>
-    <p class="loader-text">INITIALIZING EXPERIENCE</p>
-    <p class="loader-progress" id="loader-progress">████░░░░░░░░░░░░░░░░ 20%</p>
-  </div>
+  <div class="cursor-ring hidden md:block" id="cursor-ring"></div>
+  <div class="cursor-dot hidden md:block" id="cursor-dot"></div>
 
   <!-- Navigation -->
-  <nav class="fixed top-0 right-0 z-50 p-8 hidden md:block">
-    <ul class="flex gap-8">
-      <li><a href="#works" class="font-display text-xs font-medium tracking-widest text-mist hover:text-signal link-underline transition-colors" data-cursor="hover">WORKS</a></li>
-      <li><a href="#about" class="font-display text-xs font-medium tracking-widest text-mist hover:text-signal link-underline transition-colors" data-cursor="hover">ABOUT</a></li>
-      <li><a href="#contact" class="font-display text-xs font-medium tracking-widest text-mist hover:text-signal link-underline transition-colors" data-cursor="hover">CONTACT</a></li>
-    </ul>
+  <nav id="navbar" class="fixed w-full z-40 transition-all duration-300 bg-transparent py-8">
+    <div class="container mx-auto px-6 flex justify-between items-center">
+      <a href="#" class="text-2xl font-bold font-grotesk tracking-tighter text-white z-50 relative interactive">
+        nekoronomikon<span class="text-accent">.</span>
+      </a>
+
+      <!-- Desktop Menu -->
+      <div class="hidden md:flex space-x-12 items-center">
+        <a href="#works" class="text-sm font-medium text-gray-300 hover:text-accent transition-colors tracking-wide interactive">WORKS</a>
+        <a href="#services" class="text-sm font-medium text-gray-300 hover:text-accent transition-colors tracking-wide interactive">SERVICES</a>
+        <a href="#about" class="text-sm font-medium text-gray-300 hover:text-accent transition-colors tracking-wide interactive">ABOUT</a>
+        <a href="#contact" class="text-sm font-medium text-gray-300 hover:text-accent transition-colors tracking-wide interactive">CONTACT</a>
+        <a href="#contact" class="px-6 py-2 border border-accent text-accent text-sm font-bold hover:bg-accent hover:text-black transition-all duration-300 interactive">
+          CONTACT ME
+        </a>
+      </div>
+
+      <!-- Mobile Toggle -->
+      <button id="mobile-menu-btn" class="md:hidden text-white z-50 interactive p-2">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path id="menu-icon" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+      </button>
+
+      <!-- Mobile Menu -->
+      <div id="mobile-menu" class="fixed inset-0 bg-primary flex flex-col justify-center items-center opacity-0 pointer-events-none transition-opacity duration-500 md:hidden">
+        <div class="flex flex-col space-y-8 text-center">
+          <a href="#works" class="mobile-link text-4xl font-grotesk font-bold text-white hover:text-accent transition-colors">Works</a>
+          <a href="#services" class="mobile-link text-4xl font-grotesk font-bold text-white hover:text-accent transition-colors">Services</a>
+          <a href="#about" class="mobile-link text-4xl font-grotesk font-bold text-white hover:text-accent transition-colors">About</a>
+          <a href="#contact" class="mobile-link text-4xl font-grotesk font-bold text-white hover:text-accent transition-colors">Contact</a>
+        </div>
+      </div>
+    </div>
   </nav>
 
-  <!-- Mobile Navigation -->
-  <button id="mobile-nav-btn" class="fixed top-6 right-6 z-50 md:hidden w-10 h-10 flex flex-col justify-center items-center gap-1.5" aria-label="メニュー">
-    <span class="w-6 h-px bg-signal transition-transform"></span>
-    <span class="w-6 h-px bg-signal transition-opacity"></span>
-    <span class="w-6 h-px bg-signal transition-transform"></span>
-  </button>
+  <!-- Hero Section -->
+  <section id="hero" class="relative min-h-screen flex items-center justify-center overflow-hidden bg-primary">
+    <!-- Background -->
+    <div class="absolute inset-0 w-full h-full noise-bg pointer-events-none"></div>
+    <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-accent rounded-full mix-blend-screen filter blur-[128px] opacity-10 animate-pulse"></div>
 
-  <div id="mobile-nav" class="fixed inset-0 bg-void z-40 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300 md:hidden">
-    <ul class="text-center space-y-8">
-      <li><a href="#works" class="font-display text-2xl font-medium text-signal">WORKS</a></li>
-      <li><a href="#about" class="font-display text-2xl font-medium text-signal">ABOUT</a></li>
-      <li><a href="#contact" class="font-display text-2xl font-medium text-signal">CONTACT</a></li>
-    </ul>
-  </div>
+    <div class="container mx-auto px-6 relative z-10 text-center md:text-left">
+      <div class="overflow-hidden">
+        <p class="text-accent font-grotesk font-bold tracking-widest text-sm md:text-base mb-4 animate-slide-up opacity-0" style="animation-delay: 0.2s;">
+          AI × CODE × ART CREATOR
+        </p>
+      </div>
 
-  <!-- Section 1: Hero -->
-  <section id="hero" class="relative min-h-screen flex items-center justify-center overflow-hidden">
-    <canvas id="hero-canvas"></canvas>
-
-    <div class="absolute inset-0 bg-gradient-to-b from-void/50 via-transparent to-void z-10"></div>
-
-    <div class="relative z-20 px-6 md:px-12 max-w-6xl mx-auto">
-      <div class="mb-8">
-        <h1 id="hero-title" class="font-display font-medium text-signal leading-none" style="font-size: clamp(48px, 10vw, 120px); letter-spacing: -0.03em;">
-          <span class="block glitch" data-text="UNNAMED">UNNAMED</span>
-          <span class="block glitch" data-text="CREATIONS.">CREATIONS.</span>
+      <div class="overflow-hidden">
+        <h1 class="text-5xl md:text-8xl lg:text-9xl font-grotesk font-bold text-white leading-[0.9] tracking-tight mb-8">
+          <span class="block animate-slide-up opacity-0" style="animation-delay: 0.4s;">UNNAMED</span>
+          <span class="block animate-slide-up opacity-0 text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-500" style="animation-delay: 0.6s;">CREATIONS</span>
+          <span class="block animate-slide-up opacity-0 text-stroke" style="animation-delay: 0.8s;">BY NEKO.</span>
         </h1>
       </div>
 
-      <div id="hero-subtitle" class="opacity-0">
-        <p class="font-display text-base text-mist mb-1">AI × CODE × ART</p>
-        <p class="font-display text-base text-mist">by <span class="text-signal">nekoronomikon</span></p>
-      </div>
+      <p class="text-gray-400 text-lg md:text-xl max-w-2xl mt-8 animate-fade-in opacity-0" style="animation-delay: 1.2s;">
+        名前のない創造を。<br class="md:hidden"/>
+        AIとコードとアートの境界を溶かし、<br/>
+        まだ誰も見たことのない「何か」を作る。
+      </p>
     </div>
 
     <!-- Scroll Indicator -->
-    <div class="absolute bottom-12 left-1/2 transform -translate-x-1/2 z-20 scroll-indicator">
-      <div class="flex flex-col items-center gap-4">
-        <div class="w-px h-16 bg-gradient-to-b from-mist to-transparent"></div>
-        <div class="w-1.5 h-1.5 rounded-full bg-neural"></div>
-      </div>
+    <div class="absolute bottom-12 left-1/2 transform -translate-x-1/2 animate-bounce-slow">
+      <div class="w-[1px] h-24 bg-gradient-to-b from-accent to-transparent"></div>
+      <p class="text-xs text-accent font-grotesk tracking-widest mt-2 -ml-3 transform -rotate-90">SCROLL</p>
     </div>
   </section>
 
-  <!-- Section 2: Works Gallery -->
-  <section id="works" class="py-32 bg-obsidian">
-    <div class="max-w-6xl mx-auto px-6 md:px-12 mb-12">
-      <div class="flex items-baseline gap-4 slide-in">
-        <h2 class="font-display font-medium text-signal" style="font-size: clamp(32px, 5vw, 64px); letter-spacing: -0.02em;">SELECTED WORKS</h2>
-        <span class="font-mono text-xs text-mist">2024</span>
-      </div>
-    </div>
-
-    <div class="horizontal-scroll px-6 md:px-12">
-      <!-- Work 01: にゃんこタワー -->
-      <article class="work-card card-hover bg-deep-space rounded-lg overflow-hidden" data-cursor="hover">
-        <div class="aspect-video bg-gradient-to-br from-synapse/20 to-neural/20 relative overflow-hidden">
-          <div class="absolute inset-0 flex items-center justify-center">
-            <span class="text-8xl opacity-80">🐱</span>
-          </div>
-          <div class="absolute inset-0 bg-gradient-to-t from-deep-space via-transparent to-transparent"></div>
-          <div class="absolute bottom-0 left-0 right-0 p-8">
-            <span class="font-mono text-xs text-mist">01</span>
-            <h3 class="font-display text-2xl md:text-3xl font-medium text-signal mt-2">にゃんこタワー</h3>
-            <p class="font-mono text-xs text-mist mt-2">GAME / AI ART / 2024</p>
-          </div>
-        </div>
-        <div class="p-8">
-          <p class="text-mist mb-6">AIで生成したお菓子の世界観で展開するタワーディフェンスゲーム。独自のビジュアルスタイルとゲームメカニクスの融合。</p>
-          <a href="./nyanko-tower/" target="_blank" class="inline-flex items-center gap-2 font-mono text-sm text-neural hover:text-signal transition-colors">
-            VIEW PROJECT <span class="text-lg">→</span>
-          </a>
-        </div>
-      </article>
-
-      <!-- Work 02: RPG -->
-      <article class="work-card card-hover bg-deep-space rounded-lg overflow-hidden" data-cursor="hover">
-        <div class="aspect-video bg-gradient-to-br from-neural/20 to-data-cyan/20 relative overflow-hidden">
-          <div class="absolute inset-0 flex items-center justify-center">
-            <span class="text-8xl opacity-80">⚔️</span>
-          </div>
-          <div class="absolute inset-0 bg-gradient-to-t from-deep-space via-transparent to-transparent"></div>
-          <div class="absolute bottom-0 left-0 right-0 p-8">
-            <span class="font-mono text-xs text-mist">02</span>
-            <h3 class="font-display text-2xl md:text-3xl font-medium text-signal mt-2">デウス・コード 八百万の神託</h3>
-            <p class="font-mono text-xs text-mist mt-2">GAME / AI CODING / 2024</p>
-          </div>
-        </div>
-        <div class="p-8">
-          <p class="text-mist mb-6">コード0行で作ったVibe Coding RPG。日本神話と近未来が融合した世界観。AIとの対話だけで生まれたゲーム体験。</p>
-          <div class="flex gap-6">
-            <a href="./rpg-game/" target="_blank" class="inline-flex items-center gap-2 font-mono text-sm text-neural hover:text-signal transition-colors">
-              PLAY <span class="text-lg">→</span>
-            </a>
-            <a href="https://github.com/nekoojisan-labo/deus-code-gdd" target="_blank" class="inline-flex items-center gap-2 font-mono text-sm text-mist hover:text-signal transition-colors">
-              GDD <span class="text-lg">→</span>
-            </a>
-          </div>
-        </div>
-      </article>
-
-      <!-- Work 03: おみくじ -->
-      <article class="work-card card-hover bg-deep-space rounded-lg overflow-hidden" data-cursor="hover">
-        <div class="aspect-video bg-gradient-to-br from-red-600/20 to-orange-500/20 relative overflow-hidden">
-          <div class="absolute inset-0 flex items-center justify-center">
-            <span class="text-8xl opacity-80">⛩️</span>
-          </div>
-          <div class="absolute inset-0 bg-gradient-to-t from-deep-space via-transparent to-transparent"></div>
-          <div class="absolute bottom-0 left-0 right-0 p-8">
-            <span class="font-mono text-xs text-mist">03</span>
-            <h3 class="font-display text-2xl md:text-3xl font-medium text-signal mt-2">かわいいおみくじ</h3>
-            <p class="font-mono text-xs text-mist mt-2">WEB APP / 2024</p>
-          </div>
-        </div>
-        <div class="p-8">
-          <p class="text-mist mb-6">和風でかわいらしいデザインのおみくじアプリ。9つのジャンルで運勢を占える。伝統とモダンの融合。</p>
-          <a href="./kawaii-omikuji/" target="_blank" class="inline-flex items-center gap-2 font-mono text-sm text-neural hover:text-signal transition-colors">
-            VIEW PROJECT <span class="text-lg">→</span>
-          </a>
-        </div>
-      </article>
-
-      <!-- Work 04: パズル -->
-      <article class="work-card card-hover bg-deep-space rounded-lg overflow-hidden" data-cursor="hover">
-        <div class="aspect-video bg-gradient-to-br from-pink-500/20 to-synapse/20 relative overflow-hidden">
-          <div class="absolute inset-0 flex items-center justify-center">
-            <span class="text-8xl opacity-80">🎮</span>
-          </div>
-          <div class="absolute inset-0 bg-gradient-to-t from-deep-space via-transparent to-transparent"></div>
-          <div class="absolute bottom-0 left-0 right-0 p-8">
-            <span class="font-mono text-xs text-mist">04</span>
-            <h3 class="font-display text-2xl md:text-3xl font-medium text-signal mt-2">ぷよぷよ風パズル</h3>
-            <p class="font-mono text-xs text-mist mt-2">GAME / 2024</p>
-          </div>
-        </div>
-        <div class="p-8">
-          <p class="text-mist mb-6">カラフルなぷよを4つ以上つなげて消すクラシックパズル。連鎖の爽快感とシンプルな操作性。</p>
-          <a href="./puyo-puzzle-game/" target="_blank" class="inline-flex items-center gap-2 font-mono text-sm text-neural hover:text-signal transition-colors">
-            PLAY <span class="text-lg">→</span>
-          </a>
-        </div>
-      </article>
-
-      <!-- Work 05: ガイド -->
-      <article class="work-card card-hover bg-deep-space rounded-lg overflow-hidden" data-cursor="hover">
-        <div class="aspect-video bg-gradient-to-br from-terminal-green/20 to-data-cyan/20 relative overflow-hidden">
-          <div class="absolute inset-0 flex items-center justify-center">
-            <span class="text-8xl opacity-80">📝</span>
-          </div>
-          <div class="absolute inset-0 bg-gradient-to-t from-deep-space via-transparent to-transparent"></div>
-          <div class="absolute bottom-0 left-0 right-0 p-8">
-            <span class="font-mono text-xs text-mist">05</span>
-            <h3 class="font-display text-2xl md:text-3xl font-medium text-signal mt-2">AI活用ガイド</h3>
-            <p class="font-mono text-xs text-mist mt-2">GUIDE / EDUCATION</p>
-          </div>
-        </div>
-        <div class="p-8">
-          <p class="text-mist mb-6">プロンプトエンジニアリングの前に必要な「設計準備」の考え方。AI活用の本質を解説。</p>
-          <div class="flex gap-6">
-            <a href="https://note.com/nekoojisan37/n/n64bd493a5dcb" target="_blank" class="inline-flex items-center gap-2 font-mono text-sm text-terminal-green hover:text-signal transition-colors">
-              NOTE <span class="text-lg">→</span>
-            </a>
-            <a href="https://brain-market.com/u/nekoojisan/a/b0MzN0IjMgoTZsNWa0JXY" target="_blank" class="inline-flex items-center gap-2 font-mono text-sm text-synapse hover:text-signal transition-colors">
-              BRAIN <span class="text-lg">→</span>
-            </a>
-          </div>
-        </div>
-      </article>
-    </div>
-
-    <div class="max-w-6xl mx-auto px-6 md:px-12 mt-8">
-      <p class="font-mono text-xs text-mist text-center">← DRAG OR SCROLL →</p>
-    </div>
-  </section>
-
-  <!-- Section 3: Process -->
-  <section id="process" class="py-32 bg-void">
-    <div class="max-w-6xl mx-auto px-6 md:px-12">
-      <div class="mb-16 slide-in">
-        <h2 class="font-display font-medium text-signal mb-2" style="font-size: clamp(32px, 5vw, 64px); letter-spacing: -0.02em;">PROCESS</h2>
-        <p class="font-mono text-xs text-mist tracking-widest">HOW THE MAGIC HAPPENS</p>
-      </div>
-
-      <!-- Terminal -->
-      <div class="max-w-3xl mx-auto mb-20 reveal">
-        <div class="bg-terminal-bg rounded-lg border border-border-dark overflow-hidden">
-          <div class="flex items-center gap-2 px-4 py-3 border-b border-border-dark">
-            <div class="w-3 h-3 rounded-full bg-red-500"></div>
-            <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
-            <div class="w-3 h-3 rounded-full bg-green-500"></div>
-            <span class="font-mono text-xs text-mist ml-2">terminal</span>
-          </div>
-          <div class="p-6 font-mono text-sm" id="terminal-content">
-            <p class="terminal-line text-terminal-green">$ claude --mode creative</p>
-            <p class="terminal-line text-mist mt-2">> Initializing creative session...</p>
-            <p class="terminal-line text-mist">> Loading inspiration from 1,000,000+ images</p>
-            <p class="terminal-line text-mist">> Connecting to neural pathways...</p>
-            <p class="terminal-line text-terminal-green mt-4">[████████████████████████] 100%</p>
-            <p class="terminal-line text-terminal-blue mt-4">$ vibe-code --project "new-creation"</p>
-            <p class="terminal-line text-mist mt-2">> Analyzing concept...</p>
-            <p class="terminal-line text-mist">> Generating architecture...</p>
-            <p class="terminal-line text-mist">> Building components...</p>
-            <p class="terminal-line text-mist">> Testing interactions...</p>
-            <p class="terminal-line text-signal mt-4">OUTPUT: Something never seen before.</p>
-            <p class="terminal-line text-terminal-green mt-4">$ <span class="animate-pulse">_</span></p>
-          </div>
+  <!-- Works Section -->
+  <section id="works" class="py-24 md:py-40 bg-primary">
+    <div class="container mx-auto px-6">
+      <div class="fade-in flex flex-col md:flex-row justify-between items-end mb-16 md:mb-24">
+        <h2 class="text-5xl md:text-7xl font-bold font-grotesk text-white">
+          SELECTED<br /><span class="text-stroke-gray">WORKS</span>
+        </h2>
+        <div class="mt-8 md:mt-0">
+          <span class="text-accent text-sm font-bold tracking-widest">2024 — PRESENT</span>
         </div>
       </div>
 
-      <!-- 3 Steps -->
-      <div class="grid md:grid-cols-3 gap-8">
-        <div class="p-8 bg-deep-space rounded-lg border border-border-dark card-hover reveal" data-cursor="hover">
-          <span class="font-mono text-xs text-neural">STEP 01</span>
-          <h3 class="font-display text-xl font-medium text-signal mt-4 mb-4">CONCEPT</h3>
-          <p class="text-mist text-sm">AIと対話しながらアイデアを形に。無数の可能性から最適な方向性を見つける探索プロセス。</p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16">
+        <!-- Work 01: にゃんこタワー -->
+        <div class="fade-in work-card group interactive">
+          <a href="./nyanko-tower/" target="_blank" class="block">
+            <div class="relative overflow-hidden aspect-[4/3] bg-gradient-to-br from-purple-600/30 to-cyan-600/30 mb-6">
+              <div class="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-all duration-500 z-10"></div>
+              <div class="absolute inset-0 flex items-center justify-center">
+                <span class="text-[120px] transition-transform duration-700">🐱</span>
+              </div>
+              <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
+                <div class="view-btn w-24 h-24 bg-accent rounded-full flex items-center justify-center text-black font-bold text-sm tracking-widest">
+                  PLAY
+                </div>
+              </div>
+            </div>
+            <div class="flex justify-between items-start border-b border-gray-800 pb-4 group-hover:border-accent transition-colors duration-300">
+              <div>
+                <h3 class="text-2xl text-white font-bold mb-1">にゃんこタワー</h3>
+                <p class="text-gray-500 text-sm font-grotesk">GAME / AI ART / 2024</p>
+              </div>
+              <svg class="w-6 h-6 text-gray-500 group-hover:text-accent transform group-hover:-rotate-45 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+              </svg>
+            </div>
+          </a>
         </div>
 
-        <div class="p-8 bg-deep-space rounded-lg border border-border-dark card-hover reveal" data-cursor="hover">
-          <span class="font-mono text-xs text-synapse">STEP 02</span>
-          <h3 class="font-display text-xl font-medium text-signal mt-4 mb-4">VIBE CODE</h3>
-          <p class="text-mist text-sm">コードを書くのではなく、「こうしたい」を伝える。AIとの協働で高速プロトタイピング。</p>
+        <!-- Work 02: デウス・コード -->
+        <div class="fade-in work-card group interactive" style="transition-delay: 0.1s;">
+          <a href="./rpg-game/" target="_blank" class="block">
+            <div class="relative overflow-hidden aspect-[4/3] bg-gradient-to-br from-blue-600/30 to-purple-600/30 mb-6">
+              <div class="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-all duration-500 z-10"></div>
+              <div class="absolute inset-0 flex items-center justify-center">
+                <span class="text-[120px] transition-transform duration-700">⚔️</span>
+              </div>
+              <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
+                <div class="view-btn w-24 h-24 bg-accent rounded-full flex items-center justify-center text-black font-bold text-sm tracking-widest">
+                  PLAY
+                </div>
+              </div>
+            </div>
+            <div class="flex justify-between items-start border-b border-gray-800 pb-4 group-hover:border-accent transition-colors duration-300">
+              <div>
+                <h3 class="text-2xl text-white font-bold mb-1">デウス・コード 八百万の神託</h3>
+                <p class="text-gray-500 text-sm font-grotesk">GAME / AI CODING / 2024</p>
+              </div>
+              <svg class="w-6 h-6 text-gray-500 group-hover:text-accent transform group-hover:-rotate-45 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+              </svg>
+            </div>
+          </a>
         </div>
 
-        <div class="p-8 bg-deep-space rounded-lg border border-border-dark card-hover reveal" data-cursor="hover">
-          <span class="font-mono text-xs text-data-cyan">STEP 03</span>
-          <h3 class="font-display text-xl font-medium text-signal mt-4 mb-4">POLISH</h3>
-          <p class="text-mist text-sm">動くものを磨き上げ、体験として完成させる。細部へのこだわりが作品の質を決める。</p>
+        <!-- Work 03: おみくじ -->
+        <div class="fade-in work-card group interactive" style="transition-delay: 0.2s;">
+          <a href="./kawaii-omikuji/" target="_blank" class="block">
+            <div class="relative overflow-hidden aspect-[4/3] bg-gradient-to-br from-red-600/30 to-orange-500/30 mb-6">
+              <div class="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-all duration-500 z-10"></div>
+              <div class="absolute inset-0 flex items-center justify-center">
+                <span class="text-[120px] transition-transform duration-700">⛩️</span>
+              </div>
+              <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
+                <div class="view-btn w-24 h-24 bg-accent rounded-full flex items-center justify-center text-black font-bold text-sm tracking-widest">
+                  VIEW
+                </div>
+              </div>
+            </div>
+            <div class="flex justify-between items-start border-b border-gray-800 pb-4 group-hover:border-accent transition-colors duration-300">
+              <div>
+                <h3 class="text-2xl text-white font-bold mb-1">かわいいおみくじ</h3>
+                <p class="text-gray-500 text-sm font-grotesk">WEB APP / 2024</p>
+              </div>
+              <svg class="w-6 h-6 text-gray-500 group-hover:text-accent transform group-hover:-rotate-45 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+              </svg>
+            </div>
+          </a>
+        </div>
+
+        <!-- Work 04: パズル -->
+        <div class="fade-in work-card group interactive" style="transition-delay: 0.3s;">
+          <a href="./puyo-puzzle-game/" target="_blank" class="block">
+            <div class="relative overflow-hidden aspect-[4/3] bg-gradient-to-br from-pink-500/30 to-purple-500/30 mb-6">
+              <div class="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-all duration-500 z-10"></div>
+              <div class="absolute inset-0 flex items-center justify-center">
+                <span class="text-[120px] transition-transform duration-700">🎮</span>
+              </div>
+              <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
+                <div class="view-btn w-24 h-24 bg-accent rounded-full flex items-center justify-center text-black font-bold text-sm tracking-widest">
+                  PLAY
+                </div>
+              </div>
+            </div>
+            <div class="flex justify-between items-start border-b border-gray-800 pb-4 group-hover:border-accent transition-colors duration-300">
+              <div>
+                <h3 class="text-2xl text-white font-bold mb-1">ぷよぷよ風パズル</h3>
+                <p class="text-gray-500 text-sm font-grotesk">GAME / 2024</p>
+              </div>
+              <svg class="w-6 h-6 text-gray-500 group-hover:text-accent transform group-hover:-rotate-45 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+              </svg>
+            </div>
+          </a>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Section 4: About -->
-  <section id="about" class="py-32 bg-obsidian">
-    <div class="max-w-6xl mx-auto px-6 md:px-12">
-      <div class="grid lg:grid-cols-2 gap-16 items-center">
-        <!-- Left: Philosophy -->
-        <div class="reveal">
-          <h2 class="font-display font-medium text-signal leading-tight mb-8" style="font-size: clamp(28px, 4vw, 36px);">
-            技術は手段。<br>
-            目的は、まだ誰も<br>
-            見たことのない<br>
-            「何か」を作ること。
+  <!-- Services Section -->
+  <section id="services" class="py-24 bg-secondary">
+    <div class="container mx-auto px-6">
+      <div class="fade-in mb-16">
+        <h2 class="text-4xl md:text-6xl font-bold font-grotesk text-white mb-6">SERVICES</h2>
+        <p class="text-gray-400 max-w-xl">
+          AIとコードの力で、あなたのビジョンを形にします。<br/>
+          ゲーム開発からAIアート、教育コンテンツまで。
+        </p>
+      </div>
+
+      <div class="flex flex-col">
+        <!-- Service 01 -->
+        <div class="fade-in service-row group border-t border-gray-800 py-12 hover:bg-[#151515] transition-colors duration-300 relative overflow-hidden interactive cursor-pointer">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center px-4 md:px-8">
+            <div class="flex items-baseline mb-4 md:mb-0">
+              <span class="text-accent font-grotesk text-xl font-bold mr-8">01</span>
+              <h3 class="text-2xl md:text-4xl font-bold text-white group-hover:text-accent transition-colors">Vibe Coding</h3>
+            </div>
+            <div class="flex flex-col md:flex-row items-start md:items-center gap-8 md:gap-16 w-full md:w-auto">
+              <p class="text-gray-400 text-sm md:text-base w-48">AIと対話しながらコードを書く新しい開発スタイル</p>
+              <a href="https://brain-market.com/u/nekoojisan/a/b0MzN0IjMgoTZsNWa0JXY" target="_blank" class="text-accent font-grotesk font-bold text-sm hover:underline">LEARN MORE →</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Service 02 -->
+        <div class="fade-in service-row group border-t border-gray-800 py-12 hover:bg-[#151515] transition-colors duration-300 relative overflow-hidden interactive cursor-pointer">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center px-4 md:px-8">
+            <div class="flex items-baseline mb-4 md:mb-0">
+              <span class="text-accent font-grotesk text-xl font-bold mr-8">02</span>
+              <h3 class="text-2xl md:text-4xl font-bold text-white group-hover:text-accent transition-colors">Game Development</h3>
+            </div>
+            <div class="flex flex-col md:flex-row items-start md:items-center gap-8 md:gap-16 w-full md:w-auto">
+              <p class="text-gray-400 text-sm md:text-base w-48">AIアートを活用したゲーム開発・企画</p>
+              <a href="#works" class="text-accent font-grotesk font-bold text-sm hover:underline">VIEW WORKS →</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Service 03 -->
+        <div class="fade-in service-row group border-t border-gray-800 py-12 hover:bg-[#151515] transition-colors duration-300 relative overflow-hidden interactive cursor-pointer">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center px-4 md:px-8">
+            <div class="flex items-baseline mb-4 md:mb-0">
+              <span class="text-accent font-grotesk text-xl font-bold mr-8">03</span>
+              <h3 class="text-2xl md:text-4xl font-bold text-white group-hover:text-accent transition-colors">AI活用ガイド</h3>
+            </div>
+            <div class="flex flex-col md:flex-row items-start md:items-center gap-8 md:gap-16 w-full md:w-auto">
+              <p class="text-gray-400 text-sm md:text-base w-48">プロンプト設計・AI活用の教育コンテンツ</p>
+              <a href="https://note.com/nekoojisan37/n/n64bd493a5dcb" target="_blank" class="text-accent font-grotesk font-bold text-sm hover:underline">READ ON NOTE →</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Service 04 -->
+        <div class="fade-in service-row group border-t border-gray-800 border-b py-12 hover:bg-[#151515] transition-colors duration-300 relative overflow-hidden interactive cursor-pointer">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center px-4 md:px-8">
+            <div class="flex items-baseline mb-4 md:mb-0">
+              <span class="text-accent font-grotesk text-xl font-bold mr-8">04</span>
+              <h3 class="text-2xl md:text-4xl font-bold text-white group-hover:text-accent transition-colors">Video Production</h3>
+            </div>
+            <div class="flex flex-col md:flex-row items-start md:items-center gap-8 md:gap-16 w-full md:w-auto">
+              <p class="text-gray-400 text-sm md:text-base w-48">プロモーション・教育動画の企画制作</p>
+              <a href="#contact" class="text-accent font-grotesk font-bold text-sm hover:underline">CONTACT →</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- About Section -->
+  <section id="about" class="py-24 bg-primary overflow-hidden">
+    <div class="container mx-auto px-6">
+      <div class="flex flex-col lg:flex-row items-center gap-16">
+        <!-- Image -->
+        <div class="w-full lg:w-1/2 fade-in">
+          <div class="relative group">
+            <div class="absolute -inset-4 bg-accent rounded-full opacity-20 blur-xl group-hover:opacity-40 transition-opacity duration-500"></div>
+            <div class="relative rounded-2xl overflow-hidden border border-gray-800 bg-gradient-to-br from-accent/10 to-purple-600/10">
+              <div class="aspect-square flex items-center justify-center">
+                <span class="text-[200px]">🐱</span>
+              </div>
+              <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+              <div class="absolute bottom-6 left-6">
+                <p class="text-accent text-sm font-bold tracking-widest mb-1">CREATOR / DEVELOPER</p>
+                <p class="text-white text-xl font-bold">Based in Tokyo</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Text -->
+        <div class="w-full lg:w-1/2 fade-in" style="transition-delay: 0.2s;">
+          <h2 class="text-4xl md:text-5xl font-bold text-white mb-8 font-grotesk">
+            WHO I AM
+          </h2>
+          <p class="text-gray-300 text-lg leading-relaxed mb-6">
+            技術は手段。目的は、まだ誰も見たことのない「何か」を作ること。
+          </p>
+          <p class="text-gray-400 leading-relaxed mb-8">
+            AIコーディング、ジェネラティブアート、インタラクティブ体験。<br/>
+            これらを「道具」として、人の感情を動かす作品を作っています。<br/><br/>
+            ゲーム、映像、ツール、そして名前のつかないもの。<br/>
+            「これは何のジャンル？」と聞かれたら、「まだない」と答えたい。
+          </p>
+
+          <!-- Social Links -->
+          <div class="flex gap-4">
+            <a href="https://www.youtube.com/@nekoojisan37" target="_blank" class="p-3 border border-gray-700 rounded-full text-white hover:border-accent hover:text-accent transition-all interactive" aria-label="YouTube">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+              </svg>
+            </a>
+            <a href="https://x.com/nekoronomikon" target="_blank" class="p-3 border border-gray-700 rounded-full text-white hover:border-accent hover:text-accent transition-all interactive" aria-label="X">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+              </svg>
+            </a>
+            <a href="https://www.threads.net/@nekoojisan37" target="_blank" class="p-3 border border-gray-700 rounded-full text-white hover:border-accent hover:text-accent transition-all interactive" aria-label="Threads">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.29 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164 1.43 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.801-1.063-.689-1.685-1.74-1.752-2.96-.065-1.182.408-2.256 1.332-3.023.869-.722 2.053-1.086 3.455-1.086h.003c.584.003 1.143.058 1.668.165.11-.68.183-1.363.183-1.955 0-.522-.048-1.125-.16-1.681l2.002-.399c.15.749.224 1.53.224 2.323 0 .794-.096 1.665-.28 2.592 1.2.5 2.199 1.253 2.877 2.27.847 1.268 1.282 2.848 1.178 4.297-.152 2.122-1.205 3.996-2.962 5.272-1.56 1.132-3.538 1.755-5.877 1.852h-.274z"/>
+              </svg>
+            </a>
+            <a href="https://note.com/nekoojisan37" target="_blank" class="p-3 border border-gray-700 rounded-full text-white hover:border-accent hover:text-accent transition-all interactive" aria-label="NOTE">
+              <span class="font-grotesk text-xs font-bold">NOTE</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact / Footer -->
+  <footer id="contact" class="bg-dark text-white pt-24 pb-12 relative overflow-hidden">
+    <!-- Background Glow -->
+    <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-accent rounded-full mix-blend-overlay filter blur-[150px] opacity-10 pointer-events-none"></div>
+
+    <div class="container mx-auto px-6 relative z-10">
+      <div class="max-w-4xl">
+        <div class="fade-in">
+          <p class="text-accent font-bold tracking-widest mb-6">CONTACT</p>
+          <h2 class="text-5xl md:text-8xl font-grotesk font-bold leading-none mb-12">
+            LET'S CREATE<br />
+            <span class="text-gray-700 hover:text-white transition-colors duration-500 cursor-pointer interactive">SOMETHING NEW.</span>
           </h2>
 
-          <div class="text-mist space-y-4 max-w-md">
-            <p>AIコーディング、ジェネラティブアート、インタラクティブ体験。</p>
-            <p>これらを「道具」として、人の感情を動かす作品を作っています。</p>
-            <p>ゲーム、映像、ツール、そして名前のつかないもの。</p>
-            <p>「これは何のジャンル？」と聞かれたら、<br>「まだない」と答えたい。</p>
-          </div>
-        </div>
-
-        <!-- Right: Skills Orbit -->
-        <div class="relative h-80 md:h-96 flex items-center justify-center reveal">
-          <div class="absolute w-64 h-64 md:w-72 md:h-72 border border-border-dark rounded-full opacity-30"></div>
-          <div class="absolute w-44 h-44 md:w-52 md:h-52 border border-border-dark rounded-full opacity-20"></div>
-
-          <div class="z-10 w-16 h-16 bg-deep-space rounded-full flex items-center justify-center border border-neural pulse">
-            <span class="font-mono text-[10px] text-neural">CREATE</span>
+          <div class="flex flex-col sm:flex-row gap-4">
+            <a href="mailto:mp.store.contact.information@gmail.com" class="inline-flex items-center justify-center gap-4 px-10 py-6 bg-accent text-black font-bold text-lg md:text-xl rounded-full hover:bg-white hover:scale-105 transition-all duration-300 interactive group">
+              <span>Start a Project</span>
+              <svg class="w-6 h-6 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+              </svg>
+            </a>
+            <a href="https://lin.ee/ZEFpQNd" target="_blank" class="inline-flex items-center justify-center gap-4 px-10 py-6 border-2 border-accent text-accent font-bold text-lg md:text-xl rounded-full hover:bg-accent hover:text-black transition-all duration-300 interactive">
+              <span>Chat on LINE</span>
+            </a>
           </div>
 
-          <div class="orbit-item" style="--radius: 100px; --duration: 25s; --delay: 0s;">
-            <div class="bg-deep-space px-3 py-1.5 rounded border border-synapse">
-              <span class="font-mono text-[10px] text-synapse whitespace-nowrap">AI Generation</span>
-            </div>
-          </div>
-
-          <div class="orbit-item" style="--radius: 100px; --duration: 25s; --delay: -5s;">
-            <div class="bg-deep-space px-3 py-1.5 rounded border border-neural">
-              <span class="font-mono text-[10px] text-neural whitespace-nowrap">Vibe Coding</span>
-            </div>
-          </div>
-
-          <div class="orbit-item" style="--radius: 100px; --duration: 25s; --delay: -10s;">
-            <div class="bg-deep-space px-3 py-1.5 rounded border border-data-cyan">
-              <span class="font-mono text-[10px] text-data-cyan whitespace-nowrap">Game Dev</span>
-            </div>
-          </div>
-
-          <div class="orbit-item" style="--radius: 100px; --duration: 25s; --delay: -15s;">
-            <div class="bg-deep-space px-3 py-1.5 rounded border border-terminal-green">
-              <span class="font-mono text-[10px] text-terminal-green whitespace-nowrap">Video</span>
-            </div>
-          </div>
-
-          <div class="orbit-item" style="--radius: 100px; --duration: 25s; --delay: -20s;">
-            <div class="bg-deep-space px-3 py-1.5 rounded border border-mist">
-              <span class="font-mono text-[10px] text-mist whitespace-nowrap">Prompt Eng.</span>
-            </div>
+          <!-- Availability -->
+          <div class="mt-12 flex items-center gap-3">
+            <span class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
+            <span class="text-gray-400 text-sm font-grotesk">AVAILABLE FOR PROJECTS — Response: ~24h</span>
           </div>
         </div>
       </div>
-    </div>
-  </section>
 
-  <!-- Section 5: Stats -->
-  <section class="py-24 bg-void border-y border-border-dark">
-    <div class="max-w-6xl mx-auto px-6 md:px-12">
-      <div class="grid grid-cols-3 gap-8 text-center">
-        <div class="reveal">
-          <div class="font-display font-medium text-signal counter" data-target="50" style="font-size: clamp(36px, 8vw, 72px);">0</div>
-          <div class="font-mono text-[10px] text-mist tracking-widest mt-2">PROJECTS</div>
+      <!-- Footer Bottom -->
+      <div class="flex flex-col md:flex-row justify-between items-end mt-32 border-t border-gray-800 pt-12">
+        <div class="mb-8 md:mb-0">
+          <h3 class="text-2xl font-bold font-grotesk mb-2">nekoronomikon<span class="text-accent">.</span></h3>
+          <p class="text-gray-500 text-sm">© 2024 All Rights Reserved.</p>
         </div>
 
-        <div class="reveal border-x border-border-dark">
-          <div class="font-display font-medium text-signal counter" data-target="10" style="font-size: clamp(36px, 8vw, 72px);">0</div>
-          <div class="font-mono text-[10px] text-mist tracking-widest mt-2">K+ VIEWS</div>
-        </div>
-
-        <div class="reveal">
-          <div class="font-display font-medium text-signal counter" data-target="3" style="font-size: clamp(36px, 8vw, 72px);">0</div>
-          <div class="font-mono text-[10px] text-mist tracking-widest mt-2">PLATFORMS</div>
+        <div class="flex gap-8 text-sm text-gray-400 font-grotesk">
+          <a href="https://www.youtube.com/@nekoojisan37" target="_blank" class="hover:text-accent transition-colors interactive">YouTube</a>
+          <a href="https://x.com/nekoronomikon" target="_blank" class="hover:text-accent transition-colors interactive">X</a>
+          <a href="https://www.threads.net/@nekoojisan37" target="_blank" class="hover:text-accent transition-colors interactive">Threads</a>
+          <a href="https://note.com/nekoojisan37" target="_blank" class="hover:text-accent transition-colors interactive">NOTE</a>
         </div>
       </div>
-
-      <!-- Platform Links -->
-      <div class="flex justify-center gap-8 mt-16 reveal">
-        <a href="https://www.youtube.com/@nekoojisan37" target="_blank" class="text-mist hover:text-red-500 transition-colors" data-cursor="hover" aria-label="YouTube">
-          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-          </svg>
-        </a>
-        <a href="https://x.com/nekoronomikon" target="_blank" class="text-mist hover:text-signal transition-colors" data-cursor="hover" aria-label="X">
-          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-          </svg>
-        </a>
-        <a href="https://www.threads.net/@nekoojisan37" target="_blank" class="text-mist hover:text-signal transition-colors" data-cursor="hover" aria-label="Threads">
-          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.29 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164 1.43 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.801-1.063-.689-1.685-1.74-1.752-2.96-.065-1.182.408-2.256 1.332-3.023.869-.722 2.053-1.086 3.455-1.086h.003c.584.003 1.143.058 1.668.165.11-.68.183-1.363.183-1.955 0-.522-.048-1.125-.16-1.681l2.002-.399c.15.749.224 1.53.224 2.323 0 .794-.096 1.665-.28 2.592 1.2.5 2.199 1.253 2.877 2.27.847 1.268 1.282 2.848 1.178 4.297-.152 2.122-1.205 3.996-2.962 5.272-1.56 1.132-3.538 1.755-5.877 1.852h-.274z"/>
-          </svg>
-        </a>
-        <a href="https://note.com/nekoojisan37" target="_blank" class="text-mist hover:text-terminal-green transition-colors" data-cursor="hover" aria-label="NOTE">
-          <span class="font-mono text-xs font-medium">NOTE</span>
-        </a>
-      </div>
-    </div>
-  </section>
-
-  <!-- Section 6: Contact -->
-  <section id="contact" class="py-32 bg-obsidian">
-    <div class="max-w-3xl mx-auto px-6 md:px-12 text-center">
-      <h2 class="font-display font-medium text-signal leading-tight mb-8 reveal" style="font-size: clamp(32px, 6vw, 48px); letter-spacing: -0.02em;">
-        LET'S CREATE<br>SOMETHING NEW.
-      </h2>
-
-      <p class="text-mist mb-12 max-w-md mx-auto reveal">
-        新しいプロジェクト、コラボレーション、<br>
-        または「これ作れる？」というご相談。<br>
-        どんなことでもお気軽に。
-      </p>
-
-      <div class="flex flex-col sm:flex-row gap-4 justify-center mb-12 reveal">
-        <a href="mailto:mp.store.contact.information@gmail.com" class="btn-gradient px-8 py-4 rounded font-display text-sm font-medium text-signal tracking-wide" data-cursor="hover">
-          SEND MESSAGE →
-        </a>
-        <a href="https://lin.ee/ZEFpQNd" target="_blank" class="px-8 py-4 rounded border border-neural text-neural font-display text-sm font-medium tracking-wide hover:bg-neural/10 transition-colors" data-cursor="hover">
-          CHAT ON LINE →
-        </a>
-      </div>
-
-      <div class="reveal">
-        <div class="flex items-center justify-center gap-2 mb-2">
-          <span class="w-2 h-2 rounded-full bg-available-green pulse"></span>
-          <span class="font-mono text-xs text-available-green">AVAILABLE FOR PROJECTS</span>
-        </div>
-        <p class="font-mono text-xs text-mist">Typical response: ~24h</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- Footer -->
-  <footer class="py-12 bg-void border-t border-border-dark">
-    <div class="max-w-6xl mx-auto px-6 md:px-12 text-center">
-      <p class="font-display text-sm text-signal mb-2">nekoronomikon-LABO</p>
-      <p class="font-mono text-xs text-mist">© 2024 — Built with AI + Passion</p>
     </div>
   </footer>
 
   <script>
-    // ========== PRELOADER ==========
-    const preloader = document.getElementById('preloader');
-    const progressEl = document.getElementById('loader-progress');
-    let progress = 0;
-
-    const progressInterval = setInterval(() => {
-      progress += Math.random() * 15;
-      if (progress >= 100) {
-        progress = 100;
-        clearInterval(progressInterval);
-        setTimeout(() => {
-          preloader.classList.add('hidden');
-          initAnimations();
-        }, 500);
-      }
-      const filled = Math.floor(progress / 5);
-      const empty = 20 - filled;
-      progressEl.textContent = '█'.repeat(filled) + '░'.repeat(empty) + ` ${Math.floor(progress)}%`;
-    }, 100);
-
     // ========== CUSTOM CURSOR ==========
-    const cursor = document.getElementById('cursor');
-    let cursorX = 0, cursorY = 0;
-    let currentX = 0, currentY = 0;
+    const cursorRing = document.getElementById('cursor-ring');
+    const cursorDot = document.getElementById('cursor-dot');
+    let mouseX = 0, mouseY = 0;
+    let ringX = 0, ringY = 0;
+    let dotX = 0, dotY = 0;
 
     document.addEventListener('mousemove', (e) => {
-      cursorX = e.clientX;
-      cursorY = e.clientY;
+      mouseX = e.clientX;
+      mouseY = e.clientY;
     });
 
     function animateCursor() {
-      currentX += (cursorX - currentX) * 0.15;
-      currentY += (cursorY - currentY) * 0.15;
-      cursor.style.left = currentX - cursor.offsetWidth / 2 + 'px';
-      cursor.style.top = currentY - cursor.offsetHeight / 2 + 'px';
+      // Ring follows with delay
+      ringX += (mouseX - ringX - 24) * 0.15;
+      ringY += (mouseY - ringY - 24) * 0.15;
+      if (cursorRing) {
+        cursorRing.style.transform = `translate3d(${ringX}px, ${ringY}px, 0)`;
+      }
+
+      // Dot follows closely
+      dotX += (mouseX - dotX - 4) * 0.25;
+      dotY += (mouseY - dotY - 4) * 0.25;
+      if (cursorDot) {
+        cursorDot.style.transform = `translate3d(${dotX}px, ${dotY}px, 0)`;
+      }
+
       requestAnimationFrame(animateCursor);
     }
     animateCursor();
 
-    document.querySelectorAll('[data-cursor="hover"]').forEach(el => {
-      el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
-      el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
+    // Hover effect for interactive elements
+    document.querySelectorAll('.interactive').forEach(el => {
+      el.addEventListener('mouseenter', () => cursorRing?.classList.add('hover'));
+      el.addEventListener('mouseleave', () => cursorRing?.classList.remove('hover'));
     });
 
-    // ========== THREE.JS PARTICLE BACKGROUND ==========
-    const canvas = document.getElementById('hero-canvas');
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
-    // Particles
-    const particleCount = window.innerWidth < 768 ? 500 : 1500;
-    const positions = new Float32Array(particleCount * 3);
-    const colors = new Float32Array(particleCount * 3);
-
-    for (let i = 0; i < particleCount; i++) {
-      positions[i * 3] = (Math.random() - 0.5) * 10;
-      positions[i * 3 + 1] = (Math.random() - 0.5) * 10;
-      positions[i * 3 + 2] = (Math.random() - 0.5) * 10;
-
-      const color = Math.random() > 0.5 ? new THREE.Color(0x0066FF) : new THREE.Color(0x8B5CF6);
-      colors[i * 3] = color.r;
-      colors[i * 3 + 1] = color.g;
-      colors[i * 3 + 2] = color.b;
-    }
-
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-    const material = new THREE.PointsMaterial({
-      size: 0.02,
-      vertexColors: true,
-      transparent: true,
-      opacity: 0.8,
-      blending: THREE.AdditiveBlending
-    });
-
-    const particles = new THREE.Points(geometry, material);
-    scene.add(particles);
-
-    // Lines connecting particles
-    const lineGeometry = new THREE.BufferGeometry();
-    const lineMaterial = new THREE.LineBasicMaterial({
-      color: 0x0066FF,
-      transparent: true,
-      opacity: 0.1
-    });
-
-    camera.position.z = 3;
-
-    let mouseX = 0, mouseY = 0;
-    document.addEventListener('mousemove', (e) => {
-      mouseX = (e.clientX / window.innerWidth) * 2 - 1;
-      mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
-    });
-
-    function animateParticles() {
-      requestAnimationFrame(animateParticles);
-
-      particles.rotation.x += 0.0002;
-      particles.rotation.y += 0.0003;
-
-      particles.rotation.x += mouseY * 0.0005;
-      particles.rotation.y += mouseX * 0.0005;
-
-      renderer.render(scene, camera);
-    }
-    animateParticles();
-
-    window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-
-    // ========== GSAP ANIMATIONS ==========
-    function initAnimations() {
-      gsap.registerPlugin(ScrollTrigger);
-
-      // Hero title glitch
-      const glitchElements = document.querySelectorAll('.glitch');
-      glitchElements.forEach((el, i) => {
-        setTimeout(() => {
-          el.classList.add('active');
-          setTimeout(() => el.classList.remove('active'), 200);
-        }, i * 150);
-      });
-
-      // Hero subtitle fade in
-      gsap.to('#hero-subtitle', {
-        opacity: 1,
-        duration: 1,
-        delay: 0.8
-      });
-
-      // Reveal animations
-      gsap.utils.toArray('.reveal').forEach(el => {
-        gsap.to(el, {
-          scrollTrigger: {
-            trigger: el,
-            start: 'top 85%',
-            toggleActions: 'play none none none'
-          },
-          opacity: 1,
-          y: 0,
-          duration: 0.8,
-          ease: 'power3.out'
-        });
-      });
-
-      // Slide in animations
-      gsap.utils.toArray('.slide-in').forEach(el => {
-        gsap.to(el, {
-          scrollTrigger: {
-            trigger: el,
-            start: 'top 85%',
-            toggleActions: 'play none none none'
-          },
-          opacity: 1,
-          x: 0,
-          duration: 0.8,
-          ease: 'power3.out'
-        });
-      });
-
-      // Terminal lines animation
-      const terminalLines = document.querySelectorAll('.terminal-line');
-      ScrollTrigger.create({
-        trigger: '#terminal-content',
-        start: 'top 80%',
-        onEnter: () => {
-          terminalLines.forEach((line, i) => {
-            setTimeout(() => line.classList.add('visible'), i * 150);
-          });
-        }
-      });
-
-      // Counter animation
-      document.querySelectorAll('.counter').forEach(counter => {
-        const target = parseInt(counter.dataset.target);
-        ScrollTrigger.create({
-          trigger: counter,
-          start: 'top 85%',
-          onEnter: () => {
-            gsap.to(counter, {
-              innerHTML: target,
-              duration: 2,
-              ease: 'power2.out',
-              snap: { innerHTML: 1 },
-              onUpdate: function() {
-                counter.innerHTML = Math.floor(this.targets()[0].innerHTML);
-              }
-            });
-          }
-        });
-      });
-    }
-
-    // ========== MOBILE NAVIGATION ==========
-    const mobileNavBtn = document.getElementById('mobile-nav-btn');
-    const mobileNav = document.getElementById('mobile-nav');
-    let navOpen = false;
-
-    mobileNavBtn.addEventListener('click', () => {
-      navOpen = !navOpen;
-      if (navOpen) {
-        mobileNav.classList.remove('opacity-0', 'pointer-events-none');
-        mobileNav.classList.add('opacity-100');
+    // ========== NAVBAR SCROLL EFFECT ==========
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 50) {
+        navbar.classList.add('bg-primary/90', 'backdrop-blur-md', 'py-4');
+        navbar.classList.remove('bg-transparent', 'py-8');
       } else {
-        mobileNav.classList.add('opacity-0', 'pointer-events-none');
-        mobileNav.classList.remove('opacity-100');
+        navbar.classList.remove('bg-primary/90', 'backdrop-blur-md', 'py-4');
+        navbar.classList.add('bg-transparent', 'py-8');
       }
     });
 
-    mobileNav.querySelectorAll('a').forEach(link => {
+    // ========== MOBILE MENU ==========
+    const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    const menuIcon = document.getElementById('menu-icon');
+    let menuOpen = false;
+
+    mobileMenuBtn.addEventListener('click', () => {
+      menuOpen = !menuOpen;
+      if (menuOpen) {
+        mobileMenu.classList.remove('opacity-0', 'pointer-events-none');
+        mobileMenu.classList.add('opacity-100');
+        menuIcon.setAttribute('d', 'M6 18L18 6M6 6l12 12');
+      } else {
+        mobileMenu.classList.add('opacity-0', 'pointer-events-none');
+        mobileMenu.classList.remove('opacity-100');
+        menuIcon.setAttribute('d', 'M4 6h16M4 12h16M4 18h16');
+      }
+    });
+
+    document.querySelectorAll('.mobile-link').forEach(link => {
       link.addEventListener('click', () => {
-        navOpen = false;
-        mobileNav.classList.add('opacity-0', 'pointer-events-none');
-        mobileNav.classList.remove('opacity-100');
+        menuOpen = false;
+        mobileMenu.classList.add('opacity-0', 'pointer-events-none');
+        mobileMenu.classList.remove('opacity-100');
+        menuIcon.setAttribute('d', 'M4 6h16M4 12h16M4 18h16');
       });
     });
+
+    // ========== SCROLL ANIMATIONS ==========
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, observerOptions);
+
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
 
     // ========== SMOOTH SCROLL ==========
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
