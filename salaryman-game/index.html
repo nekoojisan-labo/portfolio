@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>限界サラリーマン：駅の死闘 3D</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Zen+Maru+Gothic:wght@400;700&family=Noto+Sans+JP:wght@400;700;900&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            background-color: #0a0a0f;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 100%);
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            outline: none;
+        }
+
+        /* HUD Layer */
+        .ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 15px;
+        }
+
+        .top-hud {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .urgency-label {
+            font-family: 'Noto Sans JP', sans-serif;
+            font-weight: 900;
+            font-size: 12px;
+            color: #ff4757;
+            letter-spacing: 3px;
+            text-shadow: 0 0 10px rgba(255, 71, 87, 0.5);
+        }
+
+        .bladder-bar-container {
+            width: 100%;
+            max-width: 350px;
+            height: 28px;
+            background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1a 100%);
+            border-radius: 4px;
+            border: 2px solid #2d2d4a;
+            overflow: hidden;
+            position: relative;
+            box-shadow:
+                inset 0 2px 4px rgba(0,0,0,0.5),
+                0 0 20px rgba(255, 71, 87, 0.2);
+        }
+
+        .bladder-bar {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg,
+                #00ff88 0%,
+                #ffdd00 50%,
+                #ff4757 100%);
+            transform-origin: left;
+            transition: width 0.15s ease-out;
+            position: relative;
+        }
+
+        .bladder-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50%;
+            background: linear-gradient(180deg,
+                rgba(255,255,255,0.3) 0%,
+                transparent 100%);
+        }
+
+        .bladder-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Noto Sans JP', sans-serif;
+            font-weight: 900;
+            font-size: 13px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            letter-spacing: 1px;
+        }
+
+        .bottom-hud {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .distance-display {
+            text-align: right;
+        }
+
+        .distance-label {
+            font-family: 'Noto Sans JP', sans-serif;
+            font-size: 14px;
+            color: #7f8c8d;
+            letter-spacing: 2px;
+        }
+
+        .distance-value {
+            font-family: 'Mochiy Pop One', sans-serif;
+            font-size: 48px;
+            color: #ffd700;
+            text-shadow:
+                0 0 20px rgba(255, 215, 0, 0.5),
+                2px 2px 0 #b8860b;
+            line-height: 1;
+        }
+
+        .distance-unit {
+            font-size: 20px;
+            color: #bdc3c7;
+            margin-left: 5px;
+        }
+
+        /* Overlays */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            pointer-events: auto;
+            z-index: 100;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Start Screen */
+        #startScreen {
+            background: radial-gradient(ellipse at center,
+                rgba(20, 20, 40, 0.95) 0%,
+                rgba(10, 10, 15, 0.98) 100%);
+            backdrop-filter: blur(8px);
+        }
+
+        .title-container {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .main-title {
+            font-family: 'Noto Sans JP', sans-serif;
+            font-weight: 900;
+            font-size: clamp(28px, 8vw, 48px);
+            color: #ffd700;
+            text-shadow:
+                0 0 30px rgba(255, 215, 0, 0.6),
+                0 4px 0 #b8860b,
+                0 8px 0 #8b6914;
+            letter-spacing: 8px;
+            margin-bottom: 15px;
+            animation: titlePulse 2s ease-in-out infinite;
+        }
+
+        @keyframes titlePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .sub-title {
+            font-family: 'Mochiy Pop One', sans-serif;
+            font-size: clamp(16px, 4vw, 24px);
+            color: #e74c3c;
+            text-shadow: 0 0 15px rgba(231, 76, 60, 0.5);
+            letter-spacing: 4px;
+        }
+
+        .story-box {
+            background: linear-gradient(135deg,
+                rgba(45, 45, 75, 0.8) 0%,
+                rgba(25, 25, 45, 0.9) 100%);
+            border: 2px solid #4a4a7a;
+            border-radius: 12px;
+            padding: 25px;
+            max-width: 380px;
+            margin: 20px;
+            box-shadow:
+                0 10px 40px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .story-text {
+            font-size: 16px;
+            line-height: 1.8;
+            color: #ecf0f1;
+            text-align: center;
+        }
+
+        .mission-text {
+            font-family: 'Noto Sans JP', sans-serif;
+            font-weight: 900;
+            font-size: 14px;
+            color: #ff4757;
+            letter-spacing: 2px;
+            margin-top: 15px;
+        }
+
+        .btn {
+            font-family: 'Mochiy Pop One', sans-serif;
+            background: linear-gradient(180deg, #e74c3c 0%, #c0392b 100%);
+            color: white;
+            padding: 18px 60px;
+            font-size: 22px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            margin-top: 25px;
+            box-shadow:
+                0 6px 0 #922b21,
+                0 10px 20px rgba(0, 0, 0, 0.4);
+            transition: all 0.1s;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        .btn:hover {
+            background: linear-gradient(180deg, #ff6b6b 0%, #e74c3c 100%);
+        }
+
+        .btn:active {
+            transform: translateY(4px);
+            box-shadow:
+                0 2px 0 #922b21,
+                0 4px 10px rgba(0, 0, 0, 0.4);
+        }
+
+        .controls-hint {
+            margin-top: 25px;
+            font-size: 13px;
+            color: #7f8c8d;
+            letter-spacing: 1px;
+        }
+
+        /* Game Over Screen */
+        #gameOverScreen {
+            background: radial-gradient(ellipse at center,
+                rgba(80, 20, 20, 0.95) 0%,
+                rgba(20, 5, 5, 0.98) 100%);
+            backdrop-filter: blur(8px);
+        }
+
+        .gameover-title {
+            font-family: 'Noto Sans JP', sans-serif;
+            font-weight: 900;
+            font-size: clamp(36px, 12vw, 72px);
+            color: #ff0000;
+            text-shadow:
+                0 0 50px rgba(255, 0, 0, 0.8),
+                0 4px 0 #8b0000;
+            letter-spacing: 8px;
+            animation: glitch 0.3s infinite;
+        }
+
+        @keyframes glitch {
+            0%, 100% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(2px, -2px); }
+            60% { transform: translate(-2px, -2px); }
+            80% { transform: translate(2px, 2px); }
+        }
+
+        .gameover-subtitle {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            font-size: 24px;
+            color: #bdc3c7;
+            margin-top: 20px;
+            letter-spacing: 4px;
+        }
+
+        .result-box {
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid #ff4757;
+            border-radius: 8px;
+            padding: 20px 40px;
+            margin: 30px 0;
+        }
+
+        .result-text {
+            font-family: 'Noto Sans JP', sans-serif;
+            font-size: 18px;
+            color: #ffd700;
+        }
+
+        /* Win Screen */
+        #winScreen {
+            background: radial-gradient(ellipse at center,
+                rgba(20, 60, 80, 0.95) 0%,
+                rgba(10, 30, 40, 0.98) 100%);
+            backdrop-filter: blur(8px);
+        }
+
+        .win-title {
+            font-family: 'Noto Sans JP', sans-serif;
+            font-weight: 900;
+            font-size: clamp(32px, 10vw, 60px);
+            color: #00d4ff;
+            text-shadow:
+                0 0 40px rgba(0, 212, 255, 0.8),
+                0 4px 0 #0099cc;
+            letter-spacing: 6px;
+            animation: winPulse 1s ease-in-out infinite;
+        }
+
+        @keyframes winPulse {
+            0%, 100% {
+                transform: scale(1);
+                text-shadow: 0 0 40px rgba(0, 212, 255, 0.8), 0 4px 0 #0099cc;
+            }
+            50% {
+                transform: scale(1.05);
+                text-shadow: 0 0 60px rgba(0, 212, 255, 1), 0 4px 0 #0099cc;
+            }
+        }
+
+        .win-subtitle {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            font-size: 22px;
+            color: #ecf0f1;
+            margin-top: 15px;
+        }
+
+        .score-label {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-top: 30px;
+            letter-spacing: 2px;
+        }
+
+        .score-value {
+            font-family: 'Mochiy Pop One', sans-serif;
+            font-size: 72px;
+            color: #ffd700;
+            text-shadow:
+                0 0 30px rgba(255, 215, 0, 0.6),
+                2px 2px 0 #b8860b;
+        }
+
+        /* Damage Effect */
+        .damage-effect {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle,
+                transparent 30%,
+                rgba(255, 0, 0, 0.6) 100%);
+            opacity: 0;
+            transition: opacity 0.1s;
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        /* Speed Lines Effect */
+        .speed-lines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 40;
+            opacity: 0.3;
+            background: repeating-linear-gradient(
+                90deg,
+                transparent,
+                transparent 48%,
+                rgba(255, 255, 255, 0.1) 49%,
+                rgba(255, 255, 255, 0.1) 51%,
+                transparent 52%
+            );
+            animation: speedLines 0.1s linear infinite;
+        }
+
+        @keyframes speedLines {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(10px); }
+        }
+
+        /* Mobile Controls */
+        .mobile-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 50%;
+            pointer-events: auto;
+            display: flex;
+            z-index: 30;
+        }
+
+        .touch-area {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .touch-area:active {
+            opacity: 0.3;
+            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
+        }
+
+        .touch-indicator {
+            font-size: 48px;
+            color: rgba(255, 255, 255, 0.5);
+            pointer-events: none;
+        }
+
+        /* Warning Animation */
+        .warning-flash {
+            animation: warningFlash 0.5s ease-in-out infinite;
+        }
+
+        @keyframes warningFlash {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-2px, 0, 0); }
+            20%, 80% { transform: translate3d(4px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-8px, 0, 0); }
+            40%, 60% { transform: translate3d(8px, 0, 0); }
+        }
+
+        /* Critical state */
+        .critical .bladder-bar-container {
+            animation: criticalPulse 0.3s ease-in-out infinite;
+            border-color: #ff0000;
+        }
+
+        @keyframes criticalPulse {
+            0%, 100% { box-shadow: inset 0 2px 4px rgba(0,0,0,0.5), 0 0 20px rgba(255, 0, 0, 0.4); }
+            50% { box-shadow: inset 0 2px 4px rgba(0,0,0,0.5), 0 0 40px rgba(255, 0, 0, 0.8); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <div class="speed-lines" id="speedLines"></div>
+        <div id="damageOverlay" class="damage-effect"></div>
+
+        <!-- HUD -->
+        <div class="ui-layer" id="hudLayer">
+            <div class="top-hud">
+                <span class="urgency-label">URGENCY LEVEL</span>
+                <div class="bladder-bar-container">
+                    <div id="bladderBar" class="bladder-bar"></div>
+                    <span id="bladderText" class="bladder-text">100%</span>
+                </div>
+            </div>
+
+            <div class="bottom-hud">
+                <div></div>
+                <div class="distance-display">
+                    <div class="distance-label">GOAL</div>
+                    <span id="distanceDisplay" class="distance-value">200</span>
+                    <span class="distance-unit">m</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Start Screen -->
+        <div id="startScreen" class="overlay">
+            <div class="title-container">
+                <h1 class="main-title">尊厳を、守り抜け</h1>
+                <p class="sub-title">限界サラリーマン</p>
+            </div>
+
+            <div class="story-box">
+                <p class="story-text">
+                    終電間際の駅構内。<br>
+                    トイレまであと200m。<br>
+                    だが行く手を阻む<br>
+                    通勤ラッシュの群衆...
+                </p>
+                <p class="mission-text">— MISSION —<br>障害物を避けてゴールせよ</p>
+            </div>
+
+            <button class="btn" onclick="startGame()">START</button>
+            <p class="controls-hint">← → キーまたは画面タップで移動</p>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="gameOverScreen" class="overlay hidden">
+            <h2 class="gameover-title">尊厳喪失</h2>
+            <p class="gameover-subtitle">DIGNITY LOST</p>
+            <div class="result-box">
+                <p id="resultDistance" class="result-text"></p>
+            </div>
+            <button class="btn" onclick="resetGame()">RETRY</button>
+        </div>
+
+        <!-- Win Screen -->
+        <div id="winScreen" class="overlay hidden">
+            <h2 class="win-title">尊厳死守</h2>
+            <p class="win-subtitle">MISSION COMPLETE</p>
+            <p class="score-label">REMAINING LIMIT</p>
+            <p id="scoreText" class="score-value">100%</p>
+            <button class="btn" onclick="resetGame()">NEXT DAY</button>
+        </div>
+
+        <!-- Mobile Controls -->
+        <div class="mobile-controls" id="mobileControls">
+            <div class="touch-area" id="touchLeft">
+                <span class="touch-indicator">◀</span>
+            </div>
+            <div class="touch-area" id="touchRight">
+                <span class="touch-indicator">▶</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========================================
+        // THREE.JS SETUP
+        // ========================================
+        const container = document.getElementById('game-container');
+        let scene, camera, renderer, clock;
+        let player, playerParts = {};
+        let floor, walls = [];
+        let enemies = [];
+        let particles = [];
+        let toilet;
+        let stationObjects = [];
+
+        // Game Constants
+        const LANE_WIDTH = 2.8;
+        const LANE_COUNT = 5;
+        const TOTAL_WIDTH = LANE_WIDTH * LANE_COUNT;
+        const PLAYER_SPEED = 0.35;
+        const LATERAL_SPEED = 0.5;
+        const TOTAL_DISTANCE = 200;
+
+        // Character Patterns
+        const MOB_TYPES = [
+            { name: 'SALARYMAN', color: 0x2c3e50, headColor: 0xffe0b2, speed: 0.08, scale: 1.0, hasCase: true },
+            { name: 'OL', color: 0x8e44ad, headColor: 0xffe0b2, speed: 0.1, scale: 0.9, hasCase: false },
+            { name: 'STUDENT', color: 0x27ae60, headColor: 0xffe0b2, speed: 0.15, scale: 0.85, hasCase: true },
+            { name: 'OBASAN', color: 0xe74c3c, headColor: 0xffe0b2, speed: 0.03, scale: 0.95, hasCase: false },
+            { name: 'PHONE_ZOMBIE', color: 0xf39c12, headColor: 0xffe0b2, speed: 0.02, scale: 1.0, hasCase: false },
+            { name: 'LUGGAGE', color: 0x34495e, headColor: null, speed: 0, scale: 0.8, hasCase: false }
+        ];
+
+        // Game State
+        let state = {
+            status: 'START',
+            bladder: 100,
+            distanceLeft: TOTAL_DISTANCE,
+            currentLane: 2,
+            targetLaneX: 0,
+            playerX: 0,
+            frameCount: 0,
+            shakeIntensity: 0,
+            finalApproach: false,
+            speedMultiplier: 1.0,
+            runCycle: 0,
+            invincible: false
+        };
+
+        function initThree() {
+            clock = new THREE.Clock();
+
+            // Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a0a0f);
+            scene.fog = new THREE.FogExp2(0x0a0a0f, 0.025);
+
+            // Camera (TPS view)
+            camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 100);
+            camera.position.set(0, 4.5, 7);
+            camera.lookAt(0, 1, -5);
+
+            // Renderer
+            const canvas = document.getElementById('gameCanvas');
+            renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+            // Lights
+            const ambientLight = new THREE.AmbientLight(0x404060, 0.4);
+            scene.add(ambientLight);
+
+            // Main directional light
+            const dirLight = new THREE.DirectionalLight(0xfff5e6, 0.6);
+            dirLight.position.set(5, 15, 5);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 2048;
+            dirLight.shadow.mapSize.height = 2048;
+            dirLight.shadow.camera.near = 0.5;
+            dirLight.shadow.camera.far = 50;
+            scene.add(dirLight);
+
+            // Station overhead lights
+            for (let i = 0; i < 15; i++) {
+                const light = new THREE.PointLight(0xffffcc, 0.4, 15);
+                light.position.set(0, 6, -i * 15);
+                scene.add(light);
+            }
+
+            // Create scene elements
+            createFloor();
+            createWalls();
+            createPlayer();
+            createToilet();
+            toilet.visible = false;
+
+            // Event Listeners
+            window.addEventListener('resize', onWindowResize, false);
+            setupInputs();
+
+            animate();
+        }
+
+        function createFloor() {
+            // Main floor
+            const floorGeo = new THREE.PlaneGeometry(30, 300);
+            const floorMat = new THREE.MeshStandardMaterial({
+                color: 0x1a1a2e,
+                roughness: 0.9,
+                metalness: 0.1
+            });
+            floor = new THREE.Mesh(floorGeo, floorMat);
+            floor.rotation.x = -Math.PI / 2;
+            floor.position.z = -100;
+            floor.receiveShadow = true;
+            scene.add(floor);
+
+            // Lane markers
+            for (let i = -2; i <= 2; i++) {
+                const lineGeo = new THREE.PlaneGeometry(0.1, 300);
+                const lineMat = new THREE.MeshBasicMaterial({
+                    color: 0x3a3a5e,
+                    transparent: true,
+                    opacity: 0.5
+                });
+                const line = new THREE.Mesh(lineGeo, lineMat);
+                line.rotation.x = -Math.PI / 2;
+                line.position.set(i * LANE_WIDTH + LANE_WIDTH / 2, 0.01, -100);
+                scene.add(line);
+            }
+
+            // Tile pattern
+            for (let z = 0; z < 50; z++) {
+                for (let x = -2; x <= 2; x++) {
+                    if ((x + z) % 2 === 0) {
+                        const tileGeo = new THREE.PlaneGeometry(LANE_WIDTH - 0.1, 5.9);
+                        const tileMat = new THREE.MeshStandardMaterial({
+                            color: 0x252540,
+                            roughness: 0.8
+                        });
+                        const tile = new THREE.Mesh(tileGeo, tileMat);
+                        tile.rotation.x = -Math.PI / 2;
+                        tile.position.set(x * LANE_WIDTH, 0.005, -z * 6);
+                        scene.add(tile);
+                    }
+                }
+            }
+        }
+
+        function createWalls() {
+            // Left wall
+            const wallGeo = new THREE.BoxGeometry(2, 8, 300);
+            const wallMat = new THREE.MeshStandardMaterial({ color: 0x2d2d4a });
+
+            const leftWall = new THREE.Mesh(wallGeo, wallMat);
+            leftWall.position.set(-LANE_WIDTH * 3, 4, -100);
+            scene.add(leftWall);
+
+            const rightWall = new THREE.Mesh(wallGeo, wallMat);
+            rightWall.position.set(LANE_WIDTH * 3, 4, -100);
+            scene.add(rightWall);
+
+            // Pillars
+            for (let i = 0; i < 20; i++) {
+                const pillarGeo = new THREE.BoxGeometry(0.8, 8, 0.8);
+                const pillarMat = new THREE.MeshStandardMaterial({ color: 0x4a4a6a });
+
+                const leftPillar = new THREE.Mesh(pillarGeo, pillarMat);
+                leftPillar.position.set(-LANE_WIDTH * 2.3, 4, -i * 15);
+                leftPillar.castShadow = true;
+                scene.add(leftPillar);
+
+                const rightPillar = new THREE.Mesh(pillarGeo, pillarMat);
+                rightPillar.position.set(LANE_WIDTH * 2.3, 4, -i * 15);
+                rightPillar.castShadow = true;
+                scene.add(rightPillar);
+            }
+
+            // Ceiling panels with lights
+            for (let i = 0; i < 20; i++) {
+                const ceilingGeo = new THREE.BoxGeometry(14, 0.3, 4);
+                const ceilingMat = new THREE.MeshStandardMaterial({ color: 0x3a3a5a });
+                const ceiling = new THREE.Mesh(ceilingGeo, ceilingMat);
+                ceiling.position.set(0, 7.5, -i * 15);
+                scene.add(ceiling);
+
+                // Light fixtures
+                const fixtureGeo = new THREE.BoxGeometry(2, 0.2, 0.5);
+                const fixtureMat = new THREE.MeshBasicMaterial({ color: 0xffffee });
+                const fixture = new THREE.Mesh(fixtureGeo, fixtureMat);
+                fixture.position.set(0, 7.3, -i * 15);
+                scene.add(fixture);
+            }
+
+            // Signs
+            createSign(-5, 5, -30, '出口', 0x00aa00);
+            createSign(5, 5, -60, 'トイレ →', 0x0066ff);
+            createSign(-5, 5, -90, '改札', 0xffaa00);
+        }
+
+        function createSign(x, y, z, text, color) {
+            const signGeo = new THREE.BoxGeometry(3, 1, 0.1);
+            const signMat = new THREE.MeshStandardMaterial({ color: color });
+            const sign = new THREE.Mesh(signGeo, signMat);
+            sign.position.set(x, y, z);
+            scene.add(sign);
+        }
+
+        function createPlayer() {
+            player = new THREE.Group();
+
+            // Torso (Blue suit)
+            const torsoGeo = new THREE.BoxGeometry(0.7, 0.9, 0.4);
+            const torsoMat = new THREE.MeshStandardMaterial({ color: 0x2c3e50 });
+            const torso = new THREE.Mesh(torsoGeo, torsoMat);
+            torso.position.y = 0.8;
+            torso.castShadow = true;
+            player.add(torso);
+            playerParts.torso = torso;
+
+            // Tie
+            const tieGeo = new THREE.BoxGeometry(0.12, 0.5, 0.05);
+            const tieMat = new THREE.MeshStandardMaterial({ color: 0xe74c3c });
+            const tie = new THREE.Mesh(tieGeo, tieMat);
+            tie.position.set(0, 0.7, 0.21);
+            player.add(tie);
+
+            // Head
+            const headGeo = new THREE.BoxGeometry(0.35, 0.4, 0.35);
+            const headMat = new THREE.MeshStandardMaterial({ color: 0xffe0b2 });
+            const head = new THREE.Mesh(headGeo, headMat);
+            head.position.y = 1.5;
+            head.castShadow = true;
+            player.add(head);
+            playerParts.head = head;
+
+            // Hair
+            const hairGeo = new THREE.BoxGeometry(0.38, 0.15, 0.38);
+            const hairMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a });
+            const hair = new THREE.Mesh(hairGeo, hairMat);
+            hair.position.set(0, 1.75, 0);
+            player.add(hair);
+
+            // Eyes (sweat drop expression)
+            const eyeGeo = new THREE.BoxGeometry(0.05, 0.08, 0.02);
+            const eyeMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+            const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
+            leftEye.position.set(-0.08, 1.52, 0.18);
+            player.add(leftEye);
+            const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
+            rightEye.position.set(0.08, 1.52, 0.18);
+            player.add(rightEye);
+
+            // Sweat drop
+            const sweatGeo = new THREE.BoxGeometry(0.08, 0.12, 0.05);
+            const sweatMat = new THREE.MeshBasicMaterial({ color: 0x00bfff, transparent: true, opacity: 0.8 });
+            const sweat = new THREE.Mesh(sweatGeo, sweatMat);
+            sweat.position.set(0.25, 1.6, 0.1);
+            player.add(sweat);
+            playerParts.sweat = sweat;
+
+            // Arms
+            const armGeo = new THREE.BoxGeometry(0.18, 0.6, 0.18);
+            const armMat = new THREE.MeshStandardMaterial({ color: 0x2c3e50 });
+
+            const leftArmPivot = new THREE.Group();
+            leftArmPivot.position.set(-0.45, 1.1, 0);
+            const leftArm = new THREE.Mesh(armGeo, armMat);
+            leftArm.position.y = -0.3;
+            leftArm.castShadow = true;
+            leftArmPivot.add(leftArm);
+            player.add(leftArmPivot);
+            playerParts.leftArm = leftArmPivot;
+
+            const rightArmPivot = new THREE.Group();
+            rightArmPivot.position.set(0.45, 1.1, 0);
+            const rightArm = new THREE.Mesh(armGeo, armMat);
+            rightArm.position.y = -0.3;
+            rightArm.castShadow = true;
+            rightArmPivot.add(rightArm);
+            player.add(rightArmPivot);
+            playerParts.rightArm = rightArmPivot;
+
+            // Legs
+            const legGeo = new THREE.BoxGeometry(0.2, 0.6, 0.2);
+            const legMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a });
+
+            const leftLegPivot = new THREE.Group();
+            leftLegPivot.position.set(-0.18, 0.35, 0);
+            const leftLeg = new THREE.Mesh(legGeo, legMat);
+            leftLeg.position.y = -0.3;
+            leftLeg.castShadow = true;
+            leftLegPivot.add(leftLeg);
+            player.add(leftLegPivot);
+            playerParts.leftLeg = leftLegPivot;
+
+            const rightLegPivot = new THREE.Group();
+            rightLegPivot.position.set(0.18, 0.35, 0);
+            const rightLeg = new THREE.Mesh(legGeo, legMat);
+            rightLeg.position.y = -0.3;
+            rightLeg.castShadow = true;
+            rightLegPivot.add(rightLeg);
+            player.add(rightLegPivot);
+            playerParts.rightLeg = rightLegPivot;
+
+            // Briefcase
+            const caseGeo = new THREE.BoxGeometry(0.15, 0.4, 0.5);
+            const caseMat = new THREE.MeshStandardMaterial({ color: 0x3d2314 });
+            const briefcase = new THREE.Mesh(caseGeo, caseMat);
+            briefcase.position.set(0.55, 0.6, 0);
+            briefcase.castShadow = true;
+            player.add(briefcase);
+            playerParts.briefcase = briefcase;
+
+            scene.add(player);
+        }
+
+        function createMob(type, zPos, lane) {
+            const mobData = MOB_TYPES[type];
+            const group = new THREE.Group();
+
+            if (mobData.name === 'LUGGAGE') {
+                // Suitcase/bag
+                const bodyGeo = new THREE.BoxGeometry(0.6, 0.5, 0.8);
+                const bodyMat = new THREE.MeshStandardMaterial({ color: mobData.color });
+                const body = new THREE.Mesh(bodyGeo, bodyMat);
+                body.position.y = 0.25;
+                body.castShadow = true;
+                group.add(body);
+
+                // Handle
+                const handleGeo = new THREE.BoxGeometry(0.3, 0.15, 0.05);
+                const handleMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a });
+                const handle = new THREE.Mesh(handleGeo, handleMat);
+                handle.position.set(0, 0.55, 0);
+                group.add(handle);
+            } else {
+                // Human character
+                const scale = mobData.scale;
+
+                // Torso
+                const torsoGeo = new THREE.BoxGeometry(0.6 * scale, 0.8 * scale, 0.35 * scale);
+                const torsoMat = new THREE.MeshStandardMaterial({ color: mobData.color });
+                const torso = new THREE.Mesh(torsoGeo, torsoMat);
+                torso.position.y = 0.75 * scale;
+                torso.castShadow = true;
+                group.add(torso);
+
+                // Head
+                const headGeo = new THREE.BoxGeometry(0.32 * scale, 0.35 * scale, 0.32 * scale);
+                const headMat = new THREE.MeshStandardMaterial({ color: mobData.headColor });
+                const head = new THREE.Mesh(headGeo, headMat);
+                head.position.y = 1.35 * scale;
+                head.castShadow = true;
+                group.add(head);
+
+                // Hair (different styles)
+                const hairColors = [0x1a1a1a, 0x3d2314, 0x5c3d1e, 0x1a1a1a];
+                const hairColor = hairColors[type % hairColors.length];
+                const hairGeo = new THREE.BoxGeometry(0.35 * scale, 0.12 * scale, 0.35 * scale);
+                const hairMat = new THREE.MeshStandardMaterial({ color: hairColor });
+                const hair = new THREE.Mesh(hairGeo, hairMat);
+                hair.position.y = 1.55 * scale;
+                group.add(hair);
+
+                // Legs
+                const legGeo = new THREE.BoxGeometry(0.15 * scale, 0.5 * scale, 0.15 * scale);
+                const legMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a });
+
+                const leftLeg = new THREE.Mesh(legGeo, legMat);
+                leftLeg.position.set(-0.12 * scale, 0.25 * scale, 0);
+                leftLeg.castShadow = true;
+                group.add(leftLeg);
+
+                const rightLeg = new THREE.Mesh(legGeo, legMat);
+                rightLeg.position.set(0.12 * scale, 0.25 * scale, 0);
+                rightLeg.castShadow = true;
+                group.add(rightLeg);
+
+                // Phone for PHONE_ZOMBIE
+                if (mobData.name === 'PHONE_ZOMBIE') {
+                    const phoneGeo = new THREE.BoxGeometry(0.1, 0.2, 0.05);
+                    const phoneMat = new THREE.MeshBasicMaterial({ color: 0x333333 });
+                    const phone = new THREE.Mesh(phoneGeo, phoneMat);
+                    phone.position.set(0.3 * scale, 1.0 * scale, 0.2 * scale);
+                    group.add(phone);
+
+                    // Phone screen glow
+                    const screenGeo = new THREE.BoxGeometry(0.08, 0.15, 0.02);
+                    const screenMat = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+                    const screen = new THREE.Mesh(screenGeo, screenMat);
+                    screen.position.set(0.3 * scale, 1.0 * scale, 0.23 * scale);
+                    group.add(screen);
+                }
+
+                // Briefcase for some types
+                if (mobData.hasCase) {
+                    const caseGeo = new THREE.BoxGeometry(0.12, 0.35, 0.4);
+                    const caseMat = new THREE.MeshStandardMaterial({ color: 0x2c1810 });
+                    const briefcase = new THREE.Mesh(caseGeo, caseMat);
+                    briefcase.position.set(0.4 * scale, 0.5 * scale, 0);
+                    briefcase.castShadow = true;
+                    group.add(briefcase);
+                }
+            }
+
+            const x = (lane - 2) * LANE_WIDTH;
+            group.position.set(x, 0, zPos);
+
+            scene.add(group);
+
+            return {
+                mesh: group,
+                lane: lane,
+                speed: mobData.speed,
+                active: true,
+                type: mobData.name,
+                animOffset: Math.random() * Math.PI * 2
+            };
+        }
+
+        function createToilet() {
+            toilet = new THREE.Group();
+
+            // Door frame
+            const frameGeo = new THREE.BoxGeometry(2.5, 4, 0.3);
+            const frameMat = new THREE.MeshStandardMaterial({ color: 0x4a4a6a });
+            const frame = new THREE.Mesh(frameGeo, frameMat);
+            frame.position.y = 2;
+            toilet.add(frame);
+
+            // Door
+            const doorGeo = new THREE.BoxGeometry(2.2, 3.6, 0.3);
+            const doorMat = new THREE.MeshStandardMaterial({ color: 0x3498db });
+            const door = new THREE.Mesh(doorGeo, doorMat);
+            door.position.set(0, 2, 0.15);
+            toilet.add(door);
+
+            // Sign background
+            const signBgGeo = new THREE.BoxGeometry(1.2, 0.6, 0.1);
+            const signBgMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+            const signBg = new THREE.Mesh(signBgGeo, signBgMat);
+            signBg.position.set(0, 3.5, 0.3);
+            toilet.add(signBg);
+
+            // WC Icon (simple representation)
+            const iconGeo = new THREE.BoxGeometry(0.3, 0.5, 0.05);
+            const iconMat = new THREE.MeshBasicMaterial({ color: 0x3498db });
+            const icon = new THREE.Mesh(iconGeo, iconMat);
+            icon.position.set(0, 3.5, 0.35);
+            toilet.add(icon);
+
+            // Glowing beacon
+            const beaconLight = new THREE.PointLight(0x00ffff, 2, 20);
+            beaconLight.position.set(0, 4, 0);
+            toilet.add(beaconLight);
+
+            scene.add(toilet);
+        }
+
+        function spawnEnemy(zPos) {
+            const lane = Math.floor(Math.random() * LANE_COUNT);
+            const type = Math.floor(Math.random() * MOB_TYPES.length);
+            const enemy = createMob(type, zPos, lane);
+            enemies.push(enemy);
+        }
+
+        function spawnParticle(x, y, z, color) {
+            const geo = new THREE.BoxGeometry(0.08, 0.08, 0.08);
+            const mat = new THREE.MeshBasicMaterial({ color: color });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(x, y, z);
+
+            const velocity = new THREE.Vector3(
+                (Math.random() - 0.5) * 0.4,
+                Math.random() * 0.5 + 0.2,
+                (Math.random() - 0.5) * 0.4
+            );
+
+            scene.add(mesh);
+            particles.push({ mesh, velocity, life: 1.0 });
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function setupInputs() {
+            // Keyboard
+            window.addEventListener('keydown', (e) => {
+                if (state.status !== 'PLAYING') return;
+                if (e.key === 'ArrowLeft' || e.key === 'a') changeLane(-1);
+                if (e.key === 'ArrowRight' || e.key === 'd') changeLane(1);
+            });
+
+            // Touch
+            const leftZone = document.getElementById('touchLeft');
+            const rightZone = document.getElementById('touchRight');
+
+            leftZone.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (state.status === 'PLAYING') changeLane(-1);
+            });
+
+            rightZone.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (state.status === 'PLAYING') changeLane(1);
+            });
+        }
+
+        function changeLane(dir) {
+            const newLane = state.currentLane + dir;
+            if (newLane >= 0 && newLane < LANE_COUNT) {
+                state.currentLane = newLane;
+                state.targetLaneX = (state.currentLane - 2) * LANE_WIDTH;
+
+                // Tilt animation
+                player.rotation.z = -dir * 0.25;
+                setTimeout(() => { player.rotation.z = 0; }, 150);
+            }
+        }
+
+        // ========================================
+        // GAME LOGIC
+        // ========================================
+
+        function startGame() {
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('hudLayer').style.display = 'flex';
+            resetGameState();
+            state.status = 'PLAYING';
+        }
+
+        function resetGame() {
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            document.getElementById('winScreen').classList.add('hidden');
+            document.getElementById('startScreen').classList.remove('hidden');
+        }
+
+        function resetGameState() {
+            state.bladder = 100;
+            state.distanceLeft = TOTAL_DISTANCE;
+            state.currentLane = 2;
+            state.targetLaneX = 0;
+            state.playerX = 0;
+            state.finalApproach = false;
+            state.shakeIntensity = 0;
+            state.frameCount = 0;
+            state.runCycle = 0;
+            state.invincible = false;
+
+            player.position.set(0, 0, 0);
+            player.rotation.set(0, 0, 0);
+
+            // Clear enemies
+            enemies.forEach(e => scene.remove(e.mesh));
+            enemies = [];
+
+            // Clear particles
+            particles.forEach(p => scene.remove(p.mesh));
+            particles = [];
+
+            toilet.visible = false;
+
+            document.getElementById('hudLayer').classList.remove('critical');
+            updateHUD();
+        }
+
+        function gameOver() {
+            state.status = 'GAMEOVER';
+            document.getElementById('resultDistance').innerText =
+                `残り ${Math.floor(state.distanceLeft)}m で力尽きた...`;
+            document.getElementById('gameOverScreen').classList.remove('hidden');
+        }
+
+        function gameWin() {
+            state.status = 'WIN';
+            document.getElementById('scoreText').innerText = `${Math.floor(state.bladder)}%`;
+            document.getElementById('winScreen').classList.remove('hidden');
+        }
+
+        function updateHUD() {
+            const bar = document.getElementById('bladderBar');
+            const text = document.getElementById('bladderText');
+            const dist = document.getElementById('distanceDisplay');
+            const hud = document.getElementById('hudLayer');
+
+            bar.style.width = `${state.bladder}%`;
+            text.innerText = `${Math.floor(state.bladder)}%`;
+            dist.innerText = Math.floor(state.distanceLeft);
+
+            // Critical state
+            if (state.bladder < 25) {
+                hud.classList.add('critical');
+                text.classList.add('warning-flash');
+            } else {
+                hud.classList.remove('critical');
+                text.classList.remove('warning-flash');
+            }
+        }
+
+        function animatePlayer(delta) {
+            state.runCycle += delta * 12;
+
+            const swing = Math.sin(state.runCycle) * 0.6;
+
+            // Arm swing
+            if (playerParts.leftArm) playerParts.leftArm.rotation.x = swing;
+            if (playerParts.rightArm) playerParts.rightArm.rotation.x = -swing;
+
+            // Leg swing
+            if (playerParts.leftLeg) playerParts.leftLeg.rotation.x = -swing;
+            if (playerParts.rightLeg) playerParts.rightLeg.rotation.x = swing;
+
+            // Body bob
+            player.position.y = Math.abs(Math.sin(state.runCycle * 2)) * 0.08;
+
+            // Head tilt (urgency)
+            if (playerParts.head) {
+                playerParts.head.rotation.z = Math.sin(state.runCycle * 0.5) * 0.05;
+            }
+
+            // Sweat animation
+            if (playerParts.sweat) {
+                playerParts.sweat.position.y = 1.6 + Math.sin(state.runCycle) * 0.05;
+                playerParts.sweat.scale.y = 1 + Math.sin(state.runCycle * 2) * 0.2;
+            }
+
+            // Briefcase swing
+            if (playerParts.briefcase) {
+                playerParts.briefcase.rotation.x = Math.sin(state.runCycle) * 0.2;
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const delta = clock.getDelta();
+
+            if (state.status === 'PLAYING') {
+                updateGame(delta);
+            } else if (state.status === 'WIN') {
+                player.rotation.y += delta * 3;
+            }
+
+            // Camera shake effect
+            if (state.shakeIntensity > 0) {
+                camera.position.x = (Math.random() - 0.5) * state.shakeIntensity;
+                camera.position.y = 4.5 + (Math.random() - 0.5) * state.shakeIntensity * 0.5;
+                state.shakeIntensity *= 0.9;
+                if (state.shakeIntensity < 0.01) state.shakeIntensity = 0;
+            } else {
+                // Smooth camera follow
+                camera.position.x += (player.position.x * 0.4 - camera.position.x) * 0.08;
+                camera.position.y = 4.5;
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        function updateGame(delta) {
+            state.frameCount++;
+
+            // 1. Animate player
+            animatePlayer(delta);
+
+            // 2. Move Player (Lateral smoothing)
+            player.position.x += (state.targetLaneX - player.position.x) * 0.15;
+
+            // 3. Distance & Bladder
+            if (!state.finalApproach) {
+                state.distanceLeft -= PLAYER_SPEED * 0.5;
+
+                if (state.distanceLeft <= 0) {
+                    state.distanceLeft = 0;
+                    state.finalApproach = true;
+                    toilet.position.set(0, 0, -50);
+                    toilet.visible = true;
+                }
+
+                // Spawn enemies with increasing difficulty
+                const spawnRate = 0.04 + (1 - state.distanceLeft / TOTAL_DISTANCE) * 0.03;
+                if (Math.random() < spawnRate) {
+                    spawnEnemy(-70 - Math.random() * 20);
+                }
+            } else {
+                // Final approach
+                toilet.position.z += PLAYER_SPEED * 1.8;
+
+                if (toilet.position.z > -3) {
+                    if (Math.abs(player.position.x) < 2.0) {
+                        gameWin();
+                        return;
+                    }
+                }
+
+                if (toilet.position.z > 5) {
+                    state.bladder = 0;
+                }
+            }
+
+            // Bladder drain (increases over time)
+            const drainRate = 0.025 + (1 - state.distanceLeft / TOTAL_DISTANCE) * 0.015;
+            state.bladder -= drainRate;
+
+            if (state.bladder <= 0) {
+                state.bladder = 0;
+                gameOver();
+                return;
+            }
+
+            // 4. Update enemies
+            for (let i = enemies.length - 1; i >= 0; i--) {
+                const e = enemies[i];
+                e.mesh.position.z += PLAYER_SPEED + e.speed;
+
+                // Bobbing animation for human enemies
+                if (e.type !== 'LUGGAGE') {
+                    e.mesh.position.y = Math.sin(state.frameCount * 0.15 + e.animOffset) * 0.05;
+                    e.mesh.rotation.y = Math.sin(state.frameCount * 0.1 + e.animOffset) * 0.05;
+                }
+
+                // Cleanup off-screen enemies
+                if (e.mesh.position.z > 10) {
+                    scene.remove(e.mesh);
+                    enemies.splice(i, 1);
+                    continue;
+                }
+
+                // Collision Detection
+                if (!state.invincible) {
+                    const dx = Math.abs(player.position.x - e.mesh.position.x);
+                    const dz = Math.abs(player.position.z - e.mesh.position.z);
+
+                    if (dx < 0.9 && dz < 0.9) {
+                        // HIT!
+                        state.bladder -= 12;
+                        state.shakeIntensity = 0.6;
+                        state.invincible = true;
+
+                        setTimeout(() => { state.invincible = false; }, 500);
+
+                        // Particles
+                        for (let k = 0; k < 8; k++) {
+                            spawnParticle(
+                                player.position.x + (Math.random() - 0.5),
+                                1 + Math.random(),
+                                player.position.z,
+                                0xff4444
+                            );
+                        }
+
+                        // Flash effect
+                        const overlay = document.getElementById('damageOverlay');
+                        overlay.style.opacity = 1;
+                        setTimeout(() => overlay.style.opacity = 0, 100);
+
+                        // Remove enemy
+                        scene.remove(e.mesh);
+                        enemies.splice(i, 1);
+                    }
+                }
+            }
+
+            // 5. Update particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.mesh.position.add(p.velocity);
+                p.velocity.y -= 0.015;
+                p.life -= delta * 2;
+                p.mesh.scale.setScalar(Math.max(0.1, p.life));
+
+                if (p.life <= 0) {
+                    scene.remove(p.mesh);
+                    particles.splice(i, 1);
+                }
+            }
+
+            // Update HUD
+            if (state.frameCount % 3 === 0) updateHUD();
+        }
+
+        // Initialize
+        initThree();
+    </script>
+</body>
+</html>
