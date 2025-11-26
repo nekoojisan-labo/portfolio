@@ -11,10 +11,10 @@
   <meta property="og:description" content="AI × CODE × ART — 名前のない創造を続けるクリエイターポートフォリオ。">
   <meta property="og:type" content="website">
 
-  <!-- Fonts -->
+  <!-- Fonts (optimized: fewer weights) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -61,7 +61,7 @@
       color: #000;
     }
 
-    /* Custom Cursor */
+    /* Custom Cursor (GPU accelerated) */
     .cursor-ring {
       width: 48px;
       height: 48px;
@@ -70,7 +70,7 @@
       position: fixed;
       pointer-events: none;
       z-index: 9999;
-      transition: transform 0.15s ease-out, width 0.2s, height 0.2s, background 0.2s;
+      will-change: transform;
       mix-blend-mode: difference;
     }
 
@@ -82,7 +82,7 @@
       position: fixed;
       pointer-events: none;
       z-index: 9999;
-      transition: transform 0.1s ease-out;
+      will-change: transform;
     }
 
     .cursor-ring.hover {
@@ -481,10 +481,8 @@
         <div class="w-full lg:w-1/2 fade-in">
           <div class="relative group">
             <div class="absolute -inset-4 bg-accent rounded-full opacity-20 blur-xl group-hover:opacity-40 transition-opacity duration-500"></div>
-            <div class="relative rounded-2xl overflow-hidden border border-gray-800 bg-gradient-to-br from-accent/10 to-purple-600/10">
-              <div class="aspect-square flex items-center justify-center">
-                <span class="text-[200px]">🐱</span>
-              </div>
+            <div class="relative rounded-2xl overflow-hidden border border-gray-800">
+              <img src="./profile.jpg" alt="Creator Profile" class="w-full aspect-square object-cover" loading="lazy" decoding="async">
               <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
               <div class="absolute bottom-6 left-6">
                 <p class="text-accent text-sm font-bold tracking-widest mb-1">CREATOR / DEVELOPER</p>
@@ -587,54 +585,64 @@
   </footer>
 
   <script>
-    // ========== CUSTOM CURSOR ==========
+    // ========== CUSTOM CURSOR (optimized) ==========
     const cursorRing = document.getElementById('cursor-ring');
     const cursorDot = document.getElementById('cursor-dot');
     let mouseX = 0, mouseY = 0;
     let ringX = 0, ringY = 0;
     let dotX = 0, dotY = 0;
+    let cursorActive = false;
 
     document.addEventListener('mousemove', (e) => {
       mouseX = e.clientX;
       mouseY = e.clientY;
-    });
+      if (!cursorActive) {
+        cursorActive = true;
+        animateCursor();
+      }
+    }, { passive: true });
 
     function animateCursor() {
-      // Ring follows with delay
       ringX += (mouseX - ringX - 24) * 0.15;
       ringY += (mouseY - ringY - 24) * 0.15;
-      if (cursorRing) {
-        cursorRing.style.transform = `translate3d(${ringX}px, ${ringY}px, 0)`;
-      }
-
-      // Dot follows closely
       dotX += (mouseX - dotX - 4) * 0.25;
       dotY += (mouseY - dotY - 4) * 0.25;
-      if (cursorDot) {
-        cursorDot.style.transform = `translate3d(${dotX}px, ${dotY}px, 0)`;
-      }
 
-      requestAnimationFrame(animateCursor);
-    }
-    animateCursor();
+      if (cursorRing) cursorRing.style.transform = `translate3d(${ringX}px, ${ringY}px, 0)`;
+      if (cursorDot) cursorDot.style.transform = `translate3d(${dotX}px, ${dotY}px, 0)`;
 
-    // Hover effect for interactive elements
-    document.querySelectorAll('.interactive').forEach(el => {
-      el.addEventListener('mouseenter', () => cursorRing?.classList.add('hover'));
-      el.addEventListener('mouseleave', () => cursorRing?.classList.remove('hover'));
-    });
-
-    // ========== NAVBAR SCROLL EFFECT ==========
-    const navbar = document.getElementById('navbar');
-    window.addEventListener('scroll', () => {
-      if (window.scrollY > 50) {
-        navbar.classList.add('bg-primary/90', 'backdrop-blur-md', 'py-4');
-        navbar.classList.remove('bg-transparent', 'py-8');
+      // Stop animation when cursor stops moving
+      if (Math.abs(mouseX - ringX - 24) > 0.5 || Math.abs(mouseY - ringY - 24) > 0.5) {
+        requestAnimationFrame(animateCursor);
       } else {
-        navbar.classList.remove('bg-primary/90', 'backdrop-blur-md', 'py-4');
-        navbar.classList.add('bg-transparent', 'py-8');
+        cursorActive = false;
       }
+    }
+
+    // Hover effect
+    document.querySelectorAll('.interactive').forEach(el => {
+      el.addEventListener('mouseenter', () => cursorRing?.classList.add('hover'), { passive: true });
+      el.addEventListener('mouseleave', () => cursorRing?.classList.remove('hover'), { passive: true });
     });
+
+    // ========== NAVBAR SCROLL (debounced) ==========
+    const navbar = document.getElementById('navbar');
+    let scrollTicking = false;
+    window.addEventListener('scroll', () => {
+      if (!scrollTicking) {
+        requestAnimationFrame(() => {
+          if (window.scrollY > 50) {
+            navbar.classList.add('bg-primary/90', 'backdrop-blur-md', 'py-4');
+            navbar.classList.remove('bg-transparent', 'py-8');
+          } else {
+            navbar.classList.remove('bg-primary/90', 'backdrop-blur-md', 'py-4');
+            navbar.classList.add('bg-transparent', 'py-8');
+          }
+          scrollTicking = false;
+        });
+        scrollTicking = true;
+      }
+    }, { passive: true });
 
     // ========== MOBILE MENU ==========
     const mobileMenuBtn = document.getElementById('mobile-menu-btn');
