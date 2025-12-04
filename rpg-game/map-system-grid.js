@@ -85,12 +85,12 @@ class GridMapSystem {
             // スポーン地点
             spawnPoint: { gridX: 25, gridY: 20 },
 
-            // マップ遷移定義
+            // マップ遷移定義（画面端の方向 → 遷移先マップ）
             exits: {
-                subway_entrance: { gridX: 2, gridY: 20, direction: 'west' },
-                shrine_path: { gridX: 25, gridY: 2, direction: 'north' },
-                shopping_district: { gridX: 25, gridY: 38, direction: 'south' },
-                tokyo_gov: { gridX: 48, gridY: 20, direction: 'east' }
+                north: 'shrine_path',
+                south: 'shopping_district',
+                east: 'tokyo_gov',
+                west: 'subway_entrance'
             }
         };
 
@@ -110,8 +110,8 @@ class GridMapSystem {
             ],
             spawnPoint: { gridX: 28, gridY: 10 },
             exits: {
-                shinjuku_world: { gridX: 29, gridY: 10, direction: 'east' },
-                deep_tunnel: { gridX: 1, gridY: 10, direction: 'west' }
+                east: 'shinjuku_world',
+                west: 'deep_tunnel'
             }
         };
 
@@ -135,8 +135,8 @@ class GridMapSystem {
             spawnPoint: { gridX: 15, gridY: 23 },
             savePoint: { gridX: 15, gridY: 18 },
             exits: {
-                shinjuku_world: { gridX: 15, gridY: 24, direction: 'south' },
-                biodome_garden: { gridX: 29, gridY: 12, direction: 'east' }
+                south: 'shinjuku_world',
+                east: 'biodome_garden'
             }
         };
     }
@@ -158,33 +158,8 @@ class GridMapSystem {
             }
         }
 
-        // 外周を壁で囲む
-        for (let x = 0; x < width; x++) {
-            map[0][x] = T.WALL;
-            map[height - 1][x] = T.WALL;
-        }
-        for (let y = 0; y < height; y++) {
-            map[y][0] = T.WALL;
-            map[y][width - 1] = T.WALL;
-        }
-
-        // 出口を配置
-        // 北（神社へ）
-        for (let x = 23; x < 28; x++) {
-            map[0][x] = T.EXIT_NORTH;
-        }
-        // 南（商店街へ）
-        for (let x = 23; x < 28; x++) {
-            map[height - 1][x] = T.EXIT_SOUTH;
-        }
-        // 西（地下鉄へ）
-        for (let y = 18; y < 23; y++) {
-            map[y][0] = T.EXIT_WEST;
-        }
-        // 東（都庁へ）
-        for (let y = 18; y < 23; y++) {
-            map[y][width - 1] = T.EXIT_EAST;
-        }
+        // 外周は通行可能（画面端が境界線）
+        // 全方向に出口があるため、外周は全て床のまま
 
         // ビルを配置（通行不可のエリア）
         // 左上のビル群
@@ -229,21 +204,14 @@ class GridMapSystem {
             }
         }
 
-        // 外周を壁で囲む
+        // 外周を壁で囲む（出口がある東西以外）
         for (let x = 0; x < width; x++) {
             map[0][x] = T.WALL;
             map[height - 1][x] = T.WALL;
         }
-        for (let y = 0; y < height; y++) {
-            map[y][0] = T.WALL;
-            map[y][width - 1] = T.WALL;
-        }
 
-        // 出口
-        for (let y = 8; y < 13; y++) {
-            map[y][0] = T.EXIT_WEST;  // 西（深層トンネルへ）
-            map[y][width - 1] = T.EXIT_EAST;  // 東（新宿へ）
-        }
+        // 北側と南側は壁（出口なし）のまま
+        // 東西の外周は通行可能（画面端が境界線）
 
         // 上下の壁
         this.fillRect(map, 5, 4, 20, 2, T.WALL);
@@ -272,26 +240,18 @@ class GridMapSystem {
             }
         }
 
-        // 外周を木で囲む
+        // 外周を木で囲む（出口がある南・東以外）
         for (let x = 0; x < width; x++) {
-            map[0][x] = T.TREE;
-            map[height - 1][x] = T.TREE;
+            map[0][x] = T.TREE;  // 北側は木（出口なし）
         }
         for (let y = 0; y < height; y++) {
-            map[y][0] = T.TREE;
-            map[y][width - 1] = T.TREE;
+            map[y][0] = T.TREE;  // 西側は木（出口なし）
         }
 
         // 参道（床）
         this.fillRect(map, 13, 15, 5, 10, T.FLOOR);
 
-        // 出口
-        for (let x = 13; x < 18; x++) {
-            map[height - 1][x] = T.EXIT_SOUTH;  // 南（新宿へ）
-        }
-        for (let y = 10; y < 15; y++) {
-            map[y][width - 1] = T.EXIT_EAST;  // 東（植物園へ）
-        }
+        // 南側と東側の外周は草地のまま（画面端が境界線）
 
         // 鳥居エリア
         this.fillRect(map, 13, 5, 5, 3, T.FLOOR);
@@ -341,22 +301,31 @@ class GridMapSystem {
     }
 
     // ==========================================
-    // 出口チェック
+    // 出口チェック（画面端に到達したら遷移）
     // ==========================================
     checkExit(gridX, gridY) {
         const currentMapData = this.maps[this.currentMap];
-        if (!currentMapData) return null;
+        if (!currentMapData || !currentMapData.exits) return null;
 
-        const tile = currentMapData.tiles[gridY][gridX];
-        const style = this.tileStyles[tile];
+        // 画面の端（外周）に到達したかチェック
+        let direction = null;
 
-        if (style && style.exit) {
-            // exitsオブジェクトから該当する出口を探す
-            for (const [targetMap, exitData] of Object.entries(currentMapData.exits)) {
-                if (exitData.gridX === gridX && exitData.gridY === gridY) {
-                    return { targetMap, direction: exitData.direction };
-                }
-            }
+        if (gridY === 0) {
+            direction = 'north';
+        } else if (gridY === currentMapData.height - 1) {
+            direction = 'south';
+        } else if (gridX === 0) {
+            direction = 'west';
+        } else if (gridX === currentMapData.width - 1) {
+            direction = 'east';
+        }
+
+        // 方向に応じた出口があるかチェック
+        if (direction && currentMapData.exits[direction]) {
+            return {
+                targetMap: currentMapData.exits[direction],
+                direction: direction
+            };
         }
 
         return null;
