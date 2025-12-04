@@ -201,7 +201,29 @@ class BGMSystem {
             return;
         }
 
-        this._playInternal(trackId, fadeIn);
+        // 前のBGMが再生中の場合は確実に停止してから新しいBGMを再生
+        if (this.audio && this.currentBGM && this.currentBGM !== trackId) {
+            console.log(`[BGM] Stopping previous BGM (${this.currentBGM}) before playing ${trackId}`);
+            this.isTransitioning = true;
+
+            // フェードアウトしてから新しいBGMを再生
+            this.fadeOut(() => {
+                if (this.audio) {
+                    this.audio.pause();
+                    this.audio.currentTime = 0;
+                    this.audio.src = '';
+                    this.audio = null;
+                }
+                this.currentBGM = null;
+
+                // 少し待ってから新しいBGMを開始
+                setTimeout(() => {
+                    this._playInternal(trackId, fadeIn);
+                }, 100);
+            });
+        } else {
+            this._playInternal(trackId, fadeIn);
+        }
     }
 
     // フィールドBGM切り替え（マップ移動時）

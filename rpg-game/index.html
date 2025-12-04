@@ -1372,6 +1372,8 @@
     <script src="magic-system.js"></script>
     <script src="battle-system.js"></script>
     <script src="map-system.js"></script>
+    <script src="map-system-grid.js"></script>
+    <script src="player-grid-movement.js"></script>
     <script src="bgm-system.js"></script>
     <script src="party-system.js"></script>
     <script src="story-events.js"></script>
@@ -1517,10 +1519,49 @@
             if (battleSystem && battleSystem.inBattle) {
                 handleBattleInput(e.key);
             } else {
+                // フィールドでの移動（新しいグリッドシステム）
+                if (window.playerMovement && gameStarted) {
+                    let moved = false;
+
+                    if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+                        moved = window.playerMovement.tryMove('up');
+                    } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+                        moved = window.playerMovement.tryMove('down');
+                    } else if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                        moved = window.playerMovement.tryMove('left');
+                    } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                        moved = window.playerMovement.tryMove('right');
+                    }
+
+                    if (moved) {
+                        // 移動が成功したらUI更新
+                        const stepCount = window.playerMovement.stepCount;
+                        const stepCountElement = document.getElementById('stepCount');
+                        if (stepCountElement) {
+                            stepCountElement.textContent = stepCount;
+                        }
+                        e.preventDefault();
+                    }
+                }
+
+                // メニュー開閉（Escキー）
+                if (e.key === 'Escape' || e.key === 'm' || e.key === 'M') {
+                    const menuOverlay = document.getElementById('menuOverlay');
+                    if (menuOverlay) {
+                        if (menuOverlay.classList.contains('active')) {
+                            closeMenu();
+                        } else {
+                            openMenu();
+                        }
+                        e.preventDefault();
+                    }
+                }
+
+                // 旧システムとの互換性のため、keysオブジェクトも更新
                 keys[e.key] = true;
             }
         });
-        
+
         document.addEventListener('keyup', (e) => {
             keys[e.key] = false;
         });
@@ -1814,9 +1855,61 @@
 
             try {
                 mapSystem = new MapSystem();
-                console.log('[DEBUG] ✓ MapSystem initialized');
+                console.log('[DEBUG] ✓ MapSystem initialized (legacy)');
             } catch (e) {
                 console.error('[ERROR] MapSystem failed:', e);
+            }
+
+            // 新しいグリッドマップシステム
+            try {
+                window.gridMapSystem = new GridMapSystem();
+                console.log('[DEBUG] ✓ GridMapSystem initialized');
+
+                window.playerMovement = new PlayerGridMovement(window.gridMapSystem);
+                console.log('[DEBUG] ✓ PlayerGridMovement initialized');
+
+                // 初期位置を設定
+                const mapData = window.gridMapSystem.maps[window.gridMapSystem.currentMap];
+                window.playerMovement.setPosition(mapData.spawnPoint.gridX, mapData.spawnPoint.gridY);
+                console.log('[DEBUG] Player spawn at:', mapData.spawnPoint.gridX, mapData.spawnPoint.gridY);
+
+                // マップ遷移コールバック
+                window.playerMovement.setOnExitCallback((exit) => {
+                    console.log('[MAP TRANSITION] Detected exit:', exit);
+                    // マップ切り替え処理
+                    const spawn = window.gridMapSystem.changeMap(exit.targetMap);
+                    if (spawn) {
+                        window.playerMovement.setPosition(spawn.gridX, spawn.gridY);
+                        console.log('[MAP TRANSITION] Moved to', exit.targetMap, 'at', spawn.gridX, spawn.gridY);
+
+                        // BGM切り替え
+                        const newMap = window.gridMapSystem.maps[exit.targetMap];
+                        if (newMap && newMap.bgm && window.bgmSystem) {
+                            console.log('[BGM] Changing to new map BGM:', newMap.bgm);
+                            window.bgmSystem.changeFieldBGM(newMap.bgm);
+                        }
+                    }
+                });
+
+                // 歩数カウントコールバック
+                window.playerMovement.setOnStepCallback((stepCount) => {
+                    const stepCountElement = document.getElementById('stepCount');
+                    if (stepCountElement) {
+                        stepCountElement.textContent = stepCount;
+                    }
+                });
+
+                // エンカウントコールバック
+                window.playerMovement.setOnEncounterCallback(() => {
+                    console.log('[ENCOUNTER] Random encounter triggered!');
+                    // 戦闘システムと連携（後で実装）
+                    if (window.battleSystem) {
+                        // TODO: 戦闘開始処理
+                    }
+                });
+
+            } catch (e) {
+                console.error('[ERROR] GridMapSystem failed:', e);
             }
 
             try {
@@ -1893,10 +1986,22 @@
             updateMapInfo();
             gameLoop();
 
-            // 初期マップのBGM再生
+            // オープニングBGMを確実に停止してからフィールドBGMを再生
+            console.log('[BGM] Stopping opening BGM and starting field BGM');
+
+            // 旧マップシステムのBGM（後で削除予定）
             const initialMap = mapSystem.maps[mapSystem.currentMap];
             if (initialMap && initialMap.bgm) {
                 bgmSystem.changeFieldBGM(initialMap.bgm);
+            }
+
+            // 新グリッドマップシステムのBGM
+            if (window.gridMapSystem) {
+                const gridMap = window.gridMapSystem.maps[window.gridMapSystem.currentMap];
+                if (gridMap && gridMap.bgm) {
+                    console.log('[BGM] Starting grid map BGM:', gridMap.bgm);
+                    bgmSystem.changeFieldBGM(gridMap.bgm);
+                }
             }
 
             // チャプター1開始イベントを自動再生
@@ -3261,21 +3366,27 @@
             if (!battleSystem.inBattle) {
                 // デバッグ: 最初の数フレームだけログ出力
                 if (gameLoopCounter < 3) {
-                    console.log('[DEBUG] gameLoop frame', gameLoopCounter, 'mapSystem:', mapSystem ? 'OK' : 'NULL');
+                    console.log('[DEBUG] gameLoop frame', gameLoopCounter, 'gridMapSystem:', window.gridMapSystem ? 'OK' : 'NULL');
                     gameLoopCounter++;
                 }
 
-                // マップ描画
-                if (mapSystem && mapSystem.drawCurrentMap) {
-                    mapSystem.drawCurrentMap(ctx, canvas);
-                    mapSystem.drawNPCs(ctx, storyFlags);
+                // クリア
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // 新しいグリッドマップシステムで描画
+                if (window.gridMapSystem && window.gridMapSystem.render) {
+                    window.gridMapSystem.render(ctx, canvas);
                 } else {
-                    console.error('[ERROR] mapSystem or drawCurrentMap is undefined');
+                    console.error('[ERROR] gridMapSystem or render is undefined');
                 }
 
-                // プレイヤー描画と更新
-                drawPlayer();
-                updatePlayer();
+                // プレイヤー更新と描画（新しいグリッドシステム）
+                if (window.playerMovement) {
+                    window.playerMovement.update();
+                    window.playerMovement.render(ctx);
+                } else {
+                    console.error('[ERROR] playerMovement is undefined');
+                }
             }
 
             requestAnimationFrame(gameLoop);
