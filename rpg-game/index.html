@@ -58,6 +58,9 @@
             font-size: 14px;
             color: #ffffff;
             pointer-events: auto;
+            z-index: 100;
+            /* フィールド画面では非表示（メニューで確認可能） */
+            display: none !important;
         }
 
         .status-bar {
@@ -106,18 +109,47 @@
             border-radius: 5px;
             padding: 10px;
             font-size: 12px;
+            /* タッチデバイスでは非表示（コントローラーで直感的に操作可能） */
+        }
+
+        /* タッチデバイスでは操作説明を非表示 */
+        @media (hover: none) and (pointer: coarse) {
+            .controls {
+                display: none;
+            }
         }
 
         .map-info {
             position: absolute;
             top: 10px;
             left: 10px;
-            background: rgba(0, 0, 0, 0.8);
-            border: 2px solid #0f3460;
-            border-radius: 5px;
-            padding: 10px;
-            font-size: 12px;
-            min-width: 150px;
+            background: rgba(0, 0, 0, 0.85);
+            border: 2px solid #00ffff;
+            border-radius: 8px;
+            padding: 12px 15px;
+            font-size: 14px;
+            min-width: 180px;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+            backdrop-filter: blur(5px);
+            z-index: 200;
+        }
+
+        .map-info strong {
+            color: #00ffff;
+            font-size: 16px;
+            text-shadow: 0 0 8px rgba(0, 255, 255, 0.5);
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .map-info .map-details {
+            font-size: 11px;
+            color: #aaa;
+            line-height: 1.6;
+        }
+
+        .map-info .map-details > div {
+            margin: 3px 0;
         }
 
         /* Battle Screen Styles (サイバーパンク × ドラクエ風) */
@@ -643,7 +675,7 @@
         /* オンスクリーンコントローラー（モバイル用） */
         .on-screen-controller {
             position: fixed;
-            bottom: 20px;
+            bottom: 15px;
             left: 0;
             right: 0;
             display: flex; /* 常に表示 */
@@ -652,7 +684,7 @@
             padding: 0 20px;
             pointer-events: none;
             z-index: 10000;
-            opacity: 0.85; /* 半透明にして邪魔にならないように */
+            opacity: 0.75; /* 半透明でマップが見やすく */
         }
 
         .dpad-container {
@@ -782,9 +814,11 @@
 
         /* スマートフォン向け: ボタンを大きく、操作しやすく */
         @media (max-width: 800px) {
+            /* タッチコントローラーを画面下部に配置（UIオーバーレイは非表示なので） */
             .on-screen-controller {
                 padding: 0 15px;
                 bottom: 15px;
+                opacity: 0.7; /* マップが見やすいように透明度を上げる */
             }
 
             .dpad-container {
@@ -828,13 +862,97 @@
                 height: 58px;
                 font-size: 13px;
             }
+
+            /* 戦闘画面のUI調整 */
+            .battle-commands {
+                bottom: 120px; /* コントローラーの上に配置 */
+                left: 5px;
+                width: 180px;
+                padding: 8px;
+                font-size: 12px;
+            }
+
+            .battle-message {
+                height: 60px;
+                padding: 8px;
+                font-size: 12px;
+            }
+
+            .battle-status {
+                display: none; /* 小画面では非表示（battlePartyStatusで代替） */
+            }
+
+            #battlePartyStatus {
+                bottom: 120px; /* コントローラーの上に配置 */
+                right: 5px;
+                font-size: 11px;
+            }
+
+            /* マップ情報を見やすく最適化 */
+            .map-info {
+                font-size: 13px;
+                padding: 10px 12px;
+                min-width: 160px;
+                background: rgba(0, 0, 0, 0.9);
+            }
+
+            .map-info strong {
+                font-size: 15px;
+                margin-bottom: 6px;
+            }
+
+            .map-info .map-details {
+                font-size: 10px;
+            }
+
+            /* メニュー系のレスポンシブ対応 */
+            .menu-container {
+                min-width: 300px;
+                max-width: 90vw;
+                padding: 20px;
+            }
+
+            .menu-title {
+                font-size: 20px;
+            }
+
+            #kamuiSkillMenu {
+                min-width: auto !important;
+                width: 90vw !important;
+                max-width: 500px !important;
+                padding: 15px !important;
+            }
+
+            .kamui-skill-list {
+                grid-template-columns: 1fr !important; /* 1列表示 */
+                gap: 10px !important;
+            }
+
+            #kamuiSkillGrid {
+                grid-template-columns: 1fr !important; /* 1列表示 */
+                gap: 10px !important;
+            }
+
+            .kamui-skill-item {
+                padding: 10px;
+            }
+
+            .kamui-skill-item .skill-icon {
+                font-size: 36px;
+            }
+
+            .kamui-skill-item .skill-name {
+                font-size: 16px;
+            }
         }
 
         /* さらに小さい画面用（iPhone SE など） */
         @media (max-width: 400px) {
+            /* タッチコントローラーの位置調整 */
             .on-screen-controller {
                 padding: 0 10px;
-                bottom: 10px;
+                bottom: 12px;
+                opacity: 0.65; /* さらに透明に */
             }
 
             .dpad-container {
@@ -878,6 +996,93 @@
             .action-buttons {
                 gap: 8px;
             }
+
+            /* 戦闘画面のUI調整（小画面） */
+            .battle-commands {
+                bottom: 105px; /* コントローラーの上に配置 */
+                left: 3px;
+                width: 160px;
+                padding: 6px;
+                font-size: 11px;
+            }
+
+            .command-item {
+                padding: 6px;
+            }
+
+            .battle-message {
+                height: 50px;
+                padding: 6px;
+                font-size: 11px;
+            }
+
+            #battlePartyStatus {
+                bottom: 105px; /* コントローラーの上に配置 */
+                right: 3px;
+                font-size: 10px;
+            }
+
+            .enemy-sprite {
+                font-size: 48px; /* 敵キャラを小さく */
+            }
+
+            .enemy-name {
+                font-size: 13px;
+            }
+
+            /* マップ情報を小画面でも見やすく */
+            .map-info {
+                font-size: 12px;
+                padding: 8px 10px;
+                min-width: 140px;
+                background: rgba(0, 0, 0, 0.92);
+            }
+
+            .map-info strong {
+                font-size: 13px;
+                margin-bottom: 5px;
+            }
+
+            .map-info .map-details {
+                font-size: 9px;
+            }
+
+            /* メニュー系のレスポンシブ対応（小画面） */
+            .menu-container {
+                min-width: 280px;
+                max-width: 95vw;
+                padding: 15px;
+            }
+
+            .menu-title {
+                font-size: 18px;
+            }
+
+            .menu-stats {
+                font-size: 11px;
+            }
+
+            #kamuiSkillMenu {
+                width: 95vw !important;
+                max-width: 350px !important;
+                padding: 10px !important;
+            }
+
+            #kamuiSkillMenu > div:first-child {
+                font-size: 18px !important; /* タイトルサイズ調整 */
+            }
+
+            .kamui-skill-item .skill-icon {
+                font-size: 32px;
+            }
+
+            .kamui-skill-item .skill-name {
+                font-size: 14px;
+            }
+
+            .kamui-skill-item .skill-description {
+                font-size: 11px;
+            }
         }
     </style>
 </head>
@@ -905,10 +1110,10 @@
         </div>
 
         <div class="map-info" id="mapInfo" style="display: none;">
-            <div><strong id="mapName">新宿 - 中央区画</strong></div>
-            <div style="font-size: 10px; color: #aaa; margin-top: 5px;">
-                <div>歩数: <span id="stepCount">0</span></div>
-                <div>遭遇率: <span id="encounterRate">中</span></div>
+            <strong id="mapName">新宿 - 中央区画</strong>
+            <div class="map-details">
+                <div>📍 歩数: <span id="stepCount">0</span></div>
+                <div>⚔️ 遭遇率: <span id="encounterRate">中</span></div>
             </div>
         </div>
 
@@ -1212,15 +1417,21 @@
             y: 300,
             hp: 100,
             maxHp: 100,
+            baseMaxHp: 100,
             mp: 50,
             maxMp: 50,
+            baseMaxMp: 50,
             level: 1,
             exp: 0,
             gold: 100,
-            baseAttack: 10,      // 基本攻撃力
-            baseDefense: 5,      // 基本防御力
-            attack: 10,          // 現在の攻撃力（基本 + 装備）
-            defense: 5,          // 現在の防御力（基本 + 装備）
+            baseAttack: 10,
+            baseDefense: 5,
+            baseMagic: 10,
+            baseSpeed: 8,
+            attack: 10,
+            defense: 5,
+            magic: 10,
+            speed: 8,
             facing: 'down',
             stepCount: 0
         };

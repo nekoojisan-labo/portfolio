@@ -40,7 +40,17 @@ class BattleSystem {
                 gold: 20,
                 type: 'drone',
                 skills: ['scan', 'alert'],
-                description: '監視ドローン。常に周囲を警戒している。'
+                description: '監視ドローン。常に周囲を警戒している。',
+                dropTable: [
+                    { id: 'heal_potion', rate: 0.3 },
+                    { id: 'energy_core', rate: 0.15 }
+                ],
+                aiPattern: {
+                    lowHpThreshold: 0.3,
+                    lowHpAction: 'defend',
+                    normalAction: 'attack',
+                    skillChance: 0.2
+                }
             },
             cerberus: {
                 name: 'ケルベロス',
@@ -54,7 +64,18 @@ class BattleSystem {
                 gold: 50,
                 type: 'mecha',
                 skills: ['bite', 'howl', 'rush'],
-                description: '三つ首の機械狼。高い攻撃力を持つ。'
+                description: '三つ首の機械狼。高い攻撃力を持つ。',
+                dropTable: [
+                    { id: 'heal_potion', rate: 0.25 },
+                    { id: 'mega_heal_potion', rate: 0.1 },
+                    { id: 'iron_sword', rate: 0.05 }
+                ],
+                aiPattern: {
+                    lowHpThreshold: 0.25,
+                    lowHpAction: 'attack',
+                    normalAction: 'attack',
+                    skillChance: 0.4
+                }
             },
             dustGolem: {
                 name: 'ダスト・ゴーレム',
@@ -68,7 +89,18 @@ class BattleSystem {
                 gold: 45,
                 type: 'construct',
                 skills: ['slam', 'guard'],
-                description: 'スクラップから生まれた巨人。防御力が高い。'
+                description: 'スクラップから生まれた巨人。防御力が高い。',
+                dropTable: [
+                    { id: 'heal_potion', rate: 0.2 },
+                    { id: 'iron_helmet', rate: 0.08 },
+                    { id: 'leather_armor', rate: 0.06 }
+                ],
+                aiPattern: {
+                    lowHpThreshold: 0.4,
+                    lowHpAction: 'defend',
+                    normalAction: 'attack',
+                    skillChance: 0.25
+                }
             },
             alraune: {
                 name: 'アルラウネ',
@@ -82,7 +114,18 @@ class BattleSystem {
                 gold: 40,
                 type: 'hybrid',
                 skills: ['drain', 'entangle', 'spore'],
-                description: '植物と機械の融合体。特殊攻撃を使う。'
+                description: '植物と機械の融合体。特殊攻撃を使う。',
+                dropTable: [
+                    { id: 'mega_heal_potion', rate: 0.2 },
+                    { id: 'energy_core', rate: 0.25 },
+                    { id: 'full_heal_potion', rate: 0.05 }
+                ],
+                aiPattern: {
+                    lowHpThreshold: 0.3,
+                    lowHpAction: 'skill',
+                    normalAction: 'attack',
+                    skillChance: 0.35
+                }
             },
             deusMachina: {
                 name: 'デウス・マキナ',
@@ -96,7 +139,18 @@ class BattleSystem {
                 gold: 60,
                 type: 'android',
                 skills: ['laserBeam', 'barrier', 'analyze'],
-                description: 'アークの精鋭機械兵。バランスが良い。'
+                description: 'アークの精鋭機械兵。バランスが良い。',
+                dropTable: [
+                    { id: 'mega_heal_potion', rate: 0.25 },
+                    { id: 'mega_energy_core', rate: 0.15 },
+                    { id: 'plasma_blade', rate: 0.03 }
+                ],
+                aiPattern: {
+                    lowHpThreshold: 0.3,
+                    lowHpAction: 'skill',
+                    normalAction: 'attack',
+                    skillChance: 0.3
+                }
             },
             // ボスエネミー
             corrupted_drone_boss: {
@@ -113,7 +167,18 @@ class BattleSystem {
                 boss: true,
                 skills: ['omega_laser', 'emp_pulse', 'repair_protocol'],
                 description: 'アークの監視システムが暴走した巨大ドローン。強力なレーザー攻撃を放つ。',
-                bossId: 'corrupted_drone_boss'
+                bossId: 'corrupted_drone_boss',
+                dropTable: [
+                    { id: 'full_heal_potion', rate: 0.8 },
+                    { id: 'elixir', rate: 0.5 },
+                    { id: 'plasma_blade', rate: 0.3 }
+                ],
+                aiPattern: {
+                    lowHpThreshold: 0.25,
+                    lowHpAction: 'skill',
+                    normalAction: 'attack',
+                    skillChance: 0.6
+                }
             },
             rogue_ai_core: {
                 name: '暴走AIコア',
@@ -129,7 +194,18 @@ class BattleSystem {
                 boss: true,
                 skills: ['data_storm', 'system_hack', 'firewall'],
                 description: 'アークのコアシステムの一部。圧倒的な計算能力で攻撃する。',
-                bossId: 'rogue_ai_core'
+                bossId: 'rogue_ai_core',
+                dropTable: [
+                    { id: 'elixir', rate: 1.0 },
+                    { id: 'kamui_katana', rate: 0.5 },
+                    { id: 'cyber_armor', rate: 0.4 }
+                ],
+                aiPattern: {
+                    lowHpThreshold: 0.2,
+                    lowHpAction: 'skill',
+                    normalAction: 'skill',
+                    skillChance: 0.8
+                }
             }
         };
         
@@ -234,16 +310,27 @@ class BattleSystem {
         if (!this.currentEnemy.currentMp) {
             this.currentEnemy.currentMp = this.currentEnemy.mp;
         }
-        
+
+        // ステータス異常を初期化
+        this.currentEnemy.statusAilments = {};
+
         this.selectedCommand = 0;
         this.battleLog = [];
         this.turnCount = 1;
         this.waitingForCommand = false; // 初期状態では待機しない
-        
+
         // 戦闘画面表示
         this.showBattleScreen();
         this.addBattleLog(`${enemy.name}が あらわれた！`);
-        
+
+        // パーティメンバーのステータス異常をクリア
+        const allMembers = this.getPartyMembers();
+        allMembers.forEach(member => {
+            if (!member.statusAilments) {
+                member.statusAilments = {};
+            }
+        });
+
         // 最初のターンのコマンド表示
         setTimeout(() => {
             this.startPlayerTurn();
@@ -313,6 +400,21 @@ class BattleSystem {
         }
 
         const currentMember = partyMembers[this.currentMemberIndex];
+
+        // ステータス異常チェック
+        const ailmentResult = this.checkStatusAilmentBeforeAction(currentMember);
+
+        if (ailmentResult.skipAction) {
+            // 行動不能の場合、自動的に次のメンバーへ
+            this.partyCommands[this.currentMemberIndex] = {
+                member: currentMember,
+                command: 'skip'
+            };
+            this.currentMemberIndex++;
+            this.showNextMemberCommand();
+            return;
+        }
+
         this.addBattleLog(`${currentMember.name || 'カイト'}の こうどう`);
 
         this.waitingForCommand = true;
@@ -410,13 +512,24 @@ class BattleSystem {
     memberAttack(member, callback) {
         const baseDamage = member.attack || 10;
         const variance = Math.floor(Math.random() * 5) - 2;
-        const damage = Math.max(1, baseDamage + variance - Math.floor(this.currentEnemy.defense / 2));
+        let damage = Math.max(1, baseDamage + variance - Math.floor(this.currentEnemy.defense / 2));
+
+        // クリティカル判定
+        const criticalResult = this.checkCritical(member, this.currentEnemy);
+        const isCritical = criticalResult.isCritical;
+
+        if (isCritical) {
+            damage = Math.floor(damage * criticalResult.multiplier);
+            this.addBattleLog(`${member.name}の こうげき！`);
+            this.addBattleLog(`かいしんの いちげき！`);
+        } else {
+            this.addBattleLog(`${member.name}の こうげき！`);
+        }
 
         this.currentEnemy.currentHp = Math.max(0, this.currentEnemy.currentHp - damage);
-        this.addBattleLog(`${member.name}の こうげき！`);
         this.addBattleLog(`${this.currentEnemy.name}に ${Math.floor(damage)}の ダメージ！`);
 
-        this.showDamageEffect(damage, true);
+        this.showDamageEffect(damage, true, isCritical);
         this.updateBattleUI();
 
         // 敵が倒れたかチェック
@@ -429,6 +542,102 @@ class BattleSystem {
         }
     }
 
+    // クリティカル判定
+    checkCritical(attacker, target) {
+        let critRate = 0.05; // 基本クリティカル率 5%
+
+        // 速度による補正
+        const attackerSpeed = attacker.speed || attacker.baseSpeed || 5;
+        const targetSpeed = target.speed || 5;
+
+        if (attackerSpeed >= targetSpeed * 2) {
+            critRate += 0.10; // 速度が2倍以上なら +10%
+        } else if (attackerSpeed >= targetSpeed * 1.5) {
+            critRate += 0.05; // 速度が1.5倍以上なら +5%
+        }
+
+        const isCritical = Math.random() < critRate;
+        const multiplier = isCritical ? 1.5 + Math.random() * 0.5 : 1.0; // 1.5x ~ 2.0x
+
+        return { isCritical, multiplier, critRate };
+    }
+
+    // ステータス異常を付与
+    applyStatusAilment(target, ailmentType, duration = 3) {
+        if (!target.statusAilments) {
+            target.statusAilments = {};
+        }
+
+        target.statusAilments[ailmentType] = duration;
+
+        const ailmentNames = {
+            poison: 'どく',
+            paralysis: 'まひ',
+            confusion: 'こんらん',
+            sleep: 'ねむり',
+            curse: 'のろい'
+        };
+
+        this.addBattleLog(`${target.name}は ${ailmentNames[ailmentType]}になった！`);
+    }
+
+    // 行動前のステータス異常チェック
+    checkStatusAilmentBeforeAction(character) {
+        if (!character.statusAilments) {
+            return { skipAction: false };
+        }
+
+        // 睡眠チェック
+        if (character.statusAilments.sleep > 0) {
+            this.addBattleLog(`${character.name}は ねむっている...`);
+            return { skipAction: true };
+        }
+
+        // 麻痺チェック（50%確率で行動不能）
+        if (character.statusAilments.paralysis > 0) {
+            if (Math.random() < 0.5) {
+                this.addBattleLog(`${character.name}は しびれて うごけない！`);
+                return { skipAction: true };
+            }
+        }
+
+        // 混乱チェック（後で攻撃時に処理）
+        return { skipAction: false };
+    }
+
+    // ターン終了時のステータス異常処理
+    processStatusAilmentsEndTurn(character) {
+        if (!character.statusAilments) return;
+
+        // 毒ダメージ
+        if (character.statusAilments.poison > 0) {
+            const poisonDamage = Math.floor(character.maxHp * 0.1);
+            character.hp = Math.max(0, character.hp - poisonDamage);
+            this.addBattleLog(`${character.name}は どくの ダメージを うけた！`);
+            this.addBattleLog(`${character.name}に ${poisonDamage}の ダメージ！`);
+        }
+
+        // ステータス異常の持続ターンを減らす
+        Object.keys(character.statusAilments).forEach(ailment => {
+            character.statusAilments[ailment]--;
+            if (character.statusAilments[ailment] <= 0) {
+                delete character.statusAilments[ailment];
+
+                const ailmentNames = {
+                    poison: 'どく',
+                    paralysis: 'まひ',
+                    confusion: 'こんらん',
+                    sleep: 'ねむり',
+                    curse: 'のろい'
+                };
+
+                this.addBattleLog(`${character.name}の ${ailmentNames[ailment]}が なおった！`);
+            }
+        });
+
+        this.updateBattleUI();
+    }
+
     // メンバーのカムイ
     memberKamui(member, callback, magicId = null) {
         // 魔法IDが指定されていない場合は、習得済みカムイスキル一覧を表示
@@ -437,8 +646,18 @@ class BattleSystem {
             return;
         }
 
+        console.log('[DEBUG] memberKamui called with:', {
+            magicId,
+            memberName: member.name,
+            memberMp: member.mp,
+            enemyName: this.currentEnemy ? this.currentEnemy.name : 'none',
+            inBattle: true
+        });
+
         // 魔法システムから使用
         const result = window.magicSystem.useMagic(magicId, member, this.currentEnemy, true);
+
+        console.log('[DEBUG] useMagic result:', result);
 
         if (!result.success) {
             this.addBattleLog(result.message);
@@ -678,113 +897,365 @@ class BattleSystem {
     // 敵のターン
     enemyTurn(player) {
         console.log('enemyTurn called');
-        
+
+        // 敵のAI行動決定
+        const action = this.determineEnemyAction();
+
+        switch (action) {
+            case 'attack':
+                this.enemyAttack(player);
+                break;
+            case 'defend':
+                this.enemyDefend(player);
+                break;
+            case 'skill':
+                this.enemySkillAttack(player);
+                break;
+            default:
+                this.enemyAttack(player);
+        }
+    }
+
+    // 敵の行動を決定
+    determineEnemyAction() {
+        if (!this.currentEnemy || !this.currentEnemy.aiPattern) {
+            return 'attack';
+        }
+
+        const hpRatio = this.currentEnemy.currentHp / this.currentEnemy.maxHp;
+        const aiPattern = this.currentEnemy.aiPattern;
+
+        // HP閾値以下の場合、低HP時の行動
+        if (hpRatio <= aiPattern.lowHpThreshold) {
+            return aiPattern.lowHpAction;
+        }
+
+        // スキル使用判定
+        if (aiPattern.skillChance && Math.random() < aiPattern.skillChance) {
+            return 'skill';
+        }
+
+        return aiPattern.normalAction || 'attack';
+    }
+
+    // 敵の通常攻撃
+    enemyAttack(player) {
         const baseDamage = this.currentEnemy.attack;
         const variance = Math.floor(Math.random() * 3);
         let damage = Math.max(1, baseDamage + variance - Math.floor((player.defense || 5) / 2));
-        
+
+        // パーティメンバーからランダムにターゲットを選択
+        const allMembers = this.getPartyMembers();
+        const target = allMembers[Math.floor(Math.random() * allMembers.length)];
+
         // 防御中はダメージ半減
-        if (player.defending) {
+        if (target.defending) {
             damage = Math.floor(damage / 2);
             this.addBattleLog(`${this.currentEnemy.name}の こうげき！`);
-            this.addBattleLog(`カイトは ぼうぎょしている！`);
-            player.defending = false; // 防御状態をリセット
+            this.addBattleLog(`${target.name}は ぼうぎょしている！`);
+            target.defending = false;
         } else {
             this.addBattleLog(`${this.currentEnemy.name}の こうげき！`);
         }
-        
-        player.hp = Math.max(0, player.hp - damage);
-        this.addBattleLog(`カイトに ${Math.floor(damage)}の ダメージ！`);
-        
+
+        target.hp = Math.max(0, target.hp - damage);
+        this.addBattleLog(`${target.name}に ${Math.floor(damage)}の ダメージ！`);
+
         this.showDamageEffect(damage, false);
         this.updateBattleUI();
-        
-        if (player.hp <= 0) {
-            player.hp = 0;
-            this.updateBattleUI();
+
+        // パーティ全滅チェック
+        if (this.checkPartyWipeout()) {
             setTimeout(() => this.gameOver(), 1500);
         } else {
-            // 次のターンのコマンド選択に戻る
+            // パーティメンバーのステータス異常処理
             setTimeout(() => {
-                this.turnCount++;
-                this.startPlayerTurn();
+                this.processAllMembersStatusAilments(() => {
+                    this.turnCount++;
+                    this.startPlayerTurn();
+                });
             }, 1500);
         }
+    }
+
+    // 敵の防御
+    enemyDefend(player) {
+        this.addBattleLog(`${this.currentEnemy.name}は みをまもっている！`);
+        this.currentEnemy.defending = true;
+
+        // 次のターンへ
+        setTimeout(() => {
+            this.turnCount++;
+            this.startPlayerTurn();
+        }, 1500);
+    }
+
+    // 敵のスキル攻撃
+    enemySkillAttack(player) {
+        const skillDamage = Math.floor(this.currentEnemy.attack * 1.5);
+        const variance = Math.floor(Math.random() * 5);
+        const damage = Math.max(1, skillDamage + variance - Math.floor((player.defense || 5) / 3));
+
+        // パーティメンバーからランダムにターゲットを選択
+        const allMembers = this.getPartyMembers();
+        const target = allMembers[Math.floor(Math.random() * allMembers.length)];
+
+        this.addBattleLog(`${this.currentEnemy.name}の とくしゅこうげき！`);
+
+        target.hp = Math.max(0, target.hp - damage);
+        this.addBattleLog(`${target.name}に ${Math.floor(damage)}の ダメージ！`);
+
+        this.showDamageEffect(damage, false, true);
+
+        // ステータス異常付与判定（30%確率）
+        if (Math.random() < 0.3) {
+            const ailments = ['poison', 'paralysis', 'sleep'];
+            const randomAilment = ailments[Math.floor(Math.random() * ailments.length)];
+            this.applyStatusAilment(target, randomAilment, 3);
+        }
+
+        this.updateBattleUI();
+
+        // パーティ全滅チェック
+        if (this.checkPartyWipeout()) {
+            setTimeout(() => this.gameOver(), 1500);
+        } else {
+            // パーティメンバーのステータス異常処理
+            setTimeout(() => {
+                this.processAllMembersStatusAilments(() => {
+                    this.turnCount++;
+                    this.startPlayerTurn();
+                });
+            }, 1500);
+        }
+    }
+
+    // 全メンバーのステータス異常処理
+    processAllMembersStatusAilments(callback) {
+        const allMembers = this.getPartyMembers();
+        let index = 0;
+
+        const processNext = () => {
+            if (index >= allMembers.length) {
+                callback();
+                return;
+            }
+
+            this.processStatusAilmentsEndTurn(allMembers[index]);
+            index++;
+
+            if (index < allMembers.length) {
+                setTimeout(processNext, 500);
+            } else {
+                callback();
+            }
+        };
+
+        processNext();
+    }
+
+    // パーティ全滅チェック
+    checkPartyWipeout() {
+        const allMembers = this.getPartyMembers();
+        return allMembers.every(member => member.hp <= 0);
     }
     
     // 戦闘勝利
     battleVictory(player) {
         this.waitingForCommand = false;
-        
+
         // コマンドを非表示に
         const commands = document.getElementById('battleCommands');
         if (commands) {
             commands.style.display = 'none';
         }
-        
+
         // 勝利メッセージ
         this.addBattleLog(`${this.currentEnemy.name}を たおした！`);
-        
+
         // 経験値とゴールド獲得
         const expGained = this.currentEnemy.exp || 10;
         const goldGained = this.currentEnemy.gold || 5;
-        
+
         // リザルト表示
         setTimeout(() => {
             this.addBattleLog(`せんとうに しょうり！`);
-            
-            // 経験値付与
-            player.exp = (player.exp || 0) + expGained;
             this.addBattleLog(`${expGained} の けいけんちを かくとく！`);
-            
-            // ゴールド付与
+
+            // ゴールド付与（プレイヤーのみ）
             player.gold = (player.gold || 0) + goldGained;
             this.addBattleLog(`${goldGained} ゴールドを てにいれた！`);
-            
-            // レベルアップチェック
-            const expNeeded = player.level * 100;
-            if (player.exp >= expNeeded) {
-                setTimeout(() => {
-                    player.level++;
-                    
-                    // 基本ステータスを上昇
-                    player.baseMaxHp = (player.baseMaxHp || 100) + 20;
-                    player.baseMaxMp = (player.baseMaxMp || 50) + 10;
-                    player.baseAttack = (player.baseAttack || 10) + 3;
-                    player.baseDefense = (player.baseDefense || 5) + 2;
-                    
-                    // 装備込みのステータスを再計算
-                    if (window.equipmentSystem) {
-                        window.equipmentSystem.recalculatePlayerStats(player);
-                    } else {
-                        player.maxHp = player.baseMaxHp;
-                        player.maxMp = player.baseMaxMp;
-                        player.attack = player.baseAttack;
-                        player.defense = player.baseDefense;
-                    }
-                    
-                    // HP/MPを全回復
-                    player.hp = player.maxHp;
-                    player.mp = player.maxMp;
-                    
-                    this.addBattleLog(`レベルアップ！`);
-                    this.addBattleLog(`レベル ${player.level} になった！`);
-                    this.addBattleLog(`さいだいHPが ${player.maxHp} になった！`);
-                    this.addBattleLog(`さいだいMPが ${player.maxMp} になった！`);
-                    
-                    // UIを更新
-                    if (window.updateUI) {
-                        window.updateUI();
-                    }
-                    
-                    // 戦闘終了
-                    setTimeout(() => this.endBattle(true), 2000);
-                }, 1000);
-            } else {
-                // レベルアップしない場合は戦闘終了
-                setTimeout(() => this.endBattle(true), 2000);
+
+            // 全パーティメンバーに経験値を配分
+            const allMembers = [player];
+            if (window.partySystem) {
+                allMembers.push(...window.partySystem.getMembers());
             }
+
+            // 各メンバーに経験値付与
+            allMembers.forEach(member => {
+                member.exp = (member.exp || 0) + expGained;
+            });
+
+            // ドロップアイテム判定
+            const droppedItems = this.processItemDrops();
+            if (droppedItems.length > 0) {
+                droppedItems.forEach(item => {
+                    this.addBattleLog(`${item.name}を てにいれた！`);
+                });
+            }
+
+            // レベルアップ処理を順番に実行
+            this.processLevelUps(allMembers, 0);
         }, 1000);
+    }
+
+    // ドロップアイテム処理
+    processItemDrops() {
+        const droppedItems = [];
+
+        if (!this.currentEnemy || !this.currentEnemy.dropTable) {
+            return droppedItems;
+        }
+
+        this.currentEnemy.dropTable.forEach(dropEntry => {
+            const roll = Math.random();
+            if (roll < dropEntry.rate) {
+                // アイテムかチェック
+                if (window.itemSystem && window.itemSystem.itemDatabase[dropEntry.id]) {
+                    const success = window.itemSystem.addItem(dropEntry.id, 1);
+                    if (success) {
+                        const itemData = window.itemSystem.itemDatabase[dropEntry.id];
+                        droppedItems.push(itemData);
+                    }
+                }
+                // 装備品かチェック
+                else if (window.equipmentSystem && window.equipmentSystem.equipmentDatabase[dropEntry.id]) {
+                    // 装備品をプレイヤーのインベントリに追加
+                    if (!window.player.equipmentInventory) {
+                        window.player.equipmentInventory = [];
+                    }
+
+                    const equipData = window.equipmentSystem.equipmentDatabase[dropEntry.id];
+                    window.player.equipmentInventory.push({
+                        id: dropEntry.id,
+                        ...equipData
+                    });
+
+                    droppedItems.push({
+                        name: equipData.name,
+                        emoji: equipData.emoji
+                    });
+
+                    console.log(`装備品ドロップ: ${equipData.name}`);
+                }
+            }
+        });
+
+        return droppedItems;
+    }
+
+    // レベルアップ処理を順番に実行
+    processLevelUps(members, index) {
+        if (index >= members.length) {
+            // 全員のレベルアップ処理完了
+            setTimeout(() => this.endBattle(true), 1500);
+            return;
+        }
+
+        const member = members[index];
+        const characterId = member.characterId || 'kaito';
+        const expCurve = window.CHARACTER_GROWTH?.[characterId]?.expCurve || 'normal';
+        const expNeeded = window.calculateExpNeeded ? window.calculateExpNeeded(member.level, expCurve) : member.level * 100;
+
+        if (member.exp >= expNeeded) {
+            setTimeout(() => {
+                this.levelUpCharacter(member);
+                // 次のメンバーのレベルアップチェック
+                this.processLevelUps(members, index);
+            }, 1000);
+        } else {
+            // 次のメンバーへ
+            this.processLevelUps(members, index + 1);
+        }
+    }
+
+    // キャラクターのレベルアップ処理
+    levelUpCharacter(character) {
+        const characterId = character.characterId || 'kaito';
+        const oldLevel = character.level;
+        character.level++;
+
+        // ステータス成長（ランダム幅付き）
+        const hpGain = window.calculateStatGrowth ? window.calculateStatGrowth(characterId, 'hp') : 20;
+        const mpGain = window.calculateStatGrowth ? window.calculateStatGrowth(characterId, 'mp') : 10;
+        const attackGain = window.calculateStatGrowth ? window.calculateStatGrowth(characterId, 'attack') : 3;
+        const defenseGain = window.calculateStatGrowth ? window.calculateStatGrowth(characterId, 'defense') : 2;
+        const magicGain = window.calculateStatGrowth ? window.calculateStatGrowth(characterId, 'magic') : 2;
+        const speedGain = window.calculateStatGrowth ? window.calculateStatGrowth(characterId, 'speed') : 1;
+
+        // 基本ステータスを上昇
+        character.baseMaxHp = (character.baseMaxHp || character.maxHp) + hpGain;
+        character.baseMaxMp = (character.baseMaxMp || character.maxMp) + mpGain;
+        character.baseAttack = (character.baseAttack || character.attack) + attackGain;
+        character.baseDefense = (character.baseDefense || character.defense) + defenseGain;
+        character.baseMagic = (character.baseMagic || character.magic || 0) + magicGain;
+        character.baseSpeed = (character.baseSpeed || character.speed || 5) + speedGain;
+
+        // 装備込みのステータスを再計算（プレイヤーのみ）
+        if (character === window.player && window.equipmentSystem) {
+            window.equipmentSystem.recalculatePlayerStats(character);
+        } else {
+            character.maxHp = character.baseMaxHp;
+            character.maxMp = character.baseMaxMp;
+            character.attack = character.baseAttack;
+            character.defense = character.baseDefense;
+            character.magic = character.baseMagic;
+            character.speed = character.baseSpeed;
+        }
+
+        // HP/MPを全回復
+        character.hp = character.maxHp;
+        character.mp = character.maxMp;
+
+        // レベルアップメッセージ
+        this.addBattleLog(`${character.name}が レベルアップ！`);
+        this.addBattleLog(`レベル ${character.level} になった！`);
+        this.addBattleLog(`HP+${hpGain} MP+${mpGain} 攻撃+${attackGain} 防御+${defenseGain}`);
+
+        // 新規スキル習得チェック
+        this.checkSkillLearning(character, oldLevel);
+
+        // UIを更新
+        if (window.updateUI) {
+            window.updateUI();
+        }
+    }
+
+    // スキル習得チェック
+    checkSkillLearning(character, oldLevel) {
+        const characterId = character.characterId || 'kaito';
+        const skillLearning = window.CHARACTER_GROWTH?.[characterId]?.skillLearning;
+
+        if (!skillLearning || !window.magicSystem) return;
+
+        const newLevel = character.level;
+
+        // レベル範囲内のスキルを習得
+        for (let level = oldLevel + 1; level <= newLevel; level++) {
+            const skills = skillLearning[level];
+            if (skills && Array.isArray(skills)) {
+                skills.forEach(skillId => {
+                    const learned = window.magicSystem.learnMagic(skillId, character);
+                    if (learned) {
+                        const magic = window.magicSystem.magicDatabase[skillId];
+                        if (magic) {
+                            this.addBattleLog(`${character.name}は ${magic.name}を おぼえた！`);
+                        }
+                    }
+                });
+            }
+        }
     }
     
     // 防御

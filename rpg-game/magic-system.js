@@ -189,6 +189,15 @@ class MagicSystem {
         const learnedMagic = this.learnedMagicByCharacter[charId] || {};
         const magic = learnedMagic[magicId];
 
+        console.log('[DEBUG] useMagic:', {
+            magicId,
+            charId,
+            characterName: character.name,
+            learnedMagicKeys: Object.keys(learnedMagic),
+            allCharacterIds: Object.keys(this.learnedMagicByCharacter),
+            magicFound: !!magic
+        });
+
         if (!magic) {
             return { success: false, message: 'この魔法は習得していない！' };
         }
