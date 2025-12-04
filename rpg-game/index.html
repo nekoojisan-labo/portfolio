@@ -109,14 +109,8 @@
             border-radius: 5px;
             padding: 10px;
             font-size: 12px;
-            /* タッチデバイスでは非表示（コントローラーで直感的に操作可能） */
-        }
-
-        /* タッチデバイスでは操作説明を非表示 */
-        @media (hover: none) and (pointer: coarse) {
-            .controls {
-                display: none;
-            }
+            /* フィールド画面では非表示（マップのみ表示） */
+            display: none !important;
         }
 
         .map-info {
@@ -132,6 +126,8 @@
             box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
             backdrop-filter: blur(5px);
             z-index: 200;
+            /* フィールド画面では非表示（マップのみ表示） */
+            display: none !important;
         }
 
         .map-info strong {
@@ -450,12 +446,12 @@
             padding: 5px 10px;
             font-size: 11px;
             color: #ff4444;
-            display: none;
+            /* フィールド画面では非表示（マップのみ表示） */
+            display: none !important;
         }
 
         .encounter-indicator.warning {
-            display: block;
-            animation: pulse 1s infinite;
+            display: none !important;
         }
 
         @keyframes pulse {
