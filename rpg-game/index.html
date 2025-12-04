@@ -1862,16 +1862,27 @@
 
             // 新しいグリッドマップシステム
             try {
+                console.log('[INIT] ========================================');
+                console.log('[INIT] Initializing GridMapSystem...');
                 window.gridMapSystem = new GridMapSystem();
-                console.log('[DEBUG] ✓ GridMapSystem initialized');
+                console.log('[INIT] ✓ GridMapSystem initialized');
+                console.log('[INIT] GridMapSystem type:', typeof window.gridMapSystem);
+                console.log('[INIT] GridMapSystem.render:', typeof window.gridMapSystem.render);
+                console.log('[INIT] Current map:', window.gridMapSystem.currentMap);
 
+                console.log('[INIT] Initializing PlayerGridMovement...');
                 window.playerMovement = new PlayerGridMovement(window.gridMapSystem);
-                console.log('[DEBUG] ✓ PlayerGridMovement initialized');
+                console.log('[INIT] ✓ PlayerGridMovement initialized');
+                console.log('[INIT] PlayerGridMovement type:', typeof window.playerMovement);
+                console.log('[INIT] PlayerGridMovement.render:', typeof window.playerMovement.render);
 
                 // 初期位置を設定
                 const mapData = window.gridMapSystem.maps[window.gridMapSystem.currentMap];
+                console.log('[INIT] Map data:', mapData ? mapData.name : 'NULL');
+                console.log('[INIT] Spawn point:', mapData.spawnPoint);
                 window.playerMovement.setPosition(mapData.spawnPoint.gridX, mapData.spawnPoint.gridY);
-                console.log('[DEBUG] Player spawn at:', mapData.spawnPoint.gridX, mapData.spawnPoint.gridY);
+                console.log('[INIT] ✓ Player spawn at:', mapData.spawnPoint.gridX, mapData.spawnPoint.gridY);
+                console.log('[INIT] ========================================');
 
                 // マップ遷移コールバック
                 window.playerMovement.setOnExitCallback((exit) => {
@@ -3366,7 +3377,21 @@
             if (!battleSystem.inBattle) {
                 // デバッグ: 最初の数フレームだけログ出力
                 if (gameLoopCounter < 3) {
-                    console.log('[DEBUG] gameLoop frame', gameLoopCounter, 'gridMapSystem:', window.gridMapSystem ? 'OK' : 'NULL');
+                    console.log('[DEBUG] ========================================');
+                    console.log('[DEBUG] gameLoop frame', gameLoopCounter);
+                    console.log('[DEBUG] gameStarted:', gameStarted);
+                    console.log('[DEBUG] window.gridMapSystem:', window.gridMapSystem ? 'EXISTS' : 'NULL');
+                    console.log('[DEBUG] window.playerMovement:', window.playerMovement ? 'EXISTS' : 'NULL');
+                    if (window.gridMapSystem) {
+                        console.log('[DEBUG] gridMapSystem.currentMap:', window.gridMapSystem.currentMap);
+                        console.log('[DEBUG] gridMapSystem.render:', typeof window.gridMapSystem.render);
+                    }
+                    if (window.playerMovement) {
+                        console.log('[DEBUG] playerMovement.gridX:', window.playerMovement.gridX);
+                        console.log('[DEBUG] playerMovement.gridY:', window.playerMovement.gridY);
+                        console.log('[DEBUG] playerMovement.render:', typeof window.playerMovement.render);
+                    }
+                    console.log('[DEBUG] ========================================');
                     gameLoopCounter++;
                 }
 
