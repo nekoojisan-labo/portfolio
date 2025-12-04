@@ -1881,6 +1881,13 @@
                     if (spawn) {
                         window.playerMovement.setPosition(spawn.gridX, spawn.gridY);
                         console.log('[MAP TRANSITION] Moved to', exit.targetMap, 'at', spawn.gridX, spawn.gridY);
+
+                        // BGM切り替え
+                        const newMap = window.gridMapSystem.maps[exit.targetMap];
+                        if (newMap && newMap.bgm && window.bgmSystem) {
+                            console.log('[BGM] Changing to new map BGM:', newMap.bgm);
+                            window.bgmSystem.changeFieldBGM(newMap.bgm);
+                        }
                     }
                 });
 
@@ -1979,10 +1986,22 @@
             updateMapInfo();
             gameLoop();
 
-            // 初期マップのBGM再生
+            // オープニングBGMを確実に停止してからフィールドBGMを再生
+            console.log('[BGM] Stopping opening BGM and starting field BGM');
+
+            // 旧マップシステムのBGM（後で削除予定）
             const initialMap = mapSystem.maps[mapSystem.currentMap];
             if (initialMap && initialMap.bgm) {
                 bgmSystem.changeFieldBGM(initialMap.bgm);
+            }
+
+            // 新グリッドマップシステムのBGM
+            if (window.gridMapSystem) {
+                const gridMap = window.gridMapSystem.maps[window.gridMapSystem.currentMap];
+                if (gridMap && gridMap.bgm) {
+                    console.log('[BGM] Starting grid map BGM:', gridMap.bgm);
+                    bgmSystem.changeFieldBGM(gridMap.bgm);
+                }
             }
 
             // チャプター1開始イベントを自動再生
