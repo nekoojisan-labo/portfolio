@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>グリッドマップシステム - テスト</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(45deg, #1a1a2e, #16213e);
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .game-container {
+            border: 3px solid #0f3460;
+            border-radius: 10px;
+            background: #0a0a0a;
+            box-shadow: 0 0 20px rgba(15, 52, 96, 0.5);
+            overflow: hidden;
+        }
+
+        #gameCanvas {
+            display: block;
+            background: #1a1a2e;
+        }
+
+        .info-panel {
+            background: rgba(0, 0, 0, 0.9);
+            border-top: 2px solid #0f3460;
+            padding: 15px;
+            color: #00ffff;
+            font-size: 14px;
+        }
+
+        .info-row {
+            margin: 5px 0;
+        }
+
+        .controls-help {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #00ffff;
+            border-radius: 8px;
+            padding: 15px;
+            font-size: 12px;
+            max-width: 250px;
+        }
+
+        .controls-help h3 {
+            color: #00ffff;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .controls-help div {
+            margin: 5px 0;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <canvas id="gameCanvas" width="800" height="576"></canvas>
+        <div class="info-panel">
+            <div class="info-row">
+                <strong>マップ:</strong> <span id="mapName">新宿 - 都市エリア</span>
+            </div>
+            <div class="info-row">
+                <strong>座標:</strong> グリッド(<span id="gridPos">25, 20</span>) / ピクセル(<span id="pixelPos">400, 320</span>)
+            </div>
+            <div class="info-row">
+                <strong>歩数:</strong> <span id="stepCount">0</span> | <strong>向き:</strong> <span id="facing">down</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls-help">
+        <h3>操作方法</h3>
+        <div>↑↓←→ : 移動（1マスずつ）</div>
+        <div>WASD : 移動</div>
+        <div style="margin-top: 10px; color: #00ffff;">
+            ※ ドラクエ風のグリッド移動<br>
+            ※ 壁や障害物は通行不可<br>
+            ※ 草地でエンカウント発生
+        </div>
+    </div>
+
+    <!-- スクリプト読み込み -->
+    <script src="map-system-grid.js"></script>
+    <script src="player-grid-movement.js"></script>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // システム初期化
+        let gridMapSystem = null;
+        let playerMovement = null;
+
+        function initGame() {
+            console.log('[INIT] Initializing Grid Map System...');
+
+            // グリッドマップシステム初期化
+            gridMapSystem = new GridMapSystem();
+
+            // プレイヤー移動システム初期化
+            playerMovement = new PlayerGridMovement(gridMapSystem);
+
+            // 初期マップのスポーン地点に配置
+            const mapData = gridMapSystem.maps[gridMapSystem.currentMap];
+            playerMovement.setPosition(mapData.spawnPoint.gridX, mapData.spawnPoint.gridY);
+
+            // コールバック設定
+            playerMovement.setOnStepCallback((stepCount) => {
+                document.getElementById('stepCount').textContent = stepCount;
+            });
+
+            playerMovement.setOnExitCallback((exit) => {
+                console.log('[EXIT] Detected:', exit);
+                // マップ切り替え処理
+                handleMapTransition(exit.targetMap, exit.direction);
+            });
+
+            playerMovement.setOnEncounterCallback(() => {
+                console.log('[ENCOUNTER] Random encounter!');
+                alert('敵が現れた！（戦闘システムは未実装）');
+            });
+
+            console.log('[INIT] Game initialized successfully');
+
+            // ゲームループ開始
+            gameLoop();
+        }
+
+        // マップ遷移処理
+        function handleMapTransition(targetMap, direction) {
+            console.log(`[TRANSITION] Moving to ${targetMap} from ${direction}`);
+
+            // マップ変更
+            const spawn = gridMapSystem.changeMap(targetMap);
+
+            if (spawn) {
+                // プレイヤー位置を更新
+                playerMovement.setPosition(spawn.gridX, spawn.gridY);
+
+                // UI更新
+                const mapData = gridMapSystem.maps[targetMap];
+                document.getElementById('mapName').textContent = mapData.name;
+            }
+        }
+
+        // キー入力管理
+        const keys = {};
+        let lastProcessedKey = null;
+        let lastKeyTime = 0;
+
+        document.addEventListener('keydown', (e) => {
+            // 同じキーの連続入力を防ぐ
+            const now = Date.now();
+            if (e.key === lastProcessedKey && now - lastKeyTime < 150) {
+                return;
+            }
+
+            if (!keys[e.key]) {
+                keys[e.key] = true;
+
+                // 移動キー処理
+                let moved = false;
+                if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+                    moved = playerMovement.tryMove('up');
+                } else if (e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+                    moved = playerMovement.tryMove('down');
+                } else if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') {
+                    moved = playerMovement.tryMove('left');
+                } else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') {
+                    moved = playerMovement.tryMove('right');
+                }
+
+                if (moved) {
+                    lastProcessedKey = e.key;
+                    lastKeyTime = now;
+                }
+            }
+
+            e.preventDefault();
+        });
+
+        document.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+
+        // ゲームループ
+        function gameLoop() {
+            // クリア
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // マップ描画
+            if (gridMapSystem) {
+                gridMapSystem.render(ctx, canvas);
+            }
+
+            // プレイヤー更新
+            if (playerMovement) {
+                playerMovement.update();
+                playerMovement.render(ctx);
+
+                // UI更新
+                document.getElementById('gridPos').textContent =
+                    `${playerMovement.gridX}, ${playerMovement.gridY}`;
+                document.getElementById('pixelPos').textContent =
+                    `${Math.floor(playerMovement.pixelX)}, ${Math.floor(playerMovement.pixelY)}`;
+                document.getElementById('facing').textContent = playerMovement.facing;
+            }
+
+            // 次フレーム
+            requestAnimationFrame(gameLoop);
+        }
+
+        // 初期化実行
+        window.addEventListener('load', () => {
+            setTimeout(initGame, 100);
+        });
+    </script>
+</body>
+</html>
