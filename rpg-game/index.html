@@ -1096,9 +1096,11 @@
 
         <!-- Opening Story Screen -->
         <div class="title-screen" id="openingScreen" style="display: none;">
-            <div style="max-width: 800px; width: 90%; text-align: left; line-height: 1.8; background: rgba(0, 0, 0, 0.7); padding: 40px; border-radius: 10px; border: 2px solid #00ffff;">
-                <div id="openingText" style="font-size: 16px; color: #ddd; min-height: 300px;"></div>
-                <div style="text-align: center; margin-top: 30px;">
+            <div style="max-width: 800px; width: 90%; background: rgba(0, 0, 0, 0.7); border-radius: 10px; border: 2px solid #00ffff; display: flex; flex-direction: column; height: 500px;">
+                <div style="flex: 1; padding: 40px; padding-bottom: 20px; overflow-y: auto; text-align: left; line-height: 1.8;">
+                    <div id="openingText" style="font-size: 16px; color: #ddd;"></div>
+                </div>
+                <div style="padding: 20px 40px; border-top: 1px solid rgba(0, 255, 255, 0.2); text-align: center; flex-shrink: 0;">
                     <button class="start-button" onclick="nextOpeningMessage()" id="openingButton">次へ →</button>
                     <div style="margin-top: 15px; font-size: 12px; color: #888;">[ Z / Space / Enter キーでも進めます ]</div>
                 </div>
