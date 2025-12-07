@@ -157,23 +157,23 @@ class MapSystem {
             name: '明治神宮 - 参道',
             bgColor: '#1a1a0a',
             gridColor: '#2a2a1a',
-            encounterRate: 'none',  // 神聖な場所、エンカウントなし
+            encounterRate: 'none',
             area: 'shrine',
-            bgm: 'shrine',  // BGM追加
+            bgm: 'shrine',
             buildings: [
-                { x: 370, y: 120, width: 70, height: 105, color: '#5a4a3a', borderColor: '#7a6a5a', type: 'torii' },
+                { x: 370, y: 120, width: 70, height: 105, color: '#5a4a3a', borderColor: '#7a6a5a', type: 'torii', enterable: true, enterTo: 'shrine_inner' },
                 { x: 130, y: 220, width: 42, height: 140, color: '#4a3a2a', borderColor: '#6a5a4a', type: 'lantern' },
                 { x: 628, y: 220, width: 42, height: 140, color: '#4a3a2a', borderColor: '#6a5a4a', type: 'lantern' }
-                // 神社の建物を削除（南の出口と重なっていたため）
             ],
             exits: [
                 { x: 300, y: 410, width: 200, height: 20, to: 'shinjuku_city', direction: 'south' },
-                { x: 770, y: 200, width: 30, height: 200, to: 'biodome_garden', direction: 'east' }
+                { x: 770, y: 200, width: 30, height: 200, to: 'biodome_garden', direction: 'east' },
+                { x: 370, y: 100, width: 70, height: 20, to: 'shrine_inner', direction: 'north', label: '本殿へ' }
             ],
             npcs: [
                 {
                     x: 400,
-                    y: 250,
+                    y: 280,
                     emoji: '👴',
                     name: '老神主',
                     dialogue: '神々の力は、まだこの地に眠っている...選ばれし者よ。',
@@ -181,7 +181,7 @@ class MapSystem {
                     questDialogue: 'ついに来たか、神威を継ぐ者よ。この神社には古の神々の力が眠っている。東の植物園には、生命の力を司る神が宿る場所がある。訪ねてみるがよい。'
                 }
             ],
-            savePoint: { x: 400, y: 350, emoji: '⛩️', name: 'セーブポイント' }
+            savePoint: { x: 400, y: 370, emoji: '⛩️', name: 'セーブポイント' }
         };
         
         // 都庁エリア
@@ -189,19 +189,20 @@ class MapSystem {
             name: '東京都庁 - エントランス',
             bgColor: '#0a0a1a',
             gridColor: '#1a1a3a',
-            encounterRate: 'high',  // 敵の本拠地に近い
+            encounterRate: 'high',
             area: 'city',
-            bgm: 'tokyo_gov',  // BGM追加
+            bgm: 'tokyo_gov',
             buildings: [
                 // 上の壁
                 { x: 230, y: 120, width: 280, height: 35, color: '#2a2a4a', borderColor: '#4a4a6a', type: 'wall' },
                 // 下の壁
                 { x: 230, y: 375, width: 280, height: 35, color: '#2a2a4a', borderColor: '#4a4a6a', type: 'wall' },
-                // エレベーター
-                { x: 370, y: 220, width: 70, height: 70, color: '#4a4a7a', borderColor: '#6a6a9a', type: 'elevator' }
+                // エレベーター（上階へ）
+                { x: 370, y: 220, width: 70, height: 70, color: '#4a4a7a', borderColor: '#6a6a9a', type: 'elevator', enterable: true, enterTo: 'tokyo_gov_floor2' }
             ],
             exits: [
-                { x: 0, y: 200, width: 30, height: 200, to: 'shinjuku_city', direction: 'west' }
+                { x: 0, y: 200, width: 30, height: 200, to: 'shinjuku_city', direction: 'west' },
+                { x: 370, y: 200, width: 70, height: 20, to: 'tokyo_gov_floor2', direction: 'north', label: '2階へ' }
             ],
             npcs: [
                 { x: 300, y: 300, emoji: '🤖', name: 'セキュリティドローン', dialogue: '警告：不正アクセスを検知。', hostile: true },
@@ -257,29 +258,27 @@ class MapSystem {
             gridColor: '#2f1f2f',
             encounterRate: 'extreme',
             area: 'dungeon',
-            bgm: 'deep_dungeon',  // BGM追加
+            bgm: 'deep_dungeon',
             buildings: [
                 { x: 0, y: 0, width: 800, height: 35, color: '#1a1a2f', borderColor: '#3a3a4f', type: 'wall' },
                 { x: 0, y: 395, width: 800, height: 35, color: '#1a1a2f', borderColor: '#3a3a4f', type: 'wall' },
                 { x: 0, y: 0, width: 35, height: 430, color: '#1a1a2f', borderColor: '#3a3a4f', type: 'wall' },
                 { x: 765, y: 0, width: 35, height: 430, color: '#1a1a2f', borderColor: '#3a3a4f', type: 'wall' },
 
-                // 複雑な迷路構造（サイズ縮小）
+                // 複雑な迷路構造
                 { x: 170, y: 110, width: 140, height: 28, color: '#2a2a3f', borderColor: '#4a4a5f', type: 'wall' },
                 { x: 490, y: 110, width: 140, height: 28, color: '#2a2a3f', borderColor: '#4a4a5f', type: 'wall' },
                 { x: 170, y: 342, width: 140, height: 28, color: '#2a2a3f', borderColor: '#4a4a5f', type: 'wall' },
                 { x: 490, y: 342, width: 140, height: 28, color: '#2a2a3f', borderColor: '#4a4a5f', type: 'wall' },
-                { x: 370, y: 210, width: 70, height: 140, color: '#2a2a3f', borderColor: '#4a4a5f', type: 'wall' },
-
-                // ボス部屋
-                { x: 320, y: 260, width: 140, height: 70, color: '#6a2a2a', borderColor: '#aa4a4a', type: 'boss_area' }
+                { x: 370, y: 210, width: 70, height: 100, color: '#2a2a3f', borderColor: '#4a4a5f', type: 'wall' }
             ],
             exits: [
-                { x: 300, y: 0, width: 200, height: 20, to: 'deep_tunnel', direction: 'north' }
+                { x: 300, y: 0, width: 200, height: 20, to: 'deep_tunnel', direction: 'north' },
+                { x: 300, y: 410, width: 200, height: 20, to: 'deep_tunnel_3', direction: 'south' }
             ],
             npcs: [
-                { x: 200, y: 300, emoji: '💀', name: 'ネクロマンサー', dialogue: '死者の軍団よ、目覚めよ！', hostile: true, level: 5 },
-                { x: 600, y: 300, emoji: '🐉', name: 'データドラゴン', dialogue: 'この深淵で眠りを妨げるとは...', hostile: true, level: 6, boss: true }
+                { x: 200, y: 200, emoji: '💀', name: 'ネクロマンサー', dialogue: '死者の軍団よ、目覚めよ！', hostile: true, level: 5 },
+                { x: 600, y: 200, emoji: '🐉', name: 'データドラゴン', dialogue: 'この深淵で眠りを妨げるとは...', hostile: true, level: 6 }
             ]
         };
         
@@ -331,9 +330,9 @@ class MapSystem {
             gridColor: '#2e4e2e',
             encounterRate: 'none',
             area: 'town',
-            bgm: 'residential',  // BGM追加
+            bgm: 'residential',
             buildings: [
-                { x: 120, y: 110, width: 70, height: 56, color: '#3e4e3e', borderColor: '#5e6e5e', type: 'house' },
+                { x: 120, y: 110, width: 70, height: 56, color: '#3e4e3e', borderColor: '#5e6e5e', type: 'house', enterable: true, enterTo: 'house_1' },
                 { x: 270, y: 110, width: 70, height: 56, color: '#4e3e3e', borderColor: '#6e5e5e', type: 'house' },
                 { x: 520, y: 110, width: 70, height: 56, color: '#3e3e4e', borderColor: '#5e5e6e', type: 'house' },
                 { x: 120, y: 310, width: 70, height: 56, color: '#4e4e3e', borderColor: '#6e6e5e', type: 'house' },
@@ -352,6 +351,422 @@ class MapSystem {
             ],
             savePoint: { x: 350, y: 250, emoji: '💤', name: '公園のベンチ' }
         };
+
+        // ==========================================
+        // ショップ内部マップ
+        // ==========================================
+
+        // 武器店内
+        this.maps.shop_weapon = {
+            name: '武器店 - リョウの店',
+            bgColor: '#1a2a1a',
+            gridColor: '#2a3a2a',
+            encounterRate: 'none',
+            area: 'shop',
+            bgm: 'shop',
+            buildings: [
+                // カウンター
+                { x: 300, y: 100, width: 200, height: 40, color: '#5a4a2a', borderColor: '#7a6a4a', type: 'counter' },
+                // 武器陳列棚
+                { x: 50, y: 50, width: 80, height: 120, color: '#3a3a2a', borderColor: '#5a5a4a', type: 'shelf' },
+                { x: 670, y: 50, width: 80, height: 120, color: '#3a3a2a', borderColor: '#5a5a4a', type: 'shelf' },
+                // 武器ラック
+                { x: 150, y: 200, width: 60, height: 100, color: '#4a3a2a', borderColor: '#6a5a4a', type: 'weapon_rack' },
+                { x: 590, y: 200, width: 60, height: 100, color: '#4a3a2a', borderColor: '#6a5a4a', type: 'weapon_rack' }
+            ],
+            exits: [
+                { x: 350, y: 410, width: 100, height: 20, to: 'shopping_district', direction: 'south', spawnX: 112, spawnY: 180 }
+            ],
+            npcs: [
+                { x: 400, y: 120, emoji: '🗡️', name: '武器商人リョウ', dialogue: 'いらっしゃい！最新の神器武器を取り揃えてるよ！', shop: true, shopType: 'weapons' }
+            ]
+        };
+
+        // 防具店内
+        this.maps.shop_armor = {
+            name: '防具店 - サクラの店',
+            bgColor: '#2a1a1a',
+            gridColor: '#3a2a2a',
+            encounterRate: 'none',
+            area: 'shop',
+            bgm: 'shop',
+            buildings: [
+                { x: 300, y: 100, width: 200, height: 40, color: '#5a3a3a', borderColor: '#7a5a5a', type: 'counter' },
+                { x: 50, y: 50, width: 100, height: 150, color: '#3a2a2a', borderColor: '#5a4a4a', type: 'armor_display' },
+                { x: 650, y: 50, width: 100, height: 150, color: '#3a2a2a', borderColor: '#5a4a4a', type: 'armor_display' },
+                { x: 200, y: 250, width: 80, height: 80, color: '#4a3a3a', borderColor: '#6a5a5a', type: 'mannequin' },
+                { x: 520, y: 250, width: 80, height: 80, color: '#4a3a3a', borderColor: '#6a5a5a', type: 'mannequin' }
+            ],
+            exits: [
+                { x: 350, y: 410, width: 100, height: 20, to: 'shopping_district', direction: 'south', spawnX: 262, spawnY: 180 }
+            ],
+            npcs: [
+                { x: 400, y: 120, emoji: '🛡️', name: '防具商人サクラ', dialogue: 'お疲れさま！丈夫な防具なら任せて！', shop: true, shopType: 'armor' }
+            ]
+        };
+
+        // 道具店内
+        this.maps.shop_item = {
+            name: '道具店 - ユウキの店',
+            bgColor: '#1a1a2a',
+            gridColor: '#2a2a3a',
+            encounterRate: 'none',
+            area: 'shop',
+            bgm: 'shop',
+            buildings: [
+                { x: 300, y: 100, width: 200, height: 40, color: '#3a3a5a', borderColor: '#5a5a7a', type: 'counter' },
+                { x: 50, y: 80, width: 120, height: 200, color: '#2a2a4a', borderColor: '#4a4a6a', type: 'potion_shelf' },
+                { x: 630, y: 80, width: 120, height: 200, color: '#2a2a4a', borderColor: '#4a4a6a', type: 'potion_shelf' },
+                { x: 350, y: 250, width: 100, height: 60, color: '#3a3a4a', borderColor: '#5a5a6a', type: 'display_case' }
+            ],
+            exits: [
+                { x: 350, y: 410, width: 100, height: 20, to: 'shopping_district', direction: 'south', spawnX: 412, spawnY: 180 }
+            ],
+            npcs: [
+                { x: 400, y: 120, emoji: '🧪', name: 'アイテム商人ユウキ', dialogue: 'ポーション、回復アイテム何でもあります！', shop: true, shopType: 'items' }
+            ]
+        };
+
+        // 魔法店内
+        this.maps.shop_magic = {
+            name: '魔法店 - ミコトの店',
+            bgColor: '#2a1a2a',
+            gridColor: '#3a2a3a',
+            encounterRate: 'none',
+            area: 'shop',
+            bgm: 'shop_magic',
+            buildings: [
+                { x: 300, y: 100, width: 200, height: 40, color: '#4a2a4a', borderColor: '#6a4a6a', type: 'counter' },
+                { x: 100, y: 150, width: 80, height: 80, color: '#3a1a3a', borderColor: '#5a3a5a', type: 'crystal_ball' },
+                { x: 620, y: 150, width: 80, height: 80, color: '#3a1a3a', borderColor: '#5a3a5a', type: 'magic_circle' },
+                { x: 50, y: 50, width: 60, height: 100, color: '#2a1a2a', borderColor: '#4a3a4a', type: 'bookshelf' },
+                { x: 690, y: 50, width: 60, height: 100, color: '#2a1a2a', borderColor: '#4a3a4a', type: 'bookshelf' }
+            ],
+            exits: [
+                { x: 350, y: 410, width: 100, height: 20, to: 'shopping_district', direction: 'south', spawnX: 562, spawnY: 180 }
+            ],
+            npcs: [
+                { x: 400, y: 120, emoji: '🔮', name: '魔法商人ミコト', dialogue: '古の魔法アイテムを求めるなら...', shop: true, shopType: 'magic' }
+            ]
+        };
+
+        // 宿屋内
+        this.maps.shop_inn = {
+            name: '宿屋 - やすらぎの宿',
+            bgColor: '#2a2a1a',
+            gridColor: '#3a3a2a',
+            encounterRate: 'none',
+            area: 'shop',
+            bgm: 'inn',
+            buildings: [
+                { x: 300, y: 80, width: 200, height: 40, color: '#5a4a3a', borderColor: '#7a6a5a', type: 'reception' },
+                { x: 50, y: 150, width: 120, height: 100, color: '#4a3a2a', borderColor: '#6a5a4a', type: 'bed' },
+                { x: 630, y: 150, width: 120, height: 100, color: '#4a3a2a', borderColor: '#6a5a4a', type: 'bed' },
+                { x: 350, y: 280, width: 100, height: 80, color: '#3a3a2a', borderColor: '#5a5a4a', type: 'table' }
+            ],
+            exits: [
+                { x: 350, y: 410, width: 100, height: 20, to: 'shopping_district', direction: 'south', spawnX: 112, spawnY: 380 }
+            ],
+            npcs: [
+                { x: 400, y: 100, emoji: '🏠', name: '宿屋の主人', dialogue: 'お疲れ様！ゆっくり休んでいってくださいな。', shop: true, shopType: 'inn' }
+            ],
+            savePoint: { x: 400, y: 350, emoji: '🛏️', name: 'ベッド' }
+        };
+
+        // ギルド内
+        this.maps.shop_guild = {
+            name: '冒険者ギルド',
+            bgColor: '#1a1a1a',
+            gridColor: '#2a2a2a',
+            encounterRate: 'none',
+            area: 'shop',
+            bgm: 'guild',
+            buildings: [
+                { x: 250, y: 80, width: 300, height: 50, color: '#4a4a4a', borderColor: '#6a6a6a', type: 'guild_counter' },
+                { x: 50, y: 150, width: 100, height: 150, color: '#3a3a3a', borderColor: '#5a5a5a', type: 'quest_board' },
+                { x: 650, y: 150, width: 100, height: 150, color: '#3a3a3a', borderColor: '#5a5a5a', type: 'ranking_board' },
+                { x: 300, y: 280, width: 200, height: 80, color: '#2a2a2a', borderColor: '#4a4a4a', type: 'lounge_table' }
+            ],
+            exits: [
+                { x: 350, y: 410, width: 100, height: 20, to: 'shopping_district', direction: 'south', spawnX: 562, spawnY: 380 }
+            ],
+            npcs: [
+                { x: 400, y: 100, emoji: '⚔️', name: 'ギルドマスター', dialogue: 'クエストの受注・報告はこちらで。', shop: true, shopType: 'guild' },
+                { x: 200, y: 320, emoji: '🧝', name: '冒険者A', dialogue: '最近、地下ダンジョンが活発だって噂だぜ。' },
+                { x: 600, y: 320, emoji: '🧙', name: '冒険者B', dialogue: '神威の力...伝説だと思っていたが...' }
+            ]
+        };
+
+        // 銀行内
+        this.maps.shop_bank = {
+            name: '新宿中央銀行',
+            bgColor: '#1a1a2a',
+            gridColor: '#2a2a3a',
+            encounterRate: 'none',
+            area: 'shop',
+            bgm: 'bank',
+            buildings: [
+                { x: 200, y: 80, width: 400, height: 50, color: '#3a3a5a', borderColor: '#5a5a7a', type: 'bank_counter' },
+                { x: 50, y: 200, width: 80, height: 120, color: '#2a2a4a', borderColor: '#4a4a6a', type: 'atm' },
+                { x: 670, y: 200, width: 80, height: 120, color: '#2a2a4a', borderColor: '#4a4a6a', type: 'atm' },
+                { x: 350, y: 300, width: 100, height: 60, color: '#4a4a5a', borderColor: '#6a6a7a', type: 'vault_door' }
+            ],
+            exits: [
+                { x: 350, y: 410, width: 100, height: 20, to: 'shopping_district', direction: 'south', spawnX: 262, spawnY: 380 }
+            ],
+            npcs: [
+                { x: 400, y: 100, emoji: '💰', name: '銀行員', dialogue: 'お金の預入・引出しをどうぞ。', shop: true, shopType: 'bank' }
+            ]
+        };
+
+        // ==========================================
+        // 施設内部マップ
+        // ==========================================
+
+        // 民家1
+        this.maps.house_1 = {
+            name: '民家',
+            bgColor: '#2a2a2a',
+            gridColor: '#3a3a3a',
+            encounterRate: 'none',
+            area: 'house',
+            bgm: 'residential',
+            buildings: [
+                { x: 50, y: 50, width: 150, height: 100, color: '#4a3a3a', borderColor: '#6a5a5a', type: 'bed' },
+                { x: 600, y: 50, width: 150, height: 100, color: '#3a4a3a', borderColor: '#5a6a5a', type: 'kitchen' },
+                { x: 300, y: 200, width: 200, height: 100, color: '#3a3a4a', borderColor: '#5a5a6a', type: 'living_table' }
+            ],
+            exits: [
+                { x: 350, y: 410, width: 100, height: 20, to: 'residential_area', direction: 'south', spawnX: 155, spawnY: 180 }
+            ],
+            npcs: [
+                { x: 400, y: 250, emoji: '👨', name: '住人', dialogue: 'うちは普通の家だよ。でも地下に何かあるって噂が...' }
+            ],
+            treasures: [
+                { x: 700, y: 350, item: 'ヒールポーション', opened: false }
+            ]
+        };
+
+        // 神社本殿内
+        this.maps.shrine_inner = {
+            name: '明治神宮 - 本殿',
+            bgColor: '#1a1a0a',
+            gridColor: '#2a2a1a',
+            encounterRate: 'none',
+            area: 'shrine',
+            bgm: 'shrine_inner',
+            buildings: [
+                { x: 300, y: 50, width: 200, height: 80, color: '#5a4a2a', borderColor: '#7a6a4a', type: 'altar' },
+                { x: 100, y: 150, width: 60, height: 150, color: '#4a3a1a', borderColor: '#6a5a3a', type: 'shrine_pillar' },
+                { x: 640, y: 150, width: 60, height: 150, color: '#4a3a1a', borderColor: '#6a5a3a', type: 'shrine_pillar' },
+                { x: 350, y: 200, width: 100, height: 60, color: '#6a5a3a', borderColor: '#8a7a5a', type: 'offering_box' }
+            ],
+            exits: [
+                { x: 350, y: 410, width: 100, height: 20, to: 'shrine_path', direction: 'south', spawnX: 400, spawnY: 280 }
+            ],
+            npcs: [
+                { x: 400, y: 100, emoji: '⛩️', name: '御神体', dialogue: '（神聖な力を感じる...）' }
+            ],
+            savePoint: { x: 400, y: 300, emoji: '✨', name: '神聖なる祭壇' }
+        };
+
+        // 都庁2階
+        this.maps.tokyo_gov_floor2 = {
+            name: '東京都庁 - 2階',
+            bgColor: '#0a0a1a',
+            gridColor: '#1a1a3a',
+            encounterRate: 'high',
+            area: 'dungeon',
+            bgm: 'tokyo_gov',
+            buildings: [
+                { x: 0, y: 0, width: 800, height: 35, color: '#1a1a3a', borderColor: '#3a3a5a', type: 'wall' },
+                { x: 0, y: 395, width: 800, height: 35, color: '#1a1a3a', borderColor: '#3a3a5a', type: 'wall' },
+                { x: 0, y: 0, width: 35, height: 430, color: '#1a1a3a', borderColor: '#3a3a5a', type: 'wall' },
+                { x: 765, y: 0, width: 35, height: 430, color: '#1a1a3a', borderColor: '#3a3a5a', type: 'wall' },
+                { x: 200, y: 150, width: 150, height: 100, color: '#2a2a4a', borderColor: '#4a4a6a', type: 'server_room' },
+                { x: 450, y: 150, width: 150, height: 100, color: '#2a2a4a', borderColor: '#4a4a6a', type: 'control_room' }
+            ],
+            exits: [
+                { x: 350, y: 410, width: 100, height: 20, to: 'tokyo_gov', direction: 'south', spawnX: 405, spawnY: 280 },
+                { x: 350, y: 0, width: 100, height: 20, to: 'tokyo_gov_floor3', direction: 'north' }
+            ],
+            npcs: [
+                { x: 300, y: 300, emoji: '🤖', name: 'ガードロボ', dialogue: '侵入者を排除する。', hostile: true, level: 4 },
+                { x: 500, y: 300, emoji: '🤖', name: 'ガードロボ', dialogue: '侵入者を排除する。', hostile: true, level: 4 }
+            ]
+        };
+
+        // 都庁3階（ボスエリア前）
+        this.maps.tokyo_gov_floor3 = {
+            name: '東京都庁 - 最上階',
+            bgColor: '#050510',
+            gridColor: '#151530',
+            encounterRate: 'very_high',
+            area: 'dungeon',
+            bgm: 'boss_area',
+            buildings: [
+                { x: 0, y: 0, width: 800, height: 35, color: '#1a1a3a', borderColor: '#3a3a5a', type: 'wall' },
+                { x: 0, y: 395, width: 800, height: 35, color: '#1a1a3a', borderColor: '#3a3a5a', type: 'wall' },
+                { x: 0, y: 0, width: 35, height: 430, color: '#1a1a3a', borderColor: '#3a3a5a', type: 'wall' },
+                { x: 765, y: 0, width: 35, height: 430, color: '#1a1a3a', borderColor: '#3a3a5a', type: 'wall' },
+                { x: 300, y: 100, width: 200, height: 150, color: '#4a1a1a', borderColor: '#6a3a3a', type: 'boss_throne' }
+            ],
+            exits: [
+                { x: 350, y: 410, width: 100, height: 20, to: 'tokyo_gov_floor2', direction: 'south' }
+            ],
+            npcs: [
+                { x: 400, y: 180, emoji: '🦾', name: 'アーク・プライム', dialogue: '人間よ...お前たちの時代は終わりだ。', hostile: true, level: 10, boss: true }
+            ],
+            savePoint: { x: 100, y: 350, emoji: '💠', name: '緊急セーブポイント' }
+        };
+
+        // ==========================================
+        // ダンジョン追加階層
+        // ==========================================
+
+        // 深層地下トンネル第3層
+        this.maps.deep_tunnel_3 = {
+            name: '深層地下トンネル - 第3層',
+            bgColor: '#080810',
+            gridColor: '#1f1f2f',
+            encounterRate: 'extreme',
+            area: 'dungeon',
+            bgm: 'deep_dungeon',
+            buildings: [
+                { x: 0, y: 0, width: 800, height: 35, color: '#1a1a2f', borderColor: '#3a3a4f', type: 'wall' },
+                { x: 0, y: 395, width: 800, height: 35, color: '#1a1a2f', borderColor: '#3a3a4f', type: 'wall' },
+                { x: 0, y: 0, width: 35, height: 430, color: '#1a1a2f', borderColor: '#3a3a4f', type: 'wall' },
+                { x: 765, y: 0, width: 35, height: 430, color: '#1a1a2f', borderColor: '#3a3a4f', type: 'wall' },
+                // 複雑な迷路
+                { x: 100, y: 100, width: 200, height: 25, color: '#2a2a3f', borderColor: '#4a4a5f', type: 'wall' },
+                { x: 500, y: 100, width: 200, height: 25, color: '#2a2a3f', borderColor: '#4a4a5f', type: 'wall' },
+                { x: 250, y: 200, width: 25, height: 150, color: '#2a2a3f', borderColor: '#4a4a5f', type: 'wall' },
+                { x: 525, y: 200, width: 25, height: 150, color: '#2a2a3f', borderColor: '#4a4a5f', type: 'wall' },
+                { x: 350, y: 300, width: 100, height: 25, color: '#2a2a3f', borderColor: '#4a4a5f', type: 'wall' }
+            ],
+            exits: [
+                { x: 350, y: 0, width: 100, height: 20, to: 'deep_tunnel_2', direction: 'north' },
+                { x: 350, y: 410, width: 100, height: 20, to: 'deep_tunnel_4', direction: 'south' }
+            ],
+            npcs: [
+                { x: 150, y: 250, emoji: '👻', name: 'ファントム', dialogue: 'ウゥゥ...', hostile: true, level: 6 },
+                { x: 650, y: 250, emoji: '🦇', name: 'ダークバット群', dialogue: 'キィィィ！', hostile: true, level: 5 },
+                { x: 400, y: 350, emoji: '💀', name: 'スケルトンナイト', dialogue: '...侵入者を...排除...', hostile: true, level: 7 }
+            ],
+            treasures: [
+                { x: 100, y: 350, item: 'メガヒールポーション', opened: false },
+                { x: 700, y: 100, item: 'パワーリング', opened: false }
+            ]
+        };
+
+        // 深層地下トンネル第4層
+        this.maps.deep_tunnel_4 = {
+            name: '深層地下トンネル - 第4層（最深部）',
+            bgColor: '#050508',
+            gridColor: '#151520',
+            encounterRate: 'extreme',
+            area: 'dungeon',
+            bgm: 'abyss',
+            buildings: [
+                { x: 0, y: 0, width: 800, height: 35, color: '#0f0f1f', borderColor: '#2f2f3f', type: 'wall' },
+                { x: 0, y: 395, width: 800, height: 35, color: '#0f0f1f', borderColor: '#2f2f3f', type: 'wall' },
+                { x: 0, y: 0, width: 35, height: 430, color: '#0f0f1f', borderColor: '#2f2f3f', type: 'wall' },
+                { x: 765, y: 0, width: 35, height: 430, color: '#0f0f1f', borderColor: '#2f2f3f', type: 'wall' },
+                // 中央のボス部屋への道
+                { x: 100, y: 150, width: 250, height: 25, color: '#1a1a2f', borderColor: '#3a3a4f', type: 'wall' },
+                { x: 450, y: 150, width: 250, height: 25, color: '#1a1a2f', borderColor: '#3a3a4f', type: 'wall' },
+                { x: 100, y: 300, width: 250, height: 25, color: '#1a1a2f', borderColor: '#3a3a4f', type: 'wall' },
+                { x: 450, y: 300, width: 250, height: 25, color: '#1a1a2f', borderColor: '#3a3a4f', type: 'wall' }
+            ],
+            exits: [
+                { x: 350, y: 0, width: 100, height: 20, to: 'deep_tunnel_3', direction: 'north' },
+                { x: 350, y: 410, width: 100, height: 20, to: 'deep_tunnel_boss', direction: 'south' }
+            ],
+            npcs: [
+                { x: 200, y: 220, emoji: '🕷️', name: 'クイーンスパイダー', dialogue: 'シャアアア...', hostile: true, level: 8 },
+                { x: 600, y: 220, emoji: '👹', name: 'デーモンロード', dialogue: '愚かな人間め...', hostile: true, level: 8 }
+            ],
+            treasures: [
+                { x: 100, y: 80, item: 'エリクサー', opened: false }
+            ],
+            savePoint: { x: 700, y: 350, emoji: '🔮', name: '古代の魔法陣' }
+        };
+
+        // 深層地下トンネル ボス部屋
+        this.maps.deep_tunnel_boss = {
+            name: '深淵の玉座',
+            bgColor: '#030305',
+            gridColor: '#101015',
+            encounterRate: 'none',
+            area: 'dungeon',
+            bgm: 'boss_battle',
+            buildings: [
+                { x: 0, y: 0, width: 800, height: 35, color: '#0a0a1a', borderColor: '#2a2a3a', type: 'wall' },
+                { x: 0, y: 395, width: 800, height: 35, color: '#0a0a1a', borderColor: '#2a2a3a', type: 'wall' },
+                { x: 0, y: 0, width: 35, height: 430, color: '#0a0a1a', borderColor: '#2a2a3a', type: 'wall' },
+                { x: 765, y: 0, width: 35, height: 430, color: '#0a0a1a', borderColor: '#2a2a3a', type: 'wall' },
+                // ボスの玉座
+                { x: 300, y: 80, width: 200, height: 120, color: '#3a1a3a', borderColor: '#5a3a5a', type: 'dark_throne' }
+            ],
+            exits: [
+                { x: 350, y: 410, width: 100, height: 20, to: 'deep_tunnel_4', direction: 'south' }
+            ],
+            npcs: [
+                { x: 400, y: 150, emoji: '👁️', name: '深淵の支配者', dialogue: 'ようこそ...永遠の闇へ...', hostile: true, level: 15, boss: true }
+            ],
+            treasures: [
+                { x: 400, y: 350, item: '神威の欠片', opened: false }
+            ]
+        };
+    }
+
+    // ==========================================
+    // ショップ建物から内部への遷移を追加
+    // ==========================================
+
+    // 建物入口チェック（ドアや入口に近づいた時）
+    checkBuildingEntrance(playerX, playerY) {
+        const map = this.maps[this.currentMap];
+        if (!map || !map.buildings) return null;
+
+        const interactionRange = 40;
+
+        for (const building of map.buildings) {
+            if (!building.enterable && !this.getBuildingEnterMap(building.type)) continue;
+
+            // 建物の入口位置（建物の下端中央）
+            const entranceX = building.x + building.width / 2;
+            const entranceY = building.y + building.height;
+
+            const distance = Math.sqrt(
+                Math.pow(playerX - entranceX, 2) +
+                Math.pow(playerY - entranceY, 2)
+            );
+
+            if (distance < interactionRange) {
+                const targetMap = building.enterTo || this.getBuildingEnterMap(building.type);
+                if (targetMap && this.maps[targetMap]) {
+                    return { building: building, targetMap: targetMap };
+                }
+            }
+        }
+
+        return null;
+    }
+
+    // 建物タイプから内部マップIDを取得
+    getBuildingEnterMap(buildingType) {
+        const buildingMapMapping = {
+            'weapon_shop': 'shop_weapon',
+            'armor_shop': 'shop_armor',
+            'item_shop': 'shop_item',
+            'magic_shop': 'shop_magic',
+            'inn': 'shop_inn',
+            'guild': 'shop_guild',
+            'bank': 'shop_bank',
+            'house': null  // 個別に設定
+        };
+        return buildingMapMapping[buildingType] || null;
     }
     
     // 現在のマップを描画
