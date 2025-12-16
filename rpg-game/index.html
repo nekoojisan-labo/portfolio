@@ -1706,8 +1706,16 @@
 
         // オープニングメッセージ用のキーハンドラー
         let openingKeyHandler = null;
+        let openingStarted = false;  // 重複実行防止フラグ
 
         function startOpening() {
+            // 重複実行を防止
+            if (openingStarted) {
+                console.log('[Opening] Already started, ignoring duplicate call');
+                return;
+            }
+            openingStarted = true;
+
             document.getElementById('titleScreen').style.display = 'none';
             document.getElementById('openingScreen').style.display = 'flex';
             currentOpeningIndex = 0;
@@ -1723,6 +1731,9 @@
 
             // キーボード/コントローラー操作でメッセージを進められるようにする
             openingKeyHandler = function(e) {
+                // キーリピートを無視（押し続けた場合の連続発火を防止）
+                if (e.repeat) return;
+
                 // Z、Space、Enterキーで次のメッセージへ
                 if (e.key === 'z' || e.key === 'Z' || e.key === ' ' || e.key === 'Enter') {
                     e.preventDefault();
@@ -1785,6 +1796,12 @@
 
         function startGame() {
             console.log('[DEBUG] startGame() called');
+
+            // 重複実行を防止
+            if (gameStarted) {
+                console.log('[DEBUG] Game already started, ignoring duplicate call');
+                return;
+            }
 
             // オープニングのキーボードハンドラーを削除
             if (openingKeyHandler) {
