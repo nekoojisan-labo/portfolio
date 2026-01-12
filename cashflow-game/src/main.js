@@ -8,6 +8,8 @@ let game = null;
 // 設定状態
 let selectedAvatar = '🐱';
 let selectedMode = 'easy';
+let selectedJob = null;
+let shuffledJobCards = [];
 
 // ===================================
 // 画面遷移
@@ -37,7 +39,156 @@ function selectDifficulty(btn) {
 }
 
 // ===================================
-// ゲーム開始
+// 職業選択
+// ===================================
+
+function goToJobSelection() {
+    showScreen('job-selection-screen');
+    initJobCards();
+}
+
+function backToSetup() {
+    selectedJob = null;
+    showScreen('setup-screen');
+}
+
+function initJobCards() {
+    const grid = document.getElementById('job-cards-grid');
+    const resultArea = document.getElementById('job-result-area');
+
+    // 結果エリアを非表示
+    resultArea.style.display = 'none';
+
+    // 職業カードをシャッフル
+    shuffledJobCards = shuffleArray([...JOB_CARDS]);
+
+    // カードをリセット
+    selectedJob = null;
+
+    // カードを生成（6枚表示）
+    const displayCount = Math.min(6, shuffledJobCards.length);
+    grid.innerHTML = '';
+
+    for (let i = 0; i < displayCount; i++) {
+        const job = shuffledJobCards[i];
+        const card = document.createElement('div');
+        card.className = 'job-card';
+        card.dataset.jobId = job.id;
+        card.dataset.index = i;
+
+        card.innerHTML = `
+            <div class="job-card-inner">
+                <div class="job-card-face job-card-back">
+                    <div class="card-pattern"></div>
+                    <div class="card-label">タップしてね</div>
+                </div>
+                <div class="job-card-face job-card-front">
+                    <div class="job-icon">${job.icon}</div>
+                    <div class="job-name">${job.name}</div>
+                    <div class="job-family">${job.familyIcon} ${job.familyLabel}</div>
+                </div>
+            </div>
+        `;
+
+        card.addEventListener('click', () => selectJobCard(card, job));
+        grid.appendChild(card);
+    }
+}
+
+function shuffleArray(array) {
+    const newArray = [...array];
+    for (let i = newArray.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+    }
+    return newArray;
+}
+
+async function selectJobCard(cardElement, job) {
+    // 既に選択済みなら無視
+    if (selectedJob) return;
+
+    selectedJob = job;
+
+    // 全てのカードを無効化
+    document.querySelectorAll('.job-card').forEach(c => {
+        if (c !== cardElement) {
+            c.classList.add('disabled');
+        }
+    });
+
+    // 選択されたカードをフリップ
+    cardElement.classList.add('flipped', 'selected');
+
+    // フリップアニメーションを待つ
+    await sleep(1000);
+
+    // 結果を表示
+    showJobResult(job);
+}
+
+function showJobResult(job) {
+    const resultArea = document.getElementById('job-result-area');
+
+    // 職業情報を設定
+    document.getElementById('job-result-icon').textContent = job.icon;
+    document.getElementById('job-result-name').textContent = job.name;
+    document.getElementById('job-result-description').textContent = job.description;
+
+    // ステータスを設定
+    document.getElementById('job-stat-salary').textContent = `+${job.salary}`;
+    document.getElementById('job-stat-expense').textContent = `-${job.livingExpense}`;
+    document.getElementById('job-stat-family').textContent = job.familyLabel;
+    document.getElementById('job-stat-cash').textContent = `${job.startingCash}コイン`;
+
+    // ヒントを設定
+    document.getElementById('job-result-hint').textContent = `💡 ヒント: ${job.hint}`;
+
+    // キャッシュフローを計算
+    const cashflow = job.salary - job.livingExpense;
+    const cashflowEl = document.getElementById('job-cashflow');
+    cashflowEl.textContent = cashflow >= 0 ? `+${cashflow}` : `${cashflow}`;
+    cashflowEl.className = `cashflow-value ${cashflow >= 0 ? 'positive' : 'negative'}`;
+
+    // 結果エリアを表示
+    resultArea.style.display = 'block';
+
+    // スクロール
+    resultArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function confirmJobSelection() {
+    if (!selectedJob) {
+        alert('職業カードを選んでね！');
+        return;
+    }
+
+    // ゲームを開始
+    startGameWithJob();
+}
+
+function startGameWithJob() {
+    const playerName = document.getElementById('player-name').value.trim() || 'プレイヤー';
+    const aiCount = parseInt(document.getElementById('ai-count').value);
+    const aiLevel = parseInt(document.getElementById('ai-level').value);
+
+    game = new Game();
+    game.initialize({
+        playerName: playerName,
+        avatar: selectedAvatar,
+        mode: selectedMode,
+        aiCount: aiCount,
+        aiLevel: aiLevel,
+        job: selectedJob // 選択した職業を渡す
+    });
+
+    showScreen('game-screen');
+    initGameUI();
+    startTurn();
+}
+
+// ===================================
+// ゲーム開始（従来の方法 - 職業選択なし）
 // ===================================
 
 function startGame() {
