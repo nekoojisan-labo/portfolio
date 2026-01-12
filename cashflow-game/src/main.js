@@ -293,22 +293,35 @@ function renderGameBoard() {
         const tileEl = document.createElement('div');
         tileEl.className = 'board-tile';
         tileEl.dataset.index = index;
-        tileEl.innerHTML = tile.icon;
+
+        // タイルのアイコン
+        const iconEl = document.createElement('span');
+        iconEl.className = 'tile-icon';
+        iconEl.textContent = tile.icon;
+        tileEl.appendChild(iconEl);
+
+        // プレイヤートークン用のコンテナ
+        const tokenContainer = document.createElement('div');
+        tokenContainer.className = 'tile-tokens';
+        tileEl.appendChild(tokenContainer);
+
         tileEl.title = tile.name;
         board.appendChild(tileEl);
     });
 
-    // プレイヤートークンを配置
+    // プレイヤートークンを作成
     game.players.forEach((player, index) => {
         const token = document.createElement('div');
         token.className = 'player-token';
         token.id = `token-${player.id}`;
         token.innerHTML = player.avatar;
-        token.style.transform = `translate(${index * 5}px, ${index * 5}px)`;
-        board.appendChild(token);
+        // 初期位置のタイルに追加
+        const tileIndex = player.position % BOARD_TILES.length;
+        const tile = document.querySelector(`.board-tile[data-index="${tileIndex}"] .tile-tokens`);
+        if (tile) {
+            tile.appendChild(token);
+        }
     });
-
-    updatePlayerPositions();
 }
 
 function renderPlayersPanel() {
@@ -439,14 +452,11 @@ function updatePlayerPositions() {
     game.players.forEach(player => {
         const token = document.getElementById(`token-${player.id}`);
         const tileIndex = player.position % BOARD_TILES.length;
-        const tile = document.querySelector(`.board-tile[data-index="${tileIndex}"]`);
+        const targetContainer = document.querySelector(`.board-tile[data-index="${tileIndex}"] .tile-tokens`);
 
-        if (token && tile) {
-            const tileRect = tile.getBoundingClientRect();
-            const boardRect = document.getElementById('game-board').getBoundingClientRect();
-
-            token.style.left = `${tile.offsetLeft + 10}px`;
-            token.style.top = `${tile.offsetTop + 10}px`;
+        if (token && targetContainer) {
+            // トークンを新しいタイルに移動
+            targetContainer.appendChild(token);
         }
     });
 }
