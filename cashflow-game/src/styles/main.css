@@ -354,6 +354,67 @@ body {
     font-size: 0.9rem;
 }
 
+/* AIキャラクタープレビュー */
+.ai-characters-preview {
+    margin-top: 15px;
+}
+
+.ai-preview-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-light);
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.ai-preview-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+@media (max-width: 600px) {
+    .ai-preview-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.ai-preview-card {
+    background: var(--surface);
+    border: 2px solid #E8E8E8;
+    border-radius: var(--border-radius-sm);
+    padding: 12px 8px;
+    text-align: center;
+    transition: var(--transition);
+}
+
+.ai-preview-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+    border-color: var(--primary-light);
+}
+
+.ai-preview-avatar {
+    font-size: 2rem;
+    margin-bottom: 4px;
+}
+
+.ai-preview-name {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ai-preview-desc {
+    font-size: 0.7rem;
+    color: var(--text-light);
+    line-height: 1.3;
+}
+
 /* ===================================
    チュートリアル画面
    =================================== */
@@ -723,61 +784,84 @@ body {
     font-size: 1.8rem;
     width: 45px;
     text-align: center;
+    flex-shrink: 0;
 }
 
 .player-status-info {
     flex: 1;
+    min-width: 0;
+}
+
+.player-status-name-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
 }
 
 .player-status-name {
-    font-weight: 500;
-    font-size: 0.9rem;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.player-status-name .badge {
-    font-size: 0.7rem;
-    background: var(--primary);
-    color: white;
-    padding: 2px 6px;
-    border-radius: 10px;
-}
-
-.player-status-name .badge.ai {
-    background: var(--secondary);
-}
-
-.player-status-name .badge.escaped {
-    background: var(--coin);
+    font-weight: 600;
+    font-size: 0.95rem;
     color: var(--text);
 }
 
-.player-status-stats {
-    display: flex;
-    gap: 10px;
+.player-badge {
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: 500;
+}
+
+.player-badge.human {
+    background: var(--primary);
+    color: white;
+}
+
+.player-badge.ai {
+    background: var(--secondary);
+    color: white;
+}
+
+.player-status-desc {
     font-size: 0.75rem;
     color: var(--text-light);
-    margin-top: 3px;
+    margin-bottom: 4px;
+    font-style: italic;
+}
+
+.player-status-job {
+    font-size: 0.75rem;
+    color: var(--text-light);
+    margin-bottom: 6px;
 }
 
 .player-status-progress {
-    width: 60px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.player-status-progress .progress-bar {
+.player-status-progress-bar {
+    flex: 1;
     height: 8px;
     background: #E0E0E0;
     border-radius: 4px;
     overflow: hidden;
 }
 
-.player-status-progress .progress-fill {
+.player-status-progress-fill {
     height: 100%;
-    background: var(--primary);
+    background: linear-gradient(90deg, var(--primary), var(--success));
     border-radius: 4px;
     transition: width 0.5s ease;
+}
+
+.player-status-progress-text {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--primary);
+    min-width: 35px;
+    text-align: right;
 }
 
 .player-status-progress .progress-text {

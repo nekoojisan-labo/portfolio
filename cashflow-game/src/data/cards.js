@@ -437,32 +437,120 @@ const BOARD_TILES = [
     { type: 'cooperate', icon: '🤝', name: '協力' },
 ];
 
-// AI プレイヤー設定
+// AI プレイヤー設定（難易度別キャラクター）
+const AI_CHARACTERS = {
+    // かんたんモード - やさしい動物キャラクター
+    easy: [
+        {
+            name: 'のんびりウサギ',
+            avatar: '🐰',
+            personality: 'conservative',
+            riskTolerance: 0.2,
+            cooperationRate: 0.9,
+            description: 'ゆっくり確実に進むよ'
+        },
+        {
+            name: 'ほのぼのクマ',
+            avatar: '🐻',
+            personality: 'conservative',
+            riskTolerance: 0.25,
+            cooperationRate: 0.85,
+            description: 'みんなと仲良くしたいな'
+        },
+        {
+            name: 'にこにこネコ',
+            avatar: '🐱',
+            personality: 'balanced',
+            riskTolerance: 0.3,
+            cooperationRate: 0.8,
+            description: 'のんびり楽しくいこうよ'
+        },
+        {
+            name: 'わくわくイヌ',
+            avatar: '🐶',
+            personality: 'balanced',
+            riskTolerance: 0.35,
+            cooperationRate: 0.75,
+            description: '一緒に遊ぼうよ！'
+        }
+    ],
+    // ふつうモード - 個性的なキャラクター
+    normal: [
+        {
+            name: 'しっかりフクロウ',
+            avatar: '🦉',
+            personality: 'conservative',
+            riskTolerance: 0.35,
+            cooperationRate: 0.75,
+            description: 'よく考えてから決めるよ'
+        },
+        {
+            name: 'げんきキツネ',
+            avatar: '🦊',
+            personality: 'balanced',
+            riskTolerance: 0.5,
+            cooperationRate: 0.7,
+            description: 'バランスが大事だよね'
+        },
+        {
+            name: 'チャレンジペンギン',
+            avatar: '🐧',
+            personality: 'balanced',
+            riskTolerance: 0.55,
+            cooperationRate: 0.65,
+            description: '新しいことに挑戦したい！'
+        },
+        {
+            name: 'ひらめきコアラ',
+            avatar: '🐨',
+            personality: 'aggressive',
+            riskTolerance: 0.6,
+            cooperationRate: 0.6,
+            description: 'チャンスを逃さないよ'
+        }
+    ],
+    // チャレンジモード - 強いライバルキャラクター
+    challenge: [
+        {
+            name: 'クールパンダ',
+            avatar: '🐼',
+            personality: 'balanced',
+            riskTolerance: 0.5,
+            cooperationRate: 0.55,
+            description: '冷静に判断するよ'
+        },
+        {
+            name: 'やる気ライオン',
+            avatar: '🦁',
+            personality: 'aggressive',
+            riskTolerance: 0.7,
+            cooperationRate: 0.5,
+            description: '勝負だ！負けないぞ'
+        },
+        {
+            name: 'てきぱきタカ',
+            avatar: '🦅',
+            personality: 'aggressive',
+            riskTolerance: 0.75,
+            cooperationRate: 0.45,
+            description: 'スピードが命だよ'
+        },
+        {
+            name: 'したたかドラゴン',
+            avatar: '🐲',
+            personality: 'aggressive',
+            riskTolerance: 0.8,
+            cooperationRate: 0.4,
+            description: '最高の投資を見つけるぞ'
+        }
+    ]
+};
+
+// 後方互換性のために残す（レベル別のデフォルト）
 const AI_PLAYERS = [
-    {
-        level: 1,
-        name: 'まなぶくん',
-        avatar: '🐻',
-        personality: 'conservative', // 堅実型
-        riskTolerance: 0.3,
-        cooperationRate: 0.8
-    },
-    {
-        level: 2,
-        name: 'ひかりちゃん',
-        avatar: '🦊',
-        personality: 'balanced', // バランス型
-        riskTolerance: 0.5,
-        cooperationRate: 0.7
-    },
-    {
-        level: 3,
-        name: 'たくみくん',
-        avatar: '🐼',
-        personality: 'aggressive', // 積極型
-        riskTolerance: 0.7,
-        cooperationRate: 0.6
-    }
+    AI_CHARACTERS.easy[0],
+    AI_CHARACTERS.normal[1],
+    AI_CHARACTERS.challenge[1]
 ];
 
 // 職業カードデータ

@@ -36,6 +36,41 @@ function selectDifficulty(btn) {
     document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('selected'));
     btn.classList.add('selected');
     selectedMode = btn.dataset.mode;
+
+    // AIキャラクタープレビューを更新
+    updateAICharactersPreview();
+}
+
+function updateAICharactersPreview() {
+    const preview = document.getElementById('ai-characters-preview');
+    if (!preview) return;
+
+    // 難易度に応じたキャラクターを取得
+    const characters = typeof AI_CHARACTERS !== 'undefined' ? AI_CHARACTERS[selectedMode] : [];
+
+    if (characters.length === 0) {
+        preview.innerHTML = '';
+        return;
+    }
+
+    const modeLabels = {
+        'easy': 'やさしい仲間たち',
+        'normal': '個性的なライバル',
+        'challenge': '強力なライバル'
+    };
+
+    preview.innerHTML = `
+        <div class="ai-preview-label">${modeLabels[selectedMode] || 'AIキャラクター'}</div>
+        <div class="ai-preview-grid">
+            ${characters.map(char => `
+                <div class="ai-preview-card">
+                    <div class="ai-preview-avatar">${char.avatar}</div>
+                    <div class="ai-preview-name">${char.name}</div>
+                    <div class="ai-preview-desc">${char.description}</div>
+                </div>
+            `).join('')}
+        </div>
+    `;
 }
 
 // ===================================
@@ -263,20 +298,46 @@ function renderGameBoard() {
 }
 
 function renderPlayersPanel() {
-    const list = document.getElementById('players-list');
+    const list = document.getElementById('players-status-list') || document.getElementById('players-list');
+    if (!list) return;
     list.innerHTML = '';
 
     game.players.forEach(player => {
         const finance = game.getPlayerFinance(player);
         const card = document.createElement('div');
-        card.className = 'player-card';
+        card.className = 'player-status-card';
         card.id = `player-card-${player.id}`;
 
+        // AIプレイヤーの場合は説明も表示
+        const descHtml = player.isAI && player.description
+            ? `<div class="player-status-desc">${player.description}</div>`
+            : '';
+
+        // 職業名
+        const jobHtml = player.job
+            ? `<div class="player-status-job">${player.job.icon} ${player.job.name}</div>`
+            : '';
+
+        // プレイヤーの種類を示すバッジ
+        const badgeHtml = player.isAI
+            ? '<span class="player-badge ai">AI</span>'
+            : '<span class="player-badge human">あなた</span>';
+
         card.innerHTML = `
-            <div class="player-avatar">${player.avatar}</div>
-            <div class="player-name">${player.name}</div>
-            <div class="player-progress">
-                <div class="player-progress-fill" style="width: ${finance.escapeProgress}%"></div>
+            <div class="player-status-avatar">${player.avatar}</div>
+            <div class="player-status-info">
+                <div class="player-status-name-row">
+                    <span class="player-status-name">${player.name}</span>
+                    ${badgeHtml}
+                </div>
+                ${descHtml}
+                ${jobHtml}
+                <div class="player-status-progress">
+                    <div class="player-status-progress-bar">
+                        <div class="player-status-progress-fill" style="width: ${finance.escapeProgress}%"></div>
+                    </div>
+                    <span class="player-status-progress-text">${finance.escapeProgress}%</span>
+                </div>
             </div>
         `;
 
@@ -346,9 +407,15 @@ function updatePlayersPanel() {
             card.classList.toggle('escaped', player.isEscaped);
 
             // 進捗バーを更新
-            const progressFill = card.querySelector('.player-progress-fill');
+            const progressFill = card.querySelector('.player-status-progress-fill');
             if (progressFill) {
                 progressFill.style.width = `${finance.escapeProgress}%`;
+            }
+
+            // 進捗テキストを更新
+            const progressText = card.querySelector('.player-status-progress-text');
+            if (progressText) {
+                progressText.textContent = `${finance.escapeProgress}%`;
             }
         }
     });
@@ -737,6 +804,9 @@ function showGameResult() {
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🎮 マネーアドベンチャー 起動！');
+
+    // 初期AIキャラクタープレビュー表示
+    updateAICharactersPreview();
 
     // モーダル外クリックで閉じる
     document.querySelectorAll('.modal').forEach(modal => {

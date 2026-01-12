@@ -59,8 +59,13 @@ class Game {
         const availableJobs = typeof JOB_CARDS !== 'undefined' ? [...JOB_CARDS] : [];
         const shuffledJobs = this.shuffleArray(availableJobs);
 
+        // 難易度に応じたAIキャラクターを取得
+        const aiCharacters = this.getAICharactersForMode(this.mode);
+        const shuffledCharacters = this.shuffleArray([...aiCharacters]);
+
         for (let i = 0; i < aiCount; i++) {
-            const aiConfig = AI_PLAYERS[Math.min(aiLevel - 1, AI_PLAYERS.length - 1)];
+            // 異なるキャラクターを割り当て（キャラクターが足りない場合はループ）
+            const aiConfig = shuffledCharacters[i % shuffledCharacters.length];
 
             // AIにもランダムに職業を割り当て
             let aiPlayerSettings = { ...initialSettings };
@@ -85,6 +90,7 @@ class Game {
                 personality: aiConfig.personality,
                 riskTolerance: aiConfig.riskTolerance,
                 cooperationRate: aiConfig.cooperationRate,
+                description: aiConfig.description,
                 job: aiJob,
                 ...aiPlayerSettings
             }));
@@ -111,6 +117,17 @@ class Game {
     }
 
     /**
+     * 難易度に応じたAIキャラクターを取得
+     */
+    getAICharactersForMode(mode) {
+        if (typeof AI_CHARACTERS !== 'undefined' && AI_CHARACTERS[mode]) {
+            return AI_CHARACTERS[mode];
+        }
+        // フォールバック: AI_PLAYERSを使用
+        return AI_PLAYERS || [];
+    }
+
+    /**
      * プレイヤーオブジェクトの作成
      */
     createPlayer(config) {
@@ -123,6 +140,7 @@ class Game {
             personality: config.personality || 'balanced',
             riskTolerance: config.riskTolerance || 0.5,
             cooperationRate: config.cooperationRate || 0.7,
+            description: config.description || '',
 
             // 職業情報
             job: config.job || null,
