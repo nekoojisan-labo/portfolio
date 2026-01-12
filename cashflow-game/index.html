@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>マネーアドベンチャー - お金の学習ゲーム</title>
+    <link rel="stylesheet" href="src/styles/main.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <!-- タイトル画面 -->
+        <div id="title-screen" class="screen active">
+            <div class="title-container">
+                <div class="game-logo">🎮</div>
+                <h1 class="game-title">マネーアドベンチャー</h1>
+                <p class="game-subtitle">〜 お金の冒険を始めよう 〜</p>
+
+                <div class="menu-buttons">
+                    <button class="btn btn-primary btn-large" onclick="showScreen('setup-screen')">
+                        🎮 新しく始める
+                    </button>
+                    <button class="btn btn-secondary btn-large" onclick="loadGame()">
+                        📂 続きから遊ぶ
+                    </button>
+                    <button class="btn btn-outline btn-large" onclick="showScreen('tutorial-screen')">
+                        📖 遊び方を見る
+                    </button>
+                </div>
+
+                <div class="version-info">v1.0.0</div>
+            </div>
+        </div>
+
+        <!-- セットアップ画面 -->
+        <div id="setup-screen" class="screen">
+            <div class="screen-header">
+                <button class="btn btn-icon" onclick="showScreen('title-screen')">← 戻る</button>
+                <h2>ゲーム設定</h2>
+                <div></div>
+            </div>
+
+            <div class="setup-container">
+                <div class="setup-section">
+                    <h3>👤 あなたの名前</h3>
+                    <input type="text" id="player-name" class="input-field" placeholder="なまえを入れてね" maxlength="8">
+                </div>
+
+                <div class="setup-section">
+                    <h3>🎭 アバター</h3>
+                    <div class="avatar-selection">
+                        <button class="avatar-btn selected" data-avatar="🐱" onclick="selectAvatar(this)">🐱</button>
+                        <button class="avatar-btn" data-avatar="🐶" onclick="selectAvatar(this)">🐶</button>
+                        <button class="avatar-btn" data-avatar="🐰" onclick="selectAvatar(this)">🐰</button>
+                        <button class="avatar-btn" data-avatar="🐻" onclick="selectAvatar(this)">🐻</button>
+                        <button class="avatar-btn" data-avatar="🦊" onclick="selectAvatar(this)">🦊</button>
+                        <button class="avatar-btn" data-avatar="🐼" onclick="selectAvatar(this)">🐼</button>
+                    </div>
+                </div>
+
+                <div class="setup-section">
+                    <h3>🎯 難易度</h3>
+                    <div class="difficulty-selection">
+                        <button class="difficulty-btn selected" data-mode="easy" onclick="selectDifficulty(this)">
+                            <span class="difficulty-icon">🌱</span>
+                            <span class="difficulty-name">かんたん</span>
+                            <span class="difficulty-desc">小学生向け</span>
+                        </button>
+                        <button class="difficulty-btn" data-mode="normal" onclick="selectDifficulty(this)">
+                            <span class="difficulty-icon">🌿</span>
+                            <span class="difficulty-name">ふつう</span>
+                            <span class="difficulty-desc">中学生向け</span>
+                        </button>
+                        <button class="difficulty-btn" data-mode="challenge" onclick="selectDifficulty(this)">
+                            <span class="difficulty-icon">🌳</span>
+                            <span class="difficulty-name">チャレンジ</span>
+                            <span class="difficulty-desc">高校生以上</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="setup-section">
+                    <h3>🤖 AIプレイヤー</h3>
+                    <div class="ai-settings">
+                        <label>
+                            AIの人数:
+                            <select id="ai-count" class="select-field">
+                                <option value="1">1人</option>
+                                <option value="2">2人</option>
+                                <option value="3" selected>3人</option>
+                            </select>
+                        </label>
+                        <label>
+                            AIレベル:
+                            <select id="ai-level" class="select-field">
+                                <option value="1">Lv.1 まなぶくん</option>
+                                <option value="2" selected>Lv.2 ひかりちゃん</option>
+                                <option value="3">Lv.3 たくみくん</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary btn-large btn-block" onclick="startGame()">
+                    🎮 ゲームスタート！
+                </button>
+            </div>
+        </div>
+
+        <!-- チュートリアル画面 -->
+        <div id="tutorial-screen" class="screen">
+            <div class="screen-header">
+                <button class="btn btn-icon" onclick="showScreen('title-screen')">← 戻る</button>
+                <h2>遊び方</h2>
+                <div></div>
+            </div>
+
+            <div class="tutorial-container">
+                <div class="tutorial-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h3>🎯 ゲームの目標</h3>
+                        <p>全員でラットレースから脱出しよう！<br>
+                        「持っているだけで入るお金」が「毎月の支出」を超えたら脱出成功！</p>
+                    </div>
+                </div>
+
+                <div class="tutorial-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h3>💰 お金を増やそう</h3>
+                        <p>アパートやお店を買って、毎月家賃収入をもらおう。<br>
+                        仲間と協力すれば、もっと大きなものも買えるよ！</p>
+                    </div>
+                </div>
+
+                <div class="tutorial-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h3>🤝 協力しよう</h3>
+                        <p>お金を貸し借りしたり、一緒に物件を買ったり。<br>
+                        協力すると、みんなが早く脱出できるよ！</p>
+                    </div>
+                </div>
+
+                <div class="tutorial-step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h3>💡 ヒントを活用</h3>
+                        <p>困ったら💡ボタンを押してみよう。<br>
+                        答えは教えないけど、考え方のヒントをくれるよ！</p>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary btn-large btn-block" onclick="showScreen('title-screen')">
+                    わかった！
+                </button>
+            </div>
+        </div>
+
+        <!-- メインゲーム画面 -->
+        <div id="game-screen" class="screen">
+            <!-- ヘッダー -->
+            <div class="game-header">
+                <div class="turn-info">
+                    <span class="turn-number">ターン <span id="current-turn">1</span></span>
+                    <span class="current-player"><span id="current-player-name">たろう</span>の番</span>
+                </div>
+                <div class="phase-indicator" id="phase-indicator">収入フェーズ</div>
+                <button class="btn btn-icon" onclick="showMenu()">≡</button>
+            </div>
+
+            <!-- ゲームボード -->
+            <div class="game-board-container">
+                <div class="game-board" id="game-board">
+                    <!-- ボードはJSで生成 -->
+                </div>
+                <div class="escape-goal">🏠 脱出ゴール</div>
+            </div>
+
+            <!-- 財務パネル -->
+            <div class="finance-panel">
+                <div class="panel-header">
+                    <h3>📊 わたしのおかね</h3>
+                </div>
+                <div class="finance-content">
+                    <div class="cash-display">
+                        <span class="label">💰 持ってる:</span>
+                        <span class="value" id="player-cash">300</span>
+                        <span class="unit">コイン</span>
+                    </div>
+
+                    <div class="income-expense">
+                        <div class="income-section">
+                            <div class="section-title">📥 入る</div>
+                            <div class="detail-row">
+                                <span>👔 給料</span>
+                                <span class="positive" id="salary-income">+100</span>
+                            </div>
+                            <div class="detail-row">
+                                <span>🏠 不労所得</span>
+                                <span class="positive" id="passive-income">+0</span>
+                            </div>
+                            <div class="total-row">
+                                <span>合計</span>
+                                <span class="positive" id="total-income">+100</span>
+                            </div>
+                        </div>
+
+                        <div class="expense-section">
+                            <div class="section-title">📤 出る</div>
+                            <div class="detail-row">
+                                <span>🏠 生活費</span>
+                                <span class="negative" id="living-expense">-60</span>
+                            </div>
+                            <div class="detail-row">
+                                <span>💳 ローン</span>
+                                <span class="negative" id="loan-payment">-0</span>
+                            </div>
+                            <div class="total-row">
+                                <span>合計</span>
+                                <span class="negative" id="total-expense">-60</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="cashflow-display">
+                        <span class="label">📈 のこり:</span>
+                        <span class="value positive" id="monthly-cashflow">+40</span>
+                        <span class="unit">/月</span>
+                    </div>
+
+                    <div class="escape-progress">
+                        <div class="progress-label">
+                            <span>🎯 脱出まで</span>
+                            <span id="escape-percent">0%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="escape-progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- アクションパネル -->
+            <div class="action-panel">
+                <div class="panel-header">
+                    <h3>🎯 いまできること</h3>
+                </div>
+                <div class="action-buttons">
+                    <button class="action-btn" id="btn-dice" onclick="rollDice()">
+                        <span class="action-icon">🎲</span>
+                        <span class="action-label">サイコロ</span>
+                    </button>
+                    <button class="action-btn" id="btn-buy" onclick="showBuyModal()" disabled>
+                        <span class="action-icon">🛒</span>
+                        <span class="action-label">買う</span>
+                    </button>
+                    <button class="action-btn" id="btn-sell" onclick="showSellModal()" disabled>
+                        <span class="action-icon">💰</span>
+                        <span class="action-label">売る</span>
+                    </button>
+                    <button class="action-btn" id="btn-cooperate" onclick="showCooperateModal()">
+                        <span class="action-icon">🤝</span>
+                        <span class="action-label">協力</span>
+                    </button>
+                </div>
+                <button class="btn btn-primary btn-block" id="btn-end-turn" onclick="endTurn()">
+                    ✅ ターン終了
+                </button>
+            </div>
+
+            <!-- 他プレイヤー表示 -->
+            <div class="other-players">
+                <div class="players-header">
+                    <span>👥 みんなの進み具合</span>
+                    <button class="btn btn-hint" onclick="showHint()">💡</button>
+                </div>
+                <div class="players-list" id="players-list">
+                    <!-- JSで生成 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- イベントモーダル -->
+        <div id="event-modal" class="modal">
+            <div class="modal-content event-card">
+                <div class="event-type" id="event-type">💰 チャンスカード</div>
+                <div class="event-icon" id="event-icon">🏠</div>
+                <h3 class="event-name" id="event-name">小さなアパート</h3>
+                <p class="event-description" id="event-description">駅から徒歩10分のアパートが売りに出ているよ！</p>
+
+                <div class="event-details" id="event-details">
+                    <div class="detail-item">
+                        <span class="detail-label">💴 値段:</span>
+                        <span class="detail-value" id="event-cost">200 コイン</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">💰 毎月入る:</span>
+                        <span class="detail-value positive" id="event-income">+15 コイン</span>
+                    </div>
+                </div>
+
+                <div class="event-hint" id="event-hint">
+                    💡「何ヶ月で元が取れるかな？」
+                </div>
+
+                <div class="event-actions" id="event-actions">
+                    <button class="btn btn-primary" onclick="acceptEvent()">🛒 買う</button>
+                    <button class="btn btn-secondary" onclick="rejectEvent()">❌ やめる</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ヒントモーダル -->
+        <div id="hint-modal" class="modal">
+            <div class="modal-content hint-card">
+                <div class="modal-header">
+                    <h3>💡 ヒント</h3>
+                    <button class="btn btn-icon" onclick="closeModal('hint-modal')">×</button>
+                </div>
+
+                <div class="hint-section">
+                    <h4>📍 今のあなた</h4>
+                    <p id="hint-status">持っているお金が少なめ。でも毎月プラスだから、少しずつ増える！</p>
+                </div>
+
+                <div class="hint-section">
+                    <h4>🤔 考えてみよう</h4>
+                    <ol id="hint-points">
+                        <li>今のペースで貯めると、あの物件が買えるのは何ヶ月後？</li>
+                        <li>毎月出ていくお金の中で、減らせるものはある？</li>
+                        <li>仲間と協力すると、もっと早く買えるかも？</li>
+                    </ol>
+                </div>
+
+                <div class="hint-section">
+                    <h4>❓ 自分に聞いてみよう</h4>
+                    <p id="hint-question">「急いで買う？それとも安全に貯める？」</p>
+                </div>
+
+                <div class="modal-actions">
+                    <button class="btn btn-outline" onclick="showGlossary()">📖 用語辞典</button>
+                    <button class="btn btn-primary" onclick="closeModal('hint-modal')">とじる</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 協力モーダル -->
+        <div id="cooperate-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>🤝 協力取引</h3>
+                    <button class="btn btn-icon" onclick="closeModal('cooperate-modal')">×</button>
+                </div>
+
+                <p>何をする？</p>
+
+                <div class="cooperate-options">
+                    <button class="cooperate-option" onclick="showLoanModal()">
+                        <span class="option-icon">💰</span>
+                        <span class="option-title">お金を貸す / 借りる</span>
+                        <span class="option-desc">仲間にお金を貸したり、借りたりできるよ</span>
+                    </button>
+
+                    <button class="cooperate-option" onclick="showJointPurchaseModal()">
+                        <span class="option-icon">🏠</span>
+                        <span class="option-title">いっしょに買う（共同購入）</span>
+                        <span class="option-desc">ひとりでは買えない物件をみんなで買えるよ</span>
+                    </button>
+                </div>
+
+                <button class="btn btn-secondary btn-block" onclick="closeModal('cooperate-modal')">
+                    やめる
+                </button>
+            </div>
+        </div>
+
+        <!-- リザルト画面 -->
+        <div id="result-screen" class="screen">
+            <div class="result-container">
+                <h1 class="result-title">🎉 ゲームクリア！ 🎉</h1>
+                <p class="result-subtitle">みんなでラットレースを脱出できた！</p>
+
+                <div class="result-stats">
+                    <h3>📊 結果</h3>
+                    <div class="stat-item">
+                        <span>クリアターン:</span>
+                        <span id="result-turns">25ターン</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>協力回数:</span>
+                        <span id="result-cooperation">12回</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>破綻者:</span>
+                        <span id="result-bankruptcy">0人 🏆</span>
+                    </div>
+                </div>
+
+                <div class="result-mvp">
+                    <h3>👑 MVP</h3>
+                    <div class="mvp-display">
+                        <span class="mvp-avatar" id="mvp-avatar">🐰</span>
+                        <span class="mvp-name" id="mvp-name">じろう</span>
+                        <span class="mvp-reason">（一番多く協力した！）</span>
+                    </div>
+                </div>
+
+                <div class="result-learnings">
+                    <h3>💡 今日の学び</h3>
+                    <ul id="result-learnings-list">
+                        <li>小さく始めて、だんだん大きくする</li>
+                        <li>困ったときは仲間に頼ってもいい</li>
+                        <li>失敗しても、やり直せる</li>
+                    </ul>
+                </div>
+
+                <div class="result-actions">
+                    <button class="btn btn-primary" onclick="restartGame()">🔄 もう一回</button>
+                    <button class="btn btn-secondary" onclick="showScreen('title-screen')">🏠 終わる</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="src/data/cards.js"></script>
+    <script src="src/utils/helpers.js"></script>
+    <script src="src/utils/coachAI.js"></script>
+    <script src="src/components/game.js"></script>
+    <script src="src/main.js"></script>
+</body>
+</html>
