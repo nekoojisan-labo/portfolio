@@ -48,7 +48,7 @@
             </div>
         </div>
 
-        <!-- セットアップ画面 -->
+        <!-- セットアップ画面（プレイヤー人数選択） -->
         <div id="setup-screen" class="screen">
             <div class="screen-header">
                 <button class="btn btn-icon" onclick="showScreen('title-screen')">← 戻る</button>
@@ -58,19 +58,33 @@
 
             <div class="setup-container">
                 <div class="setup-section">
-                    <h3>👤 あなたの名前</h3>
-                    <input type="text" id="player-name" class="input-field" placeholder="なまえを入れてね" maxlength="8">
+                    <h3>👥 プレイヤー人数</h3>
+                    <p class="setup-hint">何人で遊ぶ？（最大4人）</p>
+                    <div class="player-count-selection">
+                        <button class="player-count-btn selected" data-count="1" onclick="selectPlayerCount(this)">
+                            <span class="count-number">1人</span>
+                            <span class="count-desc">ひとりで</span>
+                        </button>
+                        <button class="player-count-btn" data-count="2" onclick="selectPlayerCount(this)">
+                            <span class="count-number">2人</span>
+                            <span class="count-desc">ふたりで</span>
+                        </button>
+                        <button class="player-count-btn" data-count="3" onclick="selectPlayerCount(this)">
+                            <span class="count-number">3人</span>
+                            <span class="count-desc">3人で</span>
+                        </button>
+                        <button class="player-count-btn" data-count="4" onclick="selectPlayerCount(this)">
+                            <span class="count-number">4人</span>
+                            <span class="count-desc">みんなで</span>
+                        </button>
+                    </div>
                 </div>
 
-                <div class="setup-section">
-                    <h3>🎭 アバター</h3>
-                    <div class="avatar-selection">
-                        <button class="avatar-btn selected" data-avatar="🐱" onclick="selectAvatar(this)">🐱</button>
-                        <button class="avatar-btn" data-avatar="🐶" onclick="selectAvatar(this)">🐶</button>
-                        <button class="avatar-btn" data-avatar="🐰" onclick="selectAvatar(this)">🐰</button>
-                        <button class="avatar-btn" data-avatar="🐻" onclick="selectAvatar(this)">🐻</button>
-                        <button class="avatar-btn" data-avatar="🦊" onclick="selectAvatar(this)">🦊</button>
-                        <button class="avatar-btn" data-avatar="🐼" onclick="selectAvatar(this)">🐼</button>
+                <div class="setup-section" id="ai-section">
+                    <h3>🤖 AIプレイヤー</h3>
+                    <p class="setup-hint">残り<span id="ai-slots">3</span>人はAIが参加するよ</p>
+                    <div class="ai-characters-preview" id="ai-characters-preview">
+                        <!-- 難易度に応じたAIキャラクタープレビュー -->
                     </div>
                 </div>
 
@@ -95,25 +109,46 @@
                     </div>
                 </div>
 
+                <button class="btn btn-primary btn-large btn-block" onclick="goToCharacterCreation()">
+                    次へ：キャラクターをつくる
+                </button>
+            </div>
+        </div>
+
+        <!-- キャラクター作成画面 -->
+        <div id="character-screen" class="screen">
+            <div class="screen-header">
+                <button class="btn btn-icon" onclick="backFromCharacterCreation()">← 戻る</button>
+                <h2>キャラクター作成</h2>
+                <div class="player-indicator" id="player-indicator">1人目</div>
+            </div>
+
+            <div class="setup-container">
+                <div class="character-progress" id="character-progress">
+                    <!-- プレイヤー進捗表示 -->
+                </div>
+
                 <div class="setup-section">
-                    <h3>🤖 AIプレイヤー</h3>
-                    <div class="ai-settings">
-                        <label>
-                            AIの人数:
-                            <select id="ai-count" class="select-field">
-                                <option value="1">1人</option>
-                                <option value="2">2人</option>
-                                <option value="3" selected>3人</option>
-                            </select>
-                        </label>
-                    </div>
-                    <div class="ai-characters-preview" id="ai-characters-preview">
-                        <!-- 難易度に応じたAIキャラクタープレビュー -->
+                    <h3>👤 なまえ</h3>
+                    <input type="text" id="char-name" class="input-field" placeholder="なまえを入れてね" maxlength="8">
+                </div>
+
+                <div class="setup-section">
+                    <h3>🎭 アバター</h3>
+                    <div class="avatar-selection" id="avatar-selection">
+                        <button class="avatar-btn selected" data-avatar="🐱" onclick="selectCharAvatar(this)">🐱</button>
+                        <button class="avatar-btn" data-avatar="🐶" onclick="selectCharAvatar(this)">🐶</button>
+                        <button class="avatar-btn" data-avatar="🐰" onclick="selectCharAvatar(this)">🐰</button>
+                        <button class="avatar-btn" data-avatar="🐻" onclick="selectCharAvatar(this)">🐻</button>
+                        <button class="avatar-btn" data-avatar="🦊" onclick="selectCharAvatar(this)">🦊</button>
+                        <button class="avatar-btn" data-avatar="🐼" onclick="selectCharAvatar(this)">🐼</button>
+                        <button class="avatar-btn" data-avatar="🐸" onclick="selectCharAvatar(this)">🐸</button>
+                        <button class="avatar-btn" data-avatar="🐵" onclick="selectCharAvatar(this)">🐵</button>
                     </div>
                 </div>
 
-                <button class="btn btn-primary btn-large btn-block" onclick="goToJobSelection()">
-                    🎴 次へ：職業をえらぶ
+                <button class="btn btn-primary btn-large btn-block" onclick="goToJobSelectionForPlayer()">
+                    🎴 職業をえらぶ
                 </button>
             </div>
         </div>
@@ -121,9 +156,9 @@
         <!-- 職業選択画面 -->
         <div id="job-selection-screen" class="screen">
             <div class="screen-header">
-                <button class="btn btn-icon" onclick="backToSetup()">← 戻る</button>
+                <button class="btn btn-icon" onclick="backToCharacterScreen()">← 戻る</button>
                 <h2>職業をえらぼう</h2>
-                <div></div>
+                <div class="player-indicator" id="job-player-indicator">1人目</div>
             </div>
 
             <div class="job-selection-container">
