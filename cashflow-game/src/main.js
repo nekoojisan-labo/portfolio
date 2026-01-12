@@ -205,7 +205,14 @@ function confirmJobSelection() {
 function startGameWithJob() {
     const playerName = document.getElementById('player-name').value.trim() || 'プレイヤー';
     const aiCount = parseInt(document.getElementById('ai-count').value);
-    const aiLevel = parseInt(document.getElementById('ai-level').value);
+
+    // AIレベルは難易度に応じて自動設定
+    const aiLevelByMode = {
+        'easy': 1,
+        'normal': 2,
+        'challenge': 3
+    };
+    const aiLevel = aiLevelByMode[selectedMode] || 2;
 
     game = new Game();
     game.initialize({
@@ -229,7 +236,14 @@ function startGameWithJob() {
 function startGame() {
     const playerName = document.getElementById('player-name').value.trim() || 'プレイヤー';
     const aiCount = parseInt(document.getElementById('ai-count').value);
-    const aiLevel = parseInt(document.getElementById('ai-level').value);
+
+    // AIレベルは難易度に応じて自動設定
+    const aiLevelByMode = {
+        'easy': 1,
+        'normal': 2,
+        'challenge': 3
+    };
+    const aiLevel = aiLevelByMode[selectedMode] || 2;
 
     game = new Game();
     game.initialize({

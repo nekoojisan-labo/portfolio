@@ -496,6 +496,30 @@ body {
     color: var(--text-light);
 }
 
+/* 難易度選択のレスポンシブ */
+@media (max-width: 480px) {
+    .difficulty-selection {
+        gap: 8px;
+    }
+
+    .difficulty-btn {
+        padding: 14px 8px;
+    }
+
+    .difficulty-icon {
+        font-size: 1.5rem;
+        margin-bottom: 6px;
+    }
+
+    .difficulty-name {
+        font-size: 0.75rem;
+    }
+
+    .difficulty-desc {
+        font-size: 0.6rem;
+    }
+}
+
 /* AI設定 */
 .ai-settings {
     display: flex;
@@ -521,7 +545,7 @@ body {
 }
 
 .ai-preview-label {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-weight: 600;
     color: var(--text-secondary);
     margin-bottom: 12px;
@@ -529,58 +553,115 @@ body {
     letter-spacing: 0.03em;
 }
 
+/* PC表示（横並び4列） */
 .ai-preview-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
-}
-
-@media (max-width: 600px) {
-    .ai-preview-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
+    gap: 8px;
 }
 
 .ai-preview-card {
     background: var(--surface-dark);
     border: 1px solid var(--border-color);
     border-radius: var(--border-radius-sm);
-    padding: 12px 8px;
+    padding: 10px 6px 8px;
     text-align: center;
     transition: var(--transition);
     min-width: 0;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .ai-preview-card:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-sm);
-    border-color: var(--primary-light);
+    border-color: var(--primary);
 }
 
 .ai-preview-avatar {
-    font-size: 1.8rem;
+    font-size: 1.5rem;
     margin-bottom: 4px;
+    line-height: 1;
 }
 
 .ai-preview-name {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     font-weight: 600;
     color: var(--text);
-    margin-bottom: 3px;
-    line-height: 1.3;
-    word-break: keep-all;
-    overflow-wrap: break-word;
+    margin-bottom: 2px;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
 }
 
 .ai-preview-desc {
-    font-size: 0.6rem;
-    color: var(--text-light);
-    line-height: 1.3;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
+    font-size: 0.55rem;
+    color: var(--text-muted);
+    line-height: 1.2;
+    white-space: nowrap;
     overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+/* タブレット（3列） */
+@media (max-width: 768px) {
+    .ai-preview-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+    }
+
+    .ai-preview-card {
+        padding: 8px 4px 6px;
+    }
+
+    .ai-preview-avatar {
+        font-size: 1.3rem;
+    }
+
+    .ai-preview-name {
+        font-size: 0.6rem;
+    }
+
+    .ai-preview-desc {
+        display: none;
+    }
+}
+
+/* スマホ（2列） */
+@media (max-width: 480px) {
+    .ai-preview-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+
+    .ai-preview-card {
+        padding: 12px 8px 10px;
+    }
+
+    .ai-preview-avatar {
+        font-size: 1.6rem;
+        margin-bottom: 6px;
+    }
+
+    .ai-preview-name {
+        font-size: 0.7rem;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: unset;
+    }
+
+    .ai-preview-desc {
+        display: block;
+        font-size: 0.6rem;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: unset;
+    }
 }
 
 /* ===================================
