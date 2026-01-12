@@ -477,7 +477,7 @@ const AI_CHARACTERS = {
     // ふつうモード - 個性的なキャラクター
     normal: [
         {
-            name: 'しっかりフクロウ',
+            name: 'かしこフクロウ',
             avatar: '🦉',
             personality: 'conservative',
             riskTolerance: 0.35,
@@ -493,15 +493,15 @@ const AI_CHARACTERS = {
             description: 'バランスが大事だよね'
         },
         {
-            name: 'チャレンジペンギン',
+            name: 'ペンギンくん',
             avatar: '🐧',
             personality: 'balanced',
             riskTolerance: 0.55,
             cooperationRate: 0.65,
-            description: '新しいことに挑戦したい！'
+            description: '新しいことに挑戦！'
         },
         {
-            name: 'ひらめきコアラ',
+            name: 'コアラさん',
             avatar: '🐨',
             personality: 'aggressive',
             riskTolerance: 0.6,
@@ -520,7 +520,7 @@ const AI_CHARACTERS = {
             description: '冷静に判断するよ'
         },
         {
-            name: 'やる気ライオン',
+            name: 'ライオン王',
             avatar: '🦁',
             personality: 'aggressive',
             riskTolerance: 0.7,
@@ -528,7 +528,7 @@ const AI_CHARACTERS = {
             description: '勝負だ！負けないぞ'
         },
         {
-            name: 'てきぱきタカ',
+            name: 'はやぶさ',
             avatar: '🦅',
             personality: 'aggressive',
             riskTolerance: 0.75,
@@ -536,12 +536,12 @@ const AI_CHARACTERS = {
             description: 'スピードが命だよ'
         },
         {
-            name: 'したたかドラゴン',
+            name: 'ドラゴン',
             avatar: '🐲',
             personality: 'aggressive',
             riskTolerance: 0.8,
             cooperationRate: 0.4,
-            description: '最高の投資を見つけるぞ'
+            description: '最高の投資を見つける'
         }
     ]
 };

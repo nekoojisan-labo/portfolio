@@ -370,7 +370,7 @@ body {
 .ai-preview-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
+    gap: 8px;
 }
 
 @media (max-width: 600px) {
@@ -383,9 +383,11 @@ body {
     background: var(--surface);
     border: 2px solid #E8E8E8;
     border-radius: var(--border-radius-sm);
-    padding: 12px 8px;
+    padding: 10px 6px;
     text-align: center;
     transition: var(--transition);
+    min-width: 0;
+    overflow: hidden;
 }
 
 .ai-preview-card:hover {
@@ -395,24 +397,28 @@ body {
 }
 
 .ai-preview-avatar {
-    font-size: 2rem;
+    font-size: 1.8rem;
     margin-bottom: 4px;
 }
 
 .ai-preview-name {
-    font-size: 0.85rem;
-    font-weight: 500;
+    font-size: 0.7rem;
+    font-weight: 600;
     color: var(--text);
     margin-bottom: 3px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    line-height: 1.3;
+    word-break: keep-all;
+    overflow-wrap: break-word;
 }
 
 .ai-preview-desc {
-    font-size: 0.7rem;
+    font-size: 0.6rem;
     color: var(--text-light);
     line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 /* ===================================
