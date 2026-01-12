@@ -14,23 +14,37 @@
         <!-- タイトル画面 -->
         <div id="title-screen" class="screen active">
             <div class="title-container">
-                <div class="game-logo">🎮</div>
-                <h1 class="game-title">マネーアドベンチャー</h1>
-                <p class="game-subtitle">〜 お金の冒険を始めよう 〜</p>
+                <div class="title-card">
+                    <div class="title-badge">子どものための金融教育</div>
+                    <div class="game-logo">💰</div>
+                    <h1 class="game-title">マネーアドベンチャー</h1>
+                    <p class="game-subtitle">楽しく学ぶ お金と投資のきほん</p>
 
-                <div class="menu-buttons">
-                    <button class="btn btn-primary btn-large" onclick="showScreen('setup-screen')">
-                        🎮 新しく始める
-                    </button>
-                    <button class="btn btn-secondary btn-large" onclick="loadGame()">
-                        📂 続きから遊ぶ
-                    </button>
-                    <button class="btn btn-outline btn-large" onclick="showScreen('tutorial-screen')">
-                        📖 遊び方を見る
-                    </button>
+                    <div class="menu-buttons">
+                        <button class="btn btn-primary btn-large btn-block" onclick="showScreen('setup-screen')">
+                            ゲームをはじめる
+                        </button>
+                        <button class="btn btn-outline btn-large btn-block" onclick="showScreen('tutorial-screen')">
+                            あそびかたを見る
+                        </button>
+                    </div>
+
+                    <div class="title-features">
+                        <div class="feature-item">
+                            <span class="feature-icon">📊</span>
+                            <span class="feature-text">収支を学ぶ</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">🏠</span>
+                            <span class="feature-text">投資体験</span>
+                        </div>
+                        <div class="feature-item">
+                            <span class="feature-icon">🤝</span>
+                            <span class="feature-text">協力プレイ</span>
+                        </div>
+                    </div>
                 </div>
-
-                <div class="version-info">v1.1.0</div>
+                <div class="version-info">v2.0.0</div>
             </div>
         </div>
 
