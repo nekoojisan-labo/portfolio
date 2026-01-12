@@ -6,10 +6,16 @@
 let game = null;
 
 // 設定状態
-let selectedAvatar = '🐱';
 let selectedMode = 'easy';
-let selectedJob = null;
+let humanPlayerCount = 1;
+let currentPlayerIndex = 0;  // 現在キャラメイク中のプレイヤー
+let playerConfigs = [];      // 各プレイヤーの設定を保存
+let currentCharAvatar = '🐱';
+let currentCharJob = null;
 let shuffledJobCards = [];
+
+// 使用済みアバター追跡
+let usedAvatars = [];
 
 // ===================================
 // 画面遷移
@@ -23,13 +29,26 @@ function showScreen(screenId) {
 }
 
 // ===================================
-// セットアップ画面
+// セットアップ画面（プレイヤー人数選択）
 // ===================================
 
-function selectAvatar(btn) {
-    document.querySelectorAll('.avatar-btn').forEach(b => b.classList.remove('selected'));
+function selectPlayerCount(btn) {
+    document.querySelectorAll('.player-count-btn').forEach(b => b.classList.remove('selected'));
     btn.classList.add('selected');
-    selectedAvatar = btn.dataset.avatar;
+    humanPlayerCount = parseInt(btn.dataset.count);
+
+    // AI人数を更新
+    const aiCount = 4 - humanPlayerCount;
+    document.getElementById('ai-slots').textContent = aiCount;
+
+    // AI表示セクションの表示/非表示
+    const aiSection = document.getElementById('ai-section');
+    if (aiCount > 0) {
+        aiSection.style.display = 'block';
+        updateAICharactersPreview();
+    } else {
+        aiSection.style.display = 'none';
+    }
 }
 
 function selectDifficulty(btn) {
@@ -39,6 +58,19 @@ function selectDifficulty(btn) {
 
     // AIキャラクタープレビューを更新
     updateAICharactersPreview();
+}
+
+function goToCharacterCreation() {
+    // プレイヤー設定をリセット
+    playerConfigs = [];
+    currentPlayerIndex = 0;
+    usedAvatars = [];
+    currentCharAvatar = '🐱';
+    currentCharJob = null;
+
+    // キャラクター作成画面を初期化
+    initCharacterScreen();
+    showScreen('character-screen');
 }
 
 function updateAICharactersPreview() {
@@ -74,17 +106,108 @@ function updateAICharactersPreview() {
 }
 
 // ===================================
+// キャラクター作成画面
+// ===================================
+
+function initCharacterScreen() {
+    // プレイヤー番号表示を更新
+    const indicator = document.getElementById('player-indicator');
+    indicator.textContent = `${currentPlayerIndex + 1}人目`;
+
+    // 名前フィールドをクリア
+    document.getElementById('char-name').value = '';
+
+    // 進捗表示を更新
+    updateCharacterProgress();
+
+    // 使用可能なアバターを更新
+    updateAvailableAvatars();
+
+    // 最初の利用可能なアバターを選択
+    const firstAvailable = document.querySelector('#avatar-selection .avatar-btn:not(.used)');
+    if (firstAvailable) {
+        selectCharAvatar(firstAvailable);
+    }
+}
+
+function updateCharacterProgress() {
+    const progress = document.getElementById('character-progress');
+    let html = '<div class="progress-dots">';
+
+    for (let i = 0; i < humanPlayerCount; i++) {
+        const status = i < currentPlayerIndex ? 'done' : (i === currentPlayerIndex ? 'current' : 'pending');
+        const config = playerConfigs[i];
+        const avatar = config ? config.avatar : '?';
+        html += `<div class="progress-dot ${status}">${status === 'done' ? avatar : (i + 1)}</div>`;
+    }
+
+    html += '</div>';
+    progress.innerHTML = html;
+}
+
+function updateAvailableAvatars() {
+    const avatarBtns = document.querySelectorAll('#avatar-selection .avatar-btn');
+    avatarBtns.forEach(btn => {
+        const avatar = btn.dataset.avatar;
+        if (usedAvatars.includes(avatar)) {
+            btn.classList.add('used');
+            btn.disabled = true;
+        } else {
+            btn.classList.remove('used');
+            btn.disabled = false;
+        }
+    });
+}
+
+function selectCharAvatar(btn) {
+    if (btn.classList.contains('used')) return;
+
+    document.querySelectorAll('#avatar-selection .avatar-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    currentCharAvatar = btn.dataset.avatar;
+}
+
+function backFromCharacterCreation() {
+    if (currentPlayerIndex > 0) {
+        // 前のプレイヤーのキャラメイクに戻る
+        currentPlayerIndex--;
+        const prevConfig = playerConfigs.pop();
+        if (prevConfig) {
+            usedAvatars = usedAvatars.filter(a => a !== prevConfig.avatar);
+        }
+        initCharacterScreen();
+    } else {
+        // セットアップ画面に戻る
+        showScreen('setup-screen');
+    }
+}
+
+function goToJobSelectionForPlayer() {
+    const name = document.getElementById('char-name').value.trim() || `プレイヤー${currentPlayerIndex + 1}`;
+
+    // 現在のプレイヤーの名前とアバターを一時保存
+    currentCharJob = null;
+
+    // プレイヤー表示を更新
+    const indicator = document.getElementById('job-player-indicator');
+    indicator.textContent = `${currentPlayerIndex + 1}人目: ${name}`;
+
+    showScreen('job-selection-screen');
+    initJobCards();
+}
+
+function backToCharacterScreen() {
+    currentCharJob = null;
+    showScreen('character-screen');
+}
+
+// ===================================
 // 職業選択
 // ===================================
 
 function goToJobSelection() {
     showScreen('job-selection-screen');
     initJobCards();
-}
-
-function backToSetup() {
-    selectedJob = null;
-    showScreen('setup-screen');
 }
 
 function initJobCards() {
@@ -141,9 +264,9 @@ function shuffleArray(array) {
 
 async function selectJobCard(cardElement, job) {
     // 既に選択済みなら無視
-    if (selectedJob) return;
+    if (currentCharJob) return;
 
-    selectedJob = job;
+    currentCharJob = job;
 
     // 全てのカードを無効化
     document.querySelectorAll('.job-card').forEach(c => {
@@ -193,18 +316,40 @@ function showJobResult(job) {
 }
 
 function confirmJobSelection() {
-    if (!selectedJob) {
+    if (!currentCharJob) {
         alert('職業カードを選んでね！');
         return;
     }
 
-    // ゲームを開始
-    startGameWithJob();
+    const name = document.getElementById('char-name').value.trim() || `プレイヤー${currentPlayerIndex + 1}`;
+
+    // 現在のプレイヤー設定を保存
+    playerConfigs.push({
+        name: name,
+        avatar: currentCharAvatar,
+        job: currentCharJob,
+        isAI: false
+    });
+
+    // アバターを使用済みに追加
+    usedAvatars.push(currentCharAvatar);
+
+    // 次のプレイヤーへ
+    currentPlayerIndex++;
+
+    if (currentPlayerIndex < humanPlayerCount) {
+        // まだ設定が終わっていないプレイヤーがいる
+        currentCharJob = null;
+        initCharacterScreen();
+        showScreen('character-screen');
+    } else {
+        // 全プレイヤーの設定完了、ゲーム開始
+        startGameWithPlayers();
+    }
 }
 
-function startGameWithJob() {
-    const playerName = document.getElementById('player-name').value.trim() || 'プレイヤー';
-    const aiCount = parseInt(document.getElementById('ai-count').value);
+function startGameWithPlayers() {
+    const aiCount = 4 - humanPlayerCount;
 
     // AIレベルは難易度に応じて自動設定
     const aiLevelByMode = {
@@ -215,13 +360,11 @@ function startGameWithJob() {
     const aiLevel = aiLevelByMode[selectedMode] || 2;
 
     game = new Game();
-    game.initialize({
-        playerName: playerName,
-        avatar: selectedAvatar,
+    game.initializeMultiplayer({
+        humanPlayers: playerConfigs,
         mode: selectedMode,
         aiCount: aiCount,
-        aiLevel: aiLevel,
-        job: selectedJob // 選択した職業を渡す
+        aiLevel: aiLevel
     });
 
     showScreen('game-screen');
