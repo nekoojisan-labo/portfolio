@@ -437,31 +437,291 @@ const BOARD_TILES = [
     { type: 'cooperate', icon: '🤝', name: '協力' },
 ];
 
-// AI プレイヤー設定
+// AI プレイヤー設定（難易度別キャラクター）
+const AI_CHARACTERS = {
+    // かんたんモード - やさしい動物キャラクター
+    easy: [
+        {
+            name: 'のんびりウサギ',
+            avatar: '🐰',
+            personality: 'conservative',
+            riskTolerance: 0.2,
+            cooperationRate: 0.9,
+            description: 'ゆっくり確実に進むよ'
+        },
+        {
+            name: 'ほのぼのクマ',
+            avatar: '🐻',
+            personality: 'conservative',
+            riskTolerance: 0.25,
+            cooperationRate: 0.85,
+            description: 'みんなと仲良くしたいな'
+        },
+        {
+            name: 'にこにこネコ',
+            avatar: '🐱',
+            personality: 'balanced',
+            riskTolerance: 0.3,
+            cooperationRate: 0.8,
+            description: 'のんびり楽しくいこうよ'
+        },
+        {
+            name: 'わくわくイヌ',
+            avatar: '🐶',
+            personality: 'balanced',
+            riskTolerance: 0.35,
+            cooperationRate: 0.75,
+            description: '一緒に遊ぼうよ！'
+        }
+    ],
+    // ふつうモード - 個性的なキャラクター
+    normal: [
+        {
+            name: 'しっかりフクロウ',
+            avatar: '🦉',
+            personality: 'conservative',
+            riskTolerance: 0.35,
+            cooperationRate: 0.75,
+            description: 'よく考えてから決めるよ'
+        },
+        {
+            name: 'げんきキツネ',
+            avatar: '🦊',
+            personality: 'balanced',
+            riskTolerance: 0.5,
+            cooperationRate: 0.7,
+            description: 'バランスが大事だよね'
+        },
+        {
+            name: 'チャレンジペンギン',
+            avatar: '🐧',
+            personality: 'balanced',
+            riskTolerance: 0.55,
+            cooperationRate: 0.65,
+            description: '新しいことに挑戦したい！'
+        },
+        {
+            name: 'ひらめきコアラ',
+            avatar: '🐨',
+            personality: 'aggressive',
+            riskTolerance: 0.6,
+            cooperationRate: 0.6,
+            description: 'チャンスを逃さないよ'
+        }
+    ],
+    // チャレンジモード - 強いライバルキャラクター
+    challenge: [
+        {
+            name: 'クールパンダ',
+            avatar: '🐼',
+            personality: 'balanced',
+            riskTolerance: 0.5,
+            cooperationRate: 0.55,
+            description: '冷静に判断するよ'
+        },
+        {
+            name: 'やる気ライオン',
+            avatar: '🦁',
+            personality: 'aggressive',
+            riskTolerance: 0.7,
+            cooperationRate: 0.5,
+            description: '勝負だ！負けないぞ'
+        },
+        {
+            name: 'てきぱきタカ',
+            avatar: '🦅',
+            personality: 'aggressive',
+            riskTolerance: 0.75,
+            cooperationRate: 0.45,
+            description: 'スピードが命だよ'
+        },
+        {
+            name: 'したたかドラゴン',
+            avatar: '🐲',
+            personality: 'aggressive',
+            riskTolerance: 0.8,
+            cooperationRate: 0.4,
+            description: '最高の投資を見つけるぞ'
+        }
+    ]
+};
+
+// 後方互換性のために残す（レベル別のデフォルト）
 const AI_PLAYERS = [
+    AI_CHARACTERS.easy[0],
+    AI_CHARACTERS.normal[1],
+    AI_CHARACTERS.challenge[1]
+];
+
+// 職業カードデータ
+const JOB_CARDS = [
     {
-        level: 1,
-        name: 'まなぶくん',
-        avatar: '🐻',
-        personality: 'conservative', // 堅実型
-        riskTolerance: 0.3,
-        cooperationRate: 0.8
+        id: 'J01',
+        name: 'パン屋さん',
+        icon: '🍞',
+        description: '毎朝早起きして、おいしいパンを焼くよ！',
+        salary: 80,
+        livingExpense: 50,
+        family: 'single',
+        familyIcon: '👤',
+        familyLabel: 'ひとりぐらし',
+        startingCash: 200,
+        color: '#FFA726',
+        hint: '給料は少なめだけど、生活費も少ないから貯金しやすいよ'
     },
     {
-        level: 2,
-        name: 'ひかりちゃん',
-        avatar: '🦊',
-        personality: 'balanced', // バランス型
-        riskTolerance: 0.5,
-        cooperationRate: 0.7
+        id: 'J02',
+        name: '学校の先生',
+        icon: '👨‍🏫',
+        description: '子どもたちに勉強を教えるお仕事だよ',
+        salary: 120,
+        livingExpense: 70,
+        family: 'married',
+        familyIcon: '👫',
+        familyLabel: '夫婦ふたり',
+        startingCash: 300,
+        color: '#42A5F5',
+        hint: '安定したお給料がもらえるね'
     },
     {
-        level: 3,
-        name: 'たくみくん',
-        avatar: '🐼',
-        personality: 'aggressive', // 積極型
-        riskTolerance: 0.7,
-        cooperationRate: 0.6
+        id: 'J03',
+        name: 'お医者さん',
+        icon: '👨‍⚕️',
+        description: '病気の人を助ける、とても大切なお仕事',
+        salary: 200,
+        livingExpense: 120,
+        family: 'withKids',
+        familyIcon: '👨‍👩‍👧',
+        familyLabel: '子どもがいる家族',
+        startingCash: 400,
+        color: '#66BB6A',
+        hint: 'お給料は高いけど、生活費も高いね'
+    },
+    {
+        id: 'J04',
+        name: 'ゲームクリエイター',
+        icon: '🎮',
+        description: 'みんなが楽しめるゲームを作るよ',
+        salary: 100,
+        livingExpense: 60,
+        family: 'single',
+        familyIcon: '👤',
+        familyLabel: 'ひとりぐらし',
+        startingCash: 250,
+        color: '#AB47BC',
+        hint: '好きなことを仕事にできるって素敵だね'
+    },
+    {
+        id: 'J05',
+        name: 'お花屋さん',
+        icon: '💐',
+        description: 'きれいなお花を売るお店を持っているよ',
+        salary: 90,
+        livingExpense: 55,
+        family: 'single',
+        familyIcon: '👤',
+        familyLabel: 'ひとりぐらし',
+        startingCash: 220,
+        color: '#EC407A',
+        hint: '自分のお店を持つって夢があるね'
+    },
+    {
+        id: 'J06',
+        name: '会社員',
+        icon: '💼',
+        description: '会社でいろんな仕事をしているよ',
+        salary: 130,
+        livingExpense: 80,
+        family: 'married',
+        familyIcon: '👫',
+        familyLabel: '夫婦ふたり',
+        startingCash: 350,
+        color: '#5C6BC0',
+        hint: '安定して働けるのがいいところだね'
+    },
+    {
+        id: 'J07',
+        name: 'ユーチューバー',
+        icon: '📱',
+        description: '動画を作って、みんなに見てもらうよ',
+        salary: 70,
+        livingExpense: 45,
+        family: 'single',
+        familyIcon: '👤',
+        familyLabel: 'ひとりぐらし',
+        startingCash: 150,
+        color: '#EF5350',
+        hint: '最初は大変だけど、人気が出ると収入が増えるかも'
+    },
+    {
+        id: 'J08',
+        name: '消防士',
+        icon: '🚒',
+        description: '火事から人を助ける、かっこいいお仕事',
+        salary: 110,
+        livingExpense: 65,
+        family: 'withKids',
+        familyIcon: '👨‍👩‍👦',
+        familyLabel: '子どもがいる家族',
+        startingCash: 280,
+        color: '#FF7043',
+        hint: '人を助けるやりがいのある仕事だね'
+    },
+    {
+        id: 'J09',
+        name: 'パイロット',
+        icon: '✈️',
+        description: '飛行機を操縦して、人を運ぶよ',
+        salary: 180,
+        livingExpense: 100,
+        family: 'married',
+        familyIcon: '👫',
+        familyLabel: '夫婦ふたり',
+        startingCash: 450,
+        color: '#26C6DA',
+        hint: 'お給料は高いけど、責任も大きいよ'
+    },
+    {
+        id: 'J10',
+        name: 'ケーキ屋さん',
+        icon: '🎂',
+        description: 'おいしいケーキを作って売るよ',
+        salary: 85,
+        livingExpense: 52,
+        family: 'single',
+        familyIcon: '👤',
+        familyLabel: 'ひとりぐらし',
+        startingCash: 210,
+        color: '#FFCA28',
+        hint: '自分で作ったものを売るのは楽しいね'
+    },
+    {
+        id: 'J11',
+        name: '農家さん',
+        icon: '🌾',
+        description: '野菜やお米を育てるお仕事',
+        salary: 75,
+        livingExpense: 40,
+        family: 'withKids',
+        familyIcon: '👨‍👩‍👧‍👦',
+        familyLabel: '大家族',
+        startingCash: 180,
+        color: '#8D6E63',
+        hint: '生活費が安いのがポイントだよ'
+    },
+    {
+        id: 'J12',
+        name: '弁護士',
+        icon: '⚖️',
+        description: '法律の専門家として人を助けるよ',
+        salary: 190,
+        livingExpense: 110,
+        family: 'withKids',
+        familyIcon: '👨‍👩‍👧',
+        familyLabel: '子どもがいる家族',
+        startingCash: 420,
+        color: '#78909C',
+        hint: '勉強が大変だけど、やりがいがあるね'
     }
 ];
 

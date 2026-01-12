@@ -8,6 +8,8 @@ let game = null;
 // 設定状態
 let selectedAvatar = '🐱';
 let selectedMode = 'easy';
+let selectedJob = null;
+let shuffledJobCards = [];
 
 // ===================================
 // 画面遷移
@@ -34,10 +36,194 @@ function selectDifficulty(btn) {
     document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('selected'));
     btn.classList.add('selected');
     selectedMode = btn.dataset.mode;
+
+    // AIキャラクタープレビューを更新
+    updateAICharactersPreview();
+}
+
+function updateAICharactersPreview() {
+    const preview = document.getElementById('ai-characters-preview');
+    if (!preview) return;
+
+    // 難易度に応じたキャラクターを取得
+    const characters = typeof AI_CHARACTERS !== 'undefined' ? AI_CHARACTERS[selectedMode] : [];
+
+    if (characters.length === 0) {
+        preview.innerHTML = '';
+        return;
+    }
+
+    const modeLabels = {
+        'easy': 'やさしい仲間たち',
+        'normal': '個性的なライバル',
+        'challenge': '強力なライバル'
+    };
+
+    preview.innerHTML = `
+        <div class="ai-preview-label">${modeLabels[selectedMode] || 'AIキャラクター'}</div>
+        <div class="ai-preview-grid">
+            ${characters.map(char => `
+                <div class="ai-preview-card">
+                    <div class="ai-preview-avatar">${char.avatar}</div>
+                    <div class="ai-preview-name">${char.name}</div>
+                    <div class="ai-preview-desc">${char.description}</div>
+                </div>
+            `).join('')}
+        </div>
+    `;
 }
 
 // ===================================
-// ゲーム開始
+// 職業選択
+// ===================================
+
+function goToJobSelection() {
+    showScreen('job-selection-screen');
+    initJobCards();
+}
+
+function backToSetup() {
+    selectedJob = null;
+    showScreen('setup-screen');
+}
+
+function initJobCards() {
+    const grid = document.getElementById('job-cards-grid');
+    const resultArea = document.getElementById('job-result-area');
+
+    // 結果エリアを非表示
+    resultArea.style.display = 'none';
+
+    // 職業カードをシャッフル
+    shuffledJobCards = shuffleArray([...JOB_CARDS]);
+
+    // カードをリセット
+    selectedJob = null;
+
+    // カードを生成（6枚表示）
+    const displayCount = Math.min(6, shuffledJobCards.length);
+    grid.innerHTML = '';
+
+    for (let i = 0; i < displayCount; i++) {
+        const job = shuffledJobCards[i];
+        const card = document.createElement('div');
+        card.className = 'job-card';
+        card.dataset.jobId = job.id;
+        card.dataset.index = i;
+
+        card.innerHTML = `
+            <div class="job-card-inner">
+                <div class="job-card-face job-card-back">
+                    <div class="card-pattern"></div>
+                    <div class="card-label">タップしてね</div>
+                </div>
+                <div class="job-card-face job-card-front">
+                    <div class="job-icon">${job.icon}</div>
+                    <div class="job-name">${job.name}</div>
+                    <div class="job-family">${job.familyIcon} ${job.familyLabel}</div>
+                </div>
+            </div>
+        `;
+
+        card.addEventListener('click', () => selectJobCard(card, job));
+        grid.appendChild(card);
+    }
+}
+
+function shuffleArray(array) {
+    const newArray = [...array];
+    for (let i = newArray.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+    }
+    return newArray;
+}
+
+async function selectJobCard(cardElement, job) {
+    // 既に選択済みなら無視
+    if (selectedJob) return;
+
+    selectedJob = job;
+
+    // 全てのカードを無効化
+    document.querySelectorAll('.job-card').forEach(c => {
+        if (c !== cardElement) {
+            c.classList.add('disabled');
+        }
+    });
+
+    // 選択されたカードをフリップ
+    cardElement.classList.add('flipped', 'selected');
+
+    // フリップアニメーションを待つ
+    await sleep(1000);
+
+    // 結果を表示
+    showJobResult(job);
+}
+
+function showJobResult(job) {
+    const resultArea = document.getElementById('job-result-area');
+
+    // 職業情報を設定
+    document.getElementById('job-result-icon').textContent = job.icon;
+    document.getElementById('job-result-name').textContent = job.name;
+    document.getElementById('job-result-description').textContent = job.description;
+
+    // ステータスを設定
+    document.getElementById('job-stat-salary').textContent = `+${job.salary}`;
+    document.getElementById('job-stat-expense').textContent = `-${job.livingExpense}`;
+    document.getElementById('job-stat-family').textContent = job.familyLabel;
+    document.getElementById('job-stat-cash').textContent = `${job.startingCash}コイン`;
+
+    // ヒントを設定
+    document.getElementById('job-result-hint').textContent = `💡 ヒント: ${job.hint}`;
+
+    // キャッシュフローを計算
+    const cashflow = job.salary - job.livingExpense;
+    const cashflowEl = document.getElementById('job-cashflow');
+    cashflowEl.textContent = cashflow >= 0 ? `+${cashflow}` : `${cashflow}`;
+    cashflowEl.className = `cashflow-value ${cashflow >= 0 ? 'positive' : 'negative'}`;
+
+    // 結果エリアを表示
+    resultArea.style.display = 'block';
+
+    // スクロール
+    resultArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function confirmJobSelection() {
+    if (!selectedJob) {
+        alert('職業カードを選んでね！');
+        return;
+    }
+
+    // ゲームを開始
+    startGameWithJob();
+}
+
+function startGameWithJob() {
+    const playerName = document.getElementById('player-name').value.trim() || 'プレイヤー';
+    const aiCount = parseInt(document.getElementById('ai-count').value);
+    const aiLevel = parseInt(document.getElementById('ai-level').value);
+
+    game = new Game();
+    game.initialize({
+        playerName: playerName,
+        avatar: selectedAvatar,
+        mode: selectedMode,
+        aiCount: aiCount,
+        aiLevel: aiLevel,
+        job: selectedJob // 選択した職業を渡す
+    });
+
+    showScreen('game-screen');
+    initGameUI();
+    startTurn();
+}
+
+// ===================================
+// ゲーム開始（従来の方法 - 職業選択なし）
 // ===================================
 
 function startGame() {
@@ -112,20 +298,46 @@ function renderGameBoard() {
 }
 
 function renderPlayersPanel() {
-    const list = document.getElementById('players-list');
+    const list = document.getElementById('players-status-list') || document.getElementById('players-list');
+    if (!list) return;
     list.innerHTML = '';
 
     game.players.forEach(player => {
         const finance = game.getPlayerFinance(player);
         const card = document.createElement('div');
-        card.className = 'player-card';
+        card.className = 'player-status-card';
         card.id = `player-card-${player.id}`;
 
+        // AIプレイヤーの場合は説明も表示
+        const descHtml = player.isAI && player.description
+            ? `<div class="player-status-desc">${player.description}</div>`
+            : '';
+
+        // 職業名
+        const jobHtml = player.job
+            ? `<div class="player-status-job">${player.job.icon} ${player.job.name}</div>`
+            : '';
+
+        // プレイヤーの種類を示すバッジ
+        const badgeHtml = player.isAI
+            ? '<span class="player-badge ai">AI</span>'
+            : '<span class="player-badge human">あなた</span>';
+
         card.innerHTML = `
-            <div class="player-avatar">${player.avatar}</div>
-            <div class="player-name">${player.name}</div>
-            <div class="player-progress">
-                <div class="player-progress-fill" style="width: ${finance.escapeProgress}%"></div>
+            <div class="player-status-avatar">${player.avatar}</div>
+            <div class="player-status-info">
+                <div class="player-status-name-row">
+                    <span class="player-status-name">${player.name}</span>
+                    ${badgeHtml}
+                </div>
+                ${descHtml}
+                ${jobHtml}
+                <div class="player-status-progress">
+                    <div class="player-status-progress-bar">
+                        <div class="player-status-progress-fill" style="width: ${finance.escapeProgress}%"></div>
+                    </div>
+                    <span class="player-status-progress-text">${finance.escapeProgress}%</span>
+                </div>
             </div>
         `;
 
@@ -195,9 +407,15 @@ function updatePlayersPanel() {
             card.classList.toggle('escaped', player.isEscaped);
 
             // 進捗バーを更新
-            const progressFill = card.querySelector('.player-progress-fill');
+            const progressFill = card.querySelector('.player-status-progress-fill');
             if (progressFill) {
                 progressFill.style.width = `${finance.escapeProgress}%`;
+            }
+
+            // 進捗テキストを更新
+            const progressText = card.querySelector('.player-status-progress-text');
+            if (progressText) {
+                progressText.textContent = `${finance.escapeProgress}%`;
             }
         }
     });
@@ -586,6 +804,9 @@ function showGameResult() {
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🎮 マネーアドベンチャー 起動！');
+
+    // 初期AIキャラクタープレビュー表示
+    updateAICharactersPreview();
 
     // モーダル外クリックで閉じる
     document.querySelectorAll('.modal').forEach(modal => {

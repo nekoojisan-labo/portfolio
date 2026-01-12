@@ -27,20 +27,60 @@ class Game {
 
         // 人間プレイヤーを追加
         const initialSettings = INITIAL_SETTINGS[this.mode];
+
+        // 職業が選択されている場合、職業のパラメータを使用
+        let humanPlayerSettings = { ...initialSettings };
+        let humanPlayerJob = null;
+
+        if (settings.job) {
+            humanPlayerJob = settings.job;
+            humanPlayerSettings = {
+                startingCash: settings.job.startingCash,
+                salary: settings.job.salary,
+                livingExpense: settings.job.livingExpense,
+                escapeCondition: initialSettings.escapeCondition
+            };
+        }
+
         this.players.push(this.createPlayer({
             id: 'player_human',
             name: settings.playerName,
             avatar: settings.avatar,
             isAI: false,
-            ...initialSettings
+            job: humanPlayerJob,
+            ...humanPlayerSettings
         }));
 
         // AIプレイヤーを追加
         const aiCount = settings.aiCount || 3;
         const aiLevel = settings.aiLevel || 2;
 
+        // AIにもランダムな職業を割り当て
+        const availableJobs = typeof JOB_CARDS !== 'undefined' ? [...JOB_CARDS] : [];
+        const shuffledJobs = this.shuffleArray(availableJobs);
+
+        // 難易度に応じたAIキャラクターを取得
+        const aiCharacters = this.getAICharactersForMode(this.mode);
+        const shuffledCharacters = this.shuffleArray([...aiCharacters]);
+
         for (let i = 0; i < aiCount; i++) {
-            const aiConfig = AI_PLAYERS[Math.min(aiLevel - 1, AI_PLAYERS.length - 1)];
+            // 異なるキャラクターを割り当て（キャラクターが足りない場合はループ）
+            const aiConfig = shuffledCharacters[i % shuffledCharacters.length];
+
+            // AIにもランダムに職業を割り当て
+            let aiPlayerSettings = { ...initialSettings };
+            let aiJob = null;
+
+            if (shuffledJobs.length > i) {
+                aiJob = shuffledJobs[i];
+                aiPlayerSettings = {
+                    startingCash: aiJob.startingCash,
+                    salary: aiJob.salary,
+                    livingExpense: aiJob.livingExpense,
+                    escapeCondition: initialSettings.escapeCondition
+                };
+            }
+
             this.players.push(this.createPlayer({
                 id: `player_ai_${i}`,
                 name: aiConfig.name,
@@ -50,7 +90,9 @@ class Game {
                 personality: aiConfig.personality,
                 riskTolerance: aiConfig.riskTolerance,
                 cooperationRate: aiConfig.cooperationRate,
-                ...initialSettings
+                description: aiConfig.description,
+                job: aiJob,
+                ...aiPlayerSettings
             }));
         }
 
@@ -60,6 +102,29 @@ class Game {
         this.isGameOver = false;
 
         return this;
+    }
+
+    /**
+     * 配列のシャッフル
+     */
+    shuffleArray(array) {
+        const newArray = [...array];
+        for (let i = newArray.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+        }
+        return newArray;
+    }
+
+    /**
+     * 難易度に応じたAIキャラクターを取得
+     */
+    getAICharactersForMode(mode) {
+        if (typeof AI_CHARACTERS !== 'undefined' && AI_CHARACTERS[mode]) {
+            return AI_CHARACTERS[mode];
+        }
+        // フォールバック: AI_PLAYERSを使用
+        return AI_PLAYERS || [];
     }
 
     /**
@@ -75,6 +140,10 @@ class Game {
             personality: config.personality || 'balanced',
             riskTolerance: config.riskTolerance || 0.5,
             cooperationRate: config.cooperationRate || 0.7,
+            description: config.description || '',
+
+            // 職業情報
+            job: config.job || null,
 
             // 財務状態
             cash: config.startingCash,
