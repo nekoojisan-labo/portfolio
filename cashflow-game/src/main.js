@@ -472,6 +472,10 @@ function renderPlayersPanel() {
     if (!list) return;
     list.innerHTML = '';
 
+    // 人間プレイヤーの数をカウント
+    const humanCount = game.players.filter(p => !p.isAI).length;
+    let humanIndex = 0;
+
     game.players.forEach(player => {
         const finance = game.getPlayerFinance(player);
         const card = document.createElement('div');
@@ -489,9 +493,15 @@ function renderPlayersPanel() {
             : '';
 
         // プレイヤーの種類を示すバッジ
-        const badgeHtml = player.isAI
-            ? '<span class="player-badge ai">AI</span>'
-            : '<span class="player-badge human">あなた</span>';
+        let badgeHtml;
+        if (player.isAI) {
+            badgeHtml = '<span class="player-badge ai">AI</span>';
+        } else {
+            humanIndex++;
+            // 複数人の場合はプレイヤー番号、1人の場合は「あなた」
+            const badgeText = humanCount > 1 ? `P${humanIndex}` : 'あなた';
+            badgeHtml = `<span class="player-badge human">${badgeText}</span>`;
+        }
 
         card.innerHTML = `
             <div class="player-status-avatar">${player.avatar}</div>
@@ -612,7 +622,6 @@ function updateActionButtons() {
     document.getElementById('btn-buy').disabled = true; // イベント時のみ有効
     document.getElementById('btn-sell').disabled = player.assets.length === 0;
     document.getElementById('btn-cooperate').disabled = !isHuman;
-    document.getElementById('btn-end-turn').disabled = !isHuman;
 }
 
 // ===================================
@@ -709,11 +718,32 @@ async function rollDice() {
     if (['chance', 'trouble', 'learning'].includes(tile.type)) {
         const card = game.drawEventCard(tile.type);
         showEventModal(card);
+        // イベントモーダルでの選択後に自動的にターン終了する
     } else {
-        // 協力マスなど
-        game.phase = 'action';
-        updateActionButtons();
-        updateTurnInfo();
+        // イベントがないマス → 自動的にターン終了
+        await sleep(500);
+        autoEndTurn();
+    }
+}
+
+// 自動ターン終了（アクション後に呼ばれる）
+async function autoEndTurn() {
+    const result = game.endTurn();
+
+    // 脱出チェック
+    const prevPlayer = game.players[(game.currentPlayerIndex - 1 + game.players.length) % game.players.length];
+    if (prevPlayer.isEscaped && prevPlayer.escapedTurn === game.turn) {
+        showNotification(`🎉 ${prevPlayer.name}がラットレースを脱出！`);
+        await sleep(1500);
+    }
+
+    // セーブ
+    game.save();
+
+    if (result.isGameOver) {
+        showGameResult();
+    } else {
+        startTurn();
     }
 }
 
@@ -799,7 +829,7 @@ function showEventModal(card) {
     modal.classList.add('active');
 }
 
-function acceptEvent() {
+async function acceptEvent() {
     const result = game.processEvent(true);
 
     if (result) {
@@ -814,18 +844,18 @@ function acceptEvent() {
     updateFinancePanel();
     updatePlayersPanel();
 
-    game.phase = 'action';
-    updateActionButtons();
-    updateTurnInfo();
+    // イベント処理後に自動的にターン終了
+    await sleep(800);
+    autoEndTurn();
 }
 
-function rejectEvent() {
+async function rejectEvent() {
     game.processEvent(false);
     closeModal('event-modal');
 
-    game.phase = 'action';
-    updateActionButtons();
-    updateTurnInfo();
+    // イベントをスキップ後に自動的にターン終了
+    await sleep(500);
+    autoEndTurn();
 }
 
 // ===================================
