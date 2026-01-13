@@ -17,6 +17,9 @@ let shuffledJobCards = [];
 // 使用済みアバター追跡
 let usedAvatars = [];
 
+// ゲーム状態
+let hasRolledThisTurn = false;  // このターンでサイコロを振ったか
+
 // ===================================
 // 画面遷移
 // ===================================
@@ -359,6 +362,11 @@ function startGameWithPlayers() {
     };
     const aiLevel = aiLevelByMode[selectedMode] || 2;
 
+    // CoachAIの難易度を設定
+    if (typeof CoachAI !== 'undefined') {
+        CoachAI.setDifficulty(selectedMode);
+    }
+
     game = new Game();
     game.initializeMultiplayer({
         humanPlayers: playerConfigs,
@@ -618,7 +626,8 @@ function updateActionButtons() {
     const player = game.getCurrentPlayer();
     const isHuman = !player.isAI;
 
-    document.getElementById('btn-dice').disabled = !isHuman;
+    // サイコロは人間プレイヤーかつまだ振っていない時のみ有効
+    document.getElementById('btn-dice').disabled = !isHuman || hasRolledThisTurn;
     document.getElementById('btn-buy').disabled = true; // イベント時のみ有効
     document.getElementById('btn-sell').disabled = player.assets.length === 0;
     document.getElementById('btn-cooperate').disabled = !isHuman;
@@ -631,6 +640,7 @@ function updateActionButtons() {
 async function startTurn() {
     const player = game.getCurrentPlayer();
     game.phase = 'income';
+    hasRolledThisTurn = false;  // 新しいターン開始時にリセット
     updateAllUI();
 
     if (player.isAI) {
@@ -675,7 +685,9 @@ async function processAITurnWithAnimation() {
 async function rollDice() {
     const player = game.getCurrentPlayer();
     if (player.isAI) return;
+    if (hasRolledThisTurn) return;  // 既に振っていたら何もしない
 
+    hasRolledThisTurn = true;  // サイコロを振った
     const diceBtn = document.getElementById('btn-dice');
     diceBtn.disabled = true;
 
@@ -885,6 +897,15 @@ function showHint() {
     pointsEl.innerHTML = hints.points.map(p => `<li>${p}</li>`).join('');
 
     document.getElementById('hint-question').textContent = `「${hints.question}」`;
+
+    // tipがあれば表示
+    const tipEl = document.getElementById('hint-tip');
+    if (tipEl && hints.tip) {
+        tipEl.textContent = hints.tip;
+        tipEl.style.display = 'block';
+    } else if (tipEl) {
+        tipEl.style.display = 'none';
+    }
 
     document.getElementById('hint-modal').classList.add('active');
 

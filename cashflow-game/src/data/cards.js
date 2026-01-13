@@ -746,3 +746,325 @@ const INITIAL_SETTINGS = {
         escapeCondition: (player) => player.passiveIncome >= player.livingExpense + (player.livingExpense * 3)
     }
 };
+
+// ===================================
+// 難易度別追加カード
+// ===================================
+
+// 中級者向けチャンスカード（normal以上で出現）
+const ADVANCED_CHANCE_CARDS = [
+    {
+        id: 'AC01',
+        type: 'chance',
+        category: 'realEstate',
+        name: 'マンション一室（ローン付）',
+        icon: '🏢',
+        description: '頭金100コイン、ローンで残りを払える。毎月の返済あり。',
+        cost: 100,
+        loanAmount: 200,
+        loanPayment: 15,
+        monthlyIncome: 25,
+        difficulty: ['normal', 'challenge'],
+        hint: 'レバレッジ: 少ない資金で大きな投資。でも返済は確実に来る'
+    },
+    {
+        id: 'AC02',
+        type: 'chance',
+        category: 'stock',
+        name: 'インデックスファンド',
+        icon: '📊',
+        description: '市場全体に投資。リスク分散されているが、市場全体の影響を受ける。',
+        cost: 100,
+        monthlyIncome: 5,
+        volatility: 'low',
+        difficulty: ['normal', 'challenge'],
+        hint: '分散投資の基本。個別株より安定だが、大きく勝ちにくい'
+    },
+    {
+        id: 'AC03',
+        type: 'chance',
+        category: 'business',
+        name: 'フランチャイズ加盟',
+        icon: '🏪',
+        description: '有名チェーンの店を開ける。初期費用高いが、ブランド力あり。',
+        cost: 300,
+        monthlyIncome: 30,
+        difficulty: ['normal', 'challenge'],
+        hint: 'ブランド力を借りる代わりに、ロイヤリティを払う'
+    },
+    {
+        id: 'AC04',
+        type: 'chance',
+        category: 'bond',
+        name: '社債購入',
+        icon: '📜',
+        description: '会社にお金を貸す。利息は低めだが、安定している。',
+        cost: 150,
+        monthlyIncome: 8,
+        riskLevel: 'low',
+        difficulty: ['normal', 'challenge'],
+        hint: '株より安全だが、リターンも控えめ。ポートフォリオの安定剤'
+    },
+    {
+        id: 'AC05',
+        type: 'chance',
+        category: 'realEstate',
+        name: 'REIT（不動産投資信託）',
+        icon: '🏛️',
+        description: '少額から不動産投資。分散されているが、市場の影響も受ける。',
+        cost: 50,
+        monthlyIncome: 3,
+        difficulty: ['normal', 'challenge'],
+        hint: '不動産に投資したいけど大金がない時の選択肢'
+    }
+];
+
+// 上級者向けチャンスカード（challengeのみで出現）
+const EXPERT_CHANCE_CARDS = [
+    {
+        id: 'EC01',
+        type: 'chance',
+        category: 'realEstate',
+        name: '商業ビル投資',
+        icon: '🏙️',
+        description: '頭金200で購入可能。高利回りだが空室リスクも高い。',
+        cost: 200,
+        loanAmount: 600,
+        loanPayment: 40,
+        monthlyIncome: 60,
+        vacancyRisk: 0.15,
+        difficulty: ['challenge'],
+        hint: 'キャップレート分析: (純営業収入÷物件価格)で利回りを計算'
+    },
+    {
+        id: 'EC02',
+        type: 'chance',
+        category: 'stock',
+        name: 'IPO株（新規上場）',
+        icon: '🚀',
+        description: '上場直後の株。大きく上がるか、下がるかわからない。',
+        cost: 100,
+        monthlyIncome: 0,
+        potentialGain: 200,
+        potentialLoss: 50,
+        difficulty: ['challenge'],
+        hint: 'ハイリスク・ハイリターン。宝くじ的要素あり'
+    },
+    {
+        id: 'EC03',
+        type: 'chance',
+        category: 'business',
+        name: 'スタートアップ出資',
+        icon: '💡',
+        description: '新しい会社への出資。成功すれば10倍、失敗すれば0。',
+        cost: 150,
+        monthlyIncome: 0,
+        successChance: 0.2,
+        successMultiplier: 10,
+        difficulty: ['challenge'],
+        hint: 'ベンチャーキャピタルの考え方: 10件中1件の大成功で全体を回収'
+    },
+    {
+        id: 'EC04',
+        type: 'chance',
+        category: 'derivative',
+        name: 'オプション取引',
+        icon: '📈',
+        description: '将来の価格で売買する権利。レバレッジが効くが、リスクも高い。',
+        cost: 30,
+        potentialGain: 150,
+        potentialLoss: 30,
+        difficulty: ['challenge'],
+        hint: 'デリバティブは諸刃の剣。ヘッジにも投機にも使える'
+    },
+    {
+        id: 'EC05',
+        type: 'chance',
+        category: 'realEstate',
+        name: '海外不動産投資',
+        icon: '🌍',
+        description: '海外の物件。為替リスクあるが、分散効果も。',
+        cost: 250,
+        monthlyIncome: 20,
+        currencyRisk: true,
+        difficulty: ['challenge'],
+        hint: '為替変動で利益も損失も増幅される。グローバル分散の一環'
+    }
+];
+
+// 難易度別トラブルカード
+const ADVANCED_TROUBLE_CARDS = [
+    {
+        id: 'AT01',
+        type: 'trouble',
+        category: 'market',
+        name: '金利上昇',
+        icon: '📊',
+        description: '金利が上がった！ローン返済が10%増加。',
+        effect: 'interestRateUp',
+        effectValue: 0.1,
+        difficulty: ['normal', 'challenge'],
+        hint: '変動金利のリスク。固定金利なら影響なし'
+    },
+    {
+        id: 'AT02',
+        type: 'trouble',
+        category: 'market',
+        name: 'インフレ発生',
+        icon: '💹',
+        description: '物価が上がった！生活費が15%増加。',
+        effect: 'inflation',
+        effectValue: 0.15,
+        difficulty: ['normal', 'challenge'],
+        hint: 'インフレは現金の敵、資産の味方'
+    },
+    {
+        id: 'AT03',
+        type: 'trouble',
+        category: 'tax',
+        name: '税務調査',
+        icon: '🏛️',
+        description: '税金の計算ミスが発覚。追加で50コイン支払い。',
+        cost: 50,
+        difficulty: ['challenge'],
+        hint: '節税と脱税は違う。正しい知識が必要'
+    },
+    {
+        id: 'AT04',
+        type: 'trouble',
+        category: 'market',
+        name: '市場暴落',
+        icon: '📉',
+        description: '株式市場が大暴落！株式資産が30%減少。',
+        effect: 'marketCrash',
+        effectValue: 0.3,
+        difficulty: ['challenge'],
+        hint: '暴落時は買い時？それとも逃げ時？メンタルが試される'
+    },
+    {
+        id: 'AT05',
+        type: 'trouble',
+        category: 'legal',
+        name: '訴訟リスク',
+        icon: '⚖️',
+        description: 'ビジネスで訴えられた。弁護士費用80コイン。',
+        cost: 80,
+        difficulty: ['challenge'],
+        hint: 'ビジネスリスクの一つ。保険や法人化で対策可能'
+    }
+];
+
+// 難易度別学習カード
+const ADVANCED_LEARNING_CARDS = [
+    {
+        id: 'AL01',
+        type: 'learning',
+        category: 'finance',
+        name: '複利の力を理解！',
+        icon: '📈',
+        description: '複利計算をマスター。投資判断がより正確に。',
+        effect: 'compoundKnowledge',
+        difficulty: ['normal', 'challenge'],
+        hint: '72の法則: 72÷利率=資金が2倍になる年数'
+    },
+    {
+        id: 'AL02',
+        type: 'learning',
+        category: 'finance',
+        name: 'リスク分散を学ぶ',
+        icon: '🎯',
+        description: 'ポートフォリオ理論を習得。リスク管理+10%',
+        effect: 'riskManagement',
+        effectValue: 0.1,
+        difficulty: ['normal', 'challenge'],
+        hint: '相関の低い資産を組み合わせてリスクを下げる'
+    },
+    {
+        id: 'AL03',
+        type: 'learning',
+        category: 'finance',
+        name: 'レバレッジ戦略',
+        icon: '⚡',
+        description: '借入を使った投資戦略を習得。ローン金利-2%',
+        effect: 'leverageSkill',
+        effectValue: 0.02,
+        difficulty: ['challenge'],
+        hint: 'OPM(Other People\'s Money)を活用するが、両刃の剣'
+    },
+    {
+        id: 'AL04',
+        type: 'learning',
+        category: 'tax',
+        name: '税制優遇を発見！',
+        icon: '🏛️',
+        description: '合法的な節税方法を学ぶ。支出-10コイン/月',
+        effect: 'taxOptimization',
+        effectValue: 10,
+        difficulty: ['challenge'],
+        hint: '所得控除、税額控除、損益通算などを活用'
+    },
+    {
+        id: 'AL05',
+        type: 'learning',
+        category: 'mindset',
+        name: '投資家マインドセット',
+        icon: '🧠',
+        description: '長期視点を獲得。短期的な変動に動じなくなる。',
+        effect: 'investorMindset',
+        difficulty: ['normal', 'challenge'],
+        hint: '感情に左右されず、データと論理で判断する'
+    }
+];
+
+/**
+ * 難易度に応じたカードデッキを取得
+ */
+function getCardsByDifficulty(cardType, difficulty) {
+    let baseCards = [];
+    let advancedCards = [];
+
+    switch (cardType) {
+        case 'chance':
+            baseCards = [...CHANCE_CARDS];
+            if (difficulty === 'normal' || difficulty === 'challenge') {
+                advancedCards = ADVANCED_CHANCE_CARDS.filter(c =>
+                    c.difficulty.includes(difficulty)
+                );
+            }
+            if (difficulty === 'challenge') {
+                advancedCards = advancedCards.concat(
+                    EXPERT_CHANCE_CARDS.filter(c => c.difficulty.includes(difficulty))
+                );
+            }
+            break;
+        case 'trouble':
+            baseCards = [...TROUBLE_CARDS];
+            if (difficulty === 'normal' || difficulty === 'challenge') {
+                advancedCards = ADVANCED_TROUBLE_CARDS.filter(c =>
+                    c.difficulty.includes(difficulty)
+                );
+            }
+            break;
+        case 'learning':
+            baseCards = [...LEARNING_CARDS];
+            if (difficulty === 'normal' || difficulty === 'challenge') {
+                advancedCards = ADVANCED_LEARNING_CARDS.filter(c =>
+                    c.difficulty.includes(difficulty)
+                );
+            }
+            break;
+    }
+
+    return [...baseCards, ...advancedCards];
+}
+
+/**
+ * 難易度に応じたAIキャラクターを取得
+ */
+function getAICharactersForMode(mode) {
+    return AI_CHARACTERS[mode] || AI_CHARACTERS.normal;
+}
+
+// グローバルに公開
+window.getCardsByDifficulty = getCardsByDifficulty;
+window.getAICharactersForMode = getAICharactersForMode;
