@@ -1423,6 +1423,17 @@ body {
     cursor: not-allowed;
 }
 
+/* ターン自動終了ヒント */
+.turn-auto-hint {
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    padding: 8px;
+    margin-top: 8px;
+    background: var(--surface-dark);
+    border-radius: var(--border-radius-sm);
+}
+
 .action-icon {
     font-size: 1.8rem;
     margin-bottom: 3px;
