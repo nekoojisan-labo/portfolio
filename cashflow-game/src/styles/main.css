@@ -1715,6 +1715,273 @@ body {
     border-top: 1px dashed var(--border-color);
 }
 
+/* ===================================
+   売却モーダル
+   =================================== */
+.sell-info {
+    text-align: center;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+}
+
+.sell-assets-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 16px;
+}
+
+.sell-asset-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+}
+
+.sell-asset-icon {
+    font-size: 2rem;
+}
+
+.sell-asset-info {
+    flex: 1;
+}
+
+.sell-asset-name {
+    font-weight: 600;
+    color: var(--text);
+}
+
+.sell-asset-details {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.sell-asset-price {
+    text-align: right;
+}
+
+.sell-asset-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--success);
+}
+
+.sell-asset-original {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-decoration: line-through;
+}
+
+.sell-btn {
+    padding: 8px 16px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    font-weight: 600;
+    transition: var(--transition);
+}
+
+.sell-btn:hover {
+    background: var(--accent-dark);
+}
+
+.sell-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+}
+
+/* ===================================
+   共同購入モーダル
+   =================================== */
+.joint-purchase-intro {
+    text-align: center;
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+    padding: 12px;
+    background: var(--surface-dark);
+    border-radius: var(--border-radius-sm);
+}
+
+.joint-step {
+    margin-bottom: 20px;
+}
+
+.joint-step h4 {
+    margin-bottom: 12px;
+    color: var(--primary);
+}
+
+.joint-options {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.joint-option-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 8px;
+    background: var(--surface);
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.joint-option-btn:hover {
+    border-color: var(--primary);
+    background: var(--primary-light);
+}
+
+.joint-option-btn.selected {
+    border-color: var(--primary);
+    background: var(--primary-light);
+    box-shadow: 0 0 0 3px rgba(30,95,116,0.2);
+}
+
+.joint-option-btn .option-icon {
+    font-size: 2rem;
+    margin-bottom: 8px;
+}
+
+.joint-option-btn .option-name {
+    font-weight: 600;
+    color: var(--text);
+}
+
+.joint-option-btn .option-price {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.joint-partners {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.joint-partner-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--surface);
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.joint-partner-item:hover {
+    border-color: var(--border-color-dark);
+}
+
+.joint-partner-item.selected {
+    border-color: var(--primary);
+    background: var(--primary-light);
+}
+
+.joint-partner-item.waiting {
+    opacity: 0.7;
+    border-color: var(--accent);
+}
+
+.joint-partner-avatar {
+    font-size: 1.5rem;
+}
+
+.joint-partner-info {
+    flex: 1;
+}
+
+.joint-partner-name {
+    font-weight: 600;
+}
+
+.joint-partner-status {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.joint-partner-status.approved {
+    color: var(--success);
+}
+
+.joint-partner-status.rejected {
+    color: var(--danger);
+}
+
+.joint-partner-checkbox {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--border-color);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.joint-partner-item.selected .joint-partner-checkbox {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+.joint-summary {
+    background: var(--surface);
+    padding: 16px;
+    border-radius: var(--border-radius-sm);
+    margin-bottom: 16px;
+}
+
+.joint-summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.joint-summary-row:last-child {
+    border-bottom: none;
+}
+
+.joint-summary-label {
+    color: var(--text-secondary);
+}
+
+.joint-summary-value {
+    font-weight: 600;
+}
+
+.joint-summary-value.positive {
+    color: var(--success);
+}
+
+.joint-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.joint-actions .btn {
+    flex: 1;
+}
+
+@media (max-width: 480px) {
+    .joint-options {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* 協力オプション */
 .cooperate-options {
     display: flex;

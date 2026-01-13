@@ -794,11 +794,123 @@ class Game {
             }
         }
 
+        // AIの追加アクション：積極的な投資行動
+        const proactiveAction = this.processAIProactiveAction(player);
+        if (proactiveAction) {
+            actions.push(proactiveAction);
+        }
+
         // ターン終了
         const turnResult = this.endTurn();
         actions.push({ type: 'endTurn', data: turnResult });
 
         return actions;
+    }
+
+    /**
+     * AIの積極的なアクション（チャンスタイル以外でも投資を検討）
+     */
+    processAIProactiveAction(player) {
+        // 現金に余裕がある場合、追加の投資機会を探す
+        const finance = this.getPlayerFinance(player);
+
+        // 積極型 or 現金に十分な余裕がある場合
+        const hasExcessCash = player.cash > player.livingExpense * 3;
+        const isAggressive = player.personality === 'aggressive';
+        const isBalanced = player.personality === 'balanced';
+
+        // 投資意欲の計算
+        let investmentMotivation = 0;
+        if (hasExcessCash) investmentMotivation += 0.3;
+        if (isAggressive) investmentMotivation += 0.3;
+        if (isBalanced) investmentMotivation += 0.1;
+        if (player.passiveIncome < player.livingExpense * 0.5) investmentMotivation += 0.2;
+        if (player.cash > player.livingExpense * 5) investmentMotivation += 0.2;
+
+        // 確率で追加投資を試みる
+        if (Math.random() < investmentMotivation) {
+            // 難易度に応じたカードから安価な投資を探す
+            const difficulty = this.mode || 'easy';
+            const chanceCards = typeof getCardsByDifficulty === 'function'
+                ? getCardsByDifficulty('chance', difficulty)
+                : CHANCE_CARDS;
+
+            // 買える範囲の良い投資を探す
+            const affordableCards = chanceCards.filter(card =>
+                card.cost && card.cost <= player.cash * 0.6 &&
+                card.monthlyIncome && card.monthlyIncome > 0
+            );
+
+            if (affordableCards.length > 0) {
+                // ROIが最も良いカードを選ぶ
+                const sortedCards = affordableCards.sort((a, b) =>
+                    (b.monthlyIncome / b.cost) - (a.monthlyIncome / a.cost)
+                );
+                const selectedCard = sortedCards[0];
+
+                // 購入判断
+                const shouldBuy = makeAIDecision(player, 'purchase', {
+                    cost: selectedCard.cost,
+                    monthlyIncome: selectedCard.monthlyIncome
+                });
+
+                if (shouldBuy && player.cash >= selectedCard.cost) {
+                    // 直接購入処理
+                    player.cash -= selectedCard.cost;
+                    player.passiveIncome += selectedCard.monthlyIncome;
+                    player.assets.push({
+                        id: generateUUID(),
+                        cardId: selectedCard.id,
+                        name: selectedCard.name,
+                        purchasePrice: selectedCard.cost,
+                        monthlyIncome: selectedCard.monthlyIncome,
+                        purchasedTurn: this.turn,
+                        icon: selectedCard.icon
+                    });
+                    player.investmentCount++;
+
+                    return {
+                        type: 'proactive_purchase',
+                        data: {
+                            success: true,
+                            card: selectedCard,
+                            message: `${player.name}が${selectedCard.name}を購入！月収+${selectedCard.monthlyIncome}`
+                        }
+                    };
+                }
+            }
+        }
+
+        // 売却検討：利益が大きい場合
+        if (player.assets.length > 0 && Math.random() < 0.15) {
+            for (const asset of player.assets) {
+                const marketFactor = 0.8 + Math.random() * 0.4;
+                const marketPrice = Math.floor((asset.purchasePrice || 50) * marketFactor);
+
+                const shouldSell = makeAIDecision(player, 'sell', {
+                    asset: asset,
+                    marketPrice: marketPrice
+                });
+
+                if (shouldSell) {
+                    player.cash += marketPrice;
+                    player.passiveIncome -= asset.monthlyIncome;
+                    player.assets = player.assets.filter(a => a.id !== asset.id);
+
+                    return {
+                        type: 'proactive_sell',
+                        data: {
+                            success: true,
+                            asset: asset,
+                            price: marketPrice,
+                            message: `${player.name}が${asset.name}を${marketPrice}コインで売却！`
+                        }
+                    };
+                }
+            }
+        }
+
+        return null;
     }
 
     /**

@@ -593,6 +593,93 @@
             </div>
         </div>
 
+        <!-- 売却モーダル -->
+        <div id="sell-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>💰 資産を売る</h3>
+                    <button class="btn btn-icon" onclick="closeModal('sell-modal')">×</button>
+                </div>
+
+                <div class="sell-info">
+                    <p>持っている資産を売ってお金に換えられるよ</p>
+                </div>
+
+                <div class="sell-assets-list" id="sell-assets-list">
+                    <!-- JSで生成 -->
+                </div>
+
+                <div class="sell-empty" id="sell-empty" style="display: none;">
+                    <p>売れる資産がないよ</p>
+                </div>
+
+                <button class="btn btn-secondary btn-block" onclick="closeModal('sell-modal')">
+                    やめる
+                </button>
+            </div>
+        </div>
+
+        <!-- 共同購入モーダル -->
+        <div id="joint-purchase-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>🏠 共同購入</h3>
+                    <button class="btn btn-icon" onclick="closeModal('joint-purchase-modal')">×</button>
+                </div>
+
+                <div class="joint-purchase-intro">
+                    <p>仲間と一緒に投資できるよ！費用も収入も分け合おう。</p>
+                </div>
+
+                <!-- ステップ1: 投資先選択 -->
+                <div class="joint-step" id="joint-step-1">
+                    <h4>① 何に投資する？</h4>
+                    <div class="joint-options">
+                        <button class="joint-option-btn" onclick="selectJointType('realEstate')">
+                            <span class="option-icon">🏠</span>
+                            <span class="option-name">不動産</span>
+                            <span class="option-price">300コイン〜</span>
+                        </button>
+                        <button class="joint-option-btn" onclick="selectJointType('business')">
+                            <span class="option-icon">🏪</span>
+                            <span class="option-name">ビジネス</span>
+                            <span class="option-price">200コイン〜</span>
+                        </button>
+                        <button class="joint-option-btn" onclick="selectJointType('stock')">
+                            <span class="option-icon">📈</span>
+                            <span class="option-name">株式</span>
+                            <span class="option-price">100コイン〜</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ステップ2: パートナー選択 -->
+                <div class="joint-step" id="joint-step-2" style="display: none;">
+                    <h4>② 誰と一緒に買う？</h4>
+                    <div class="joint-partners" id="joint-partners">
+                        <!-- JSで生成 -->
+                    </div>
+                    <button class="btn btn-outline btn-block" onclick="backToJointStep1()">← 戻る</button>
+                </div>
+
+                <!-- ステップ3: 確認 -->
+                <div class="joint-step" id="joint-step-3" style="display: none;">
+                    <h4>③ 確認</h4>
+                    <div class="joint-summary" id="joint-summary">
+                        <!-- JSで生成 -->
+                    </div>
+                    <div class="joint-actions">
+                        <button class="btn btn-outline" onclick="backToJointStep2()">← 戻る</button>
+                        <button class="btn btn-primary" onclick="confirmJointPurchase()">購入する</button>
+                    </div>
+                </div>
+
+                <button class="btn btn-secondary btn-block" onclick="closeModal('joint-purchase-modal')" style="margin-top: 16px;">
+                    やめる
+                </button>
+            </div>
+        </div>
+
         <!-- 脱出演出モーダル -->
         <div id="escape-modal" class="modal">
             <div class="modal-content escape-celebration">
