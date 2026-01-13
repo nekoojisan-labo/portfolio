@@ -330,18 +330,35 @@ class Game {
         const player = this.getCurrentPlayer();
         let cards;
 
+        // 難易度に応じたカードを取得
+        const difficulty = this.mode || 'easy';
+
         switch (tileType) {
             case 'chance':
-                cards = CHANCE_CARDS;
+                cards = typeof getCardsByDifficulty === 'function'
+                    ? getCardsByDifficulty('chance', difficulty)
+                    : CHANCE_CARDS;
                 break;
             case 'trouble':
-                cards = TROUBLE_CARDS;
+                cards = typeof getCardsByDifficulty === 'function'
+                    ? getCardsByDifficulty('trouble', difficulty)
+                    : TROUBLE_CARDS;
                 break;
             case 'learning':
-                cards = LEARNING_CARDS;
+                cards = typeof getCardsByDifficulty === 'function'
+                    ? getCardsByDifficulty('learning', difficulty)
+                    : LEARNING_CARDS;
                 break;
             default:
-                cards = [...CHANCE_CARDS, ...TROUBLE_CARDS, ...LEARNING_CARDS];
+                if (typeof getCardsByDifficulty === 'function') {
+                    cards = [
+                        ...getCardsByDifficulty('chance', difficulty),
+                        ...getCardsByDifficulty('trouble', difficulty),
+                        ...getCardsByDifficulty('learning', difficulty)
+                    ];
+                } else {
+                    cards = [...CHANCE_CARDS, ...TROUBLE_CARDS, ...LEARNING_CARDS];
+                }
         }
 
         // 重み付け選択

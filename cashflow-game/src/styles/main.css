@@ -1696,6 +1696,25 @@ body {
     line-height: 1.8;
 }
 
+/* ヒントのtip（アドバイス）スタイル */
+.hint-tip {
+    background: linear-gradient(135deg, var(--accent-light) 0%, #FFF4E0 100%);
+    border: 2px solid var(--accent);
+    border-radius: var(--border-radius-sm);
+    padding: 12px 16px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text);
+    text-align: center;
+    margin: 0;
+}
+
+.hint-tip-section {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border-color);
+}
+
 /* 協力オプション */
 .cooperate-options {
     display: flex;
