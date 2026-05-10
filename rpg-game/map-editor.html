@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>Map Editor — タイルペイント版</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+    background: #0a0a14;
+    color: #e0eef5;
+    padding: 14px;
+    line-height: 1.5;
+}
+h1 {
+    font-size: 18px;
+    color: #00ffff;
+    margin-bottom: 8px;
+    text-shadow: 0 0 8px rgba(0,255,255,.5);
+}
+.layout {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 14px;
+    align-items: flex-start;
+}
+.left, .right {
+    background: rgba(0,8,24,.6);
+    border: 1px solid rgba(0,255,255,.25);
+    border-radius: 8px;
+    padding: 12px;
+}
+.toolbar {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+    align-items: center;
+}
+.toolbar label { color: #88ccff; font-size: 13px; }
+select, button, input[type=text], input[type=number] {
+    background: rgba(0,30,60,.7);
+    color: #e0eef5;
+    border: 1px solid rgba(0,255,255,.4);
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-size: 13px;
+    font-family: inherit;
+}
+button { cursor: pointer; }
+button:hover { background: rgba(0,80,160,.7); border-color: #00ffff; }
+button.active { background: rgba(0,180,160,.85); color: #001; border-color: #ffff66; font-weight: bold; }
+button.danger { background: rgba(140,40,40,.7); border-color: rgba(255,120,120,.6); }
+button.danger:hover { background: rgba(180,60,60,.85); }
+.canvas-wrap {
+    position: relative;
+    display: inline-block;
+    border: 2px solid #0f3460;
+    background: #000;
+    margin-top: 6px;
+}
+canvas#editor {
+    display: block;
+    cursor: crosshair;
+}
+.coord-readout {
+    color: #88aab8;
+    font-size: 12px;
+    margin-top: 4px;
+}
+.section {
+    margin-top: 12px;
+    border-top: 1px dashed rgba(0,255,255,.2);
+    padding-top: 10px;
+}
+.section h2 {
+    font-size: 13px;
+    color: #ffff66;
+    margin-bottom: 6px;
+}
+.rect-list {
+    max-height: 160px;
+    overflow-y: auto;
+    background: rgba(0,0,12,.4);
+    border-radius: 4px;
+    padding: 4px;
+}
+.rect-row {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    padding: 4px 6px;
+    border-radius: 3px;
+    margin-bottom: 2px;
+    font-size: 11px;
+    font-family: monospace;
+    background: rgba(0,30,60,.5);
+    cursor: pointer;
+}
+.rect-row.selected {
+    background: rgba(0,80,160,.7);
+    box-shadow: 0 0 6px rgba(0,255,255,.5);
+}
+.rect-row .swatch {
+    width: 10px; height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+.rect-row .info { flex: 1; overflow: hidden; }
+.rect-row button {
+    padding: 2px 6px;
+    font-size: 10px;
+}
+.exit-fields {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px 8px;
+    margin-top: 6px;
+    padding: 6px;
+    background: rgba(0,40,80,.4);
+    border-radius: 4px;
+    font-size: 12px;
+}
+.exit-fields label { color: #88ccff; align-self: center; }
+.exit-fields input { padding: 3px 6px; font-size: 12px; width: 100%; }
+.output-area {
+    width: 100%;
+    height: 160px;
+    background: rgba(0,0,12,.6);
+    border: 1px solid rgba(0,255,255,.3);
+    border-radius: 4px;
+    color: #88ddff;
+    font-family: monospace;
+    font-size: 11px;
+    padding: 6px;
+    resize: vertical;
+}
+.muted { color: #88aab8; font-size: 11px; }
+.legend {
+    display: flex;
+    gap: 12px;
+    font-size: 11px;
+    margin: 4px 0 8px;
+    color: #88aab8;
+    flex-wrap: wrap;
+}
+.legend > span { display: inline-flex; align-items: center; gap: 4px; }
+.legend i {
+    display: inline-block;
+    width: 12px; height: 12px;
+    border-radius: 2px;
+}
+.help {
+    background: rgba(0,40,80,.4);
+    padding: 8px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    color: #aaccdd;
+    line-height: 1.6;
+}
+.help kbd {
+    background: rgba(0,80,160,.6);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 10px;
+    border: 1px solid rgba(0,255,255,.3);
+}
+.brush-size {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.brush-size input { width: 60px; }
+</style>
+</head>
+<body>
+
+<h1>🗺️ Map Editor — タイルペイント版（隙間なし）</h1>
+
+<div class="layout">
+
+<div class="left">
+    <div class="toolbar">
+        <label>マップ:</label>
+        <select id="mapSelect"></select>
+        <button id="modePaintWalk" class="active">🖌️ 歩行ペイント</button>
+        <button id="modeErase">🧹 消しゴム</button>
+        <button id="modeRectExit">📐 出口矩形</button>
+        <button id="undoBtn">↶ Undo</button>
+    </div>
+    <div class="toolbar">
+        <span class="brush-size">
+            ブラシ径: <input type="number" id="brushSize" value="32" min="8" max="128" step="4">px
+        </span>
+        <button id="fillAllBtn">🟩 全面歩行可</button>
+        <button id="clearWalkBtn" class="danger">walkable全消去</button>
+        <button id="clearExitBtn" class="danger">exit全消去</button>
+    </div>
+    <div class="legend">
+        <span><i style="background:rgba(0,255,80,.5);border:1px solid #00ff88"></i>walkable (ペイント)</span>
+        <span><i style="background:rgba(255,200,0,.5);border:1px solid #ffaa00"></i>exit (矩形)</span>
+        <span><i style="background:rgba(255,80,80,.5);border:1px solid #ff4444"></i>選択中</span>
+    </div>
+
+    <div class="canvas-wrap">
+        <canvas id="editor" width="800" height="450"></canvas>
+    </div>
+    <div class="coord-readout" id="coordReadout">座標: -</div>
+
+    <div class="help" style="margin-top:8px">
+        <strong>歩行ペイント:</strong> 左ドラッグでブラシ範囲を歩行可能に塗る／<br>
+        <strong>消しゴム:</strong> 左ドラッグでペイントを消す／<br>
+        <strong>出口矩形:</strong> 左ドラッグで出口矩形を描画 (右側の to/方向/spawnX/Y を設定)／<br>
+        <strong>キー:</strong> <kbd>Ctrl+Z</kbd>=Undo / <kbd>Esc</kbd>=選択解除 / <kbd>Delete</kbd>=出口削除<br>
+        <strong>Tip:</strong> 歩行はタイル単位 (TILE=8px) で内部保存し、出力時に最大の矩形にまとめます。隙間ができません。
+    </div>
+</div>
+
+<div class="right">
+    <div class="section" style="margin-top:0;border-top:none;padding-top:0">
+        <h2>walkable サマリ</h2>
+        <div id="walkSummary" class="muted">塗りつぶされたタイル数: 0 / 出力矩形数: 0</div>
+    </div>
+
+    <div class="section">
+        <h2>exits</h2>
+        <div class="rect-list" id="exitList"></div>
+        <div id="exitDetail"></div>
+    </div>
+
+    <div class="section">
+        <h2>JSON出力 (このマップ)</h2>
+        <textarea class="output-area" id="output" readonly></textarea>
+        <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+            <button id="copyBtn">📋 コピー</button>
+            <button id="loadBtn">📥 JSONをロード</button>
+            <button id="exportTilesBtn">💾 タイルマスク保存</button>
+        </div>
+        <div class="muted" style="margin-top:6px">
+            自動的にlocalStorageに保存。出力欄を直接編集→📥でロード可。
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>全マップ JSON 一括出力</h2>
+        <button id="dumpAllBtn">📦 全マップ出力</button>
+        <textarea class="output-area" id="dumpAll" readonly style="height:120px"></textarea>
+    </div>
+</div>
+
+</div>
+
+<script>
+const MAP_LIST = [
+    'shinjuku_center_plaza',
+    'shinjuku_station_gate',
+    'subway_concourse_a',
+    'shopping_street_north',
+    'shopping_street_south',
+    'black_market_entrance',
+    'residential_street',
+    'shrine_south_gate',
+    'tokyo_gov_approach',
+    'biodome_gate'
+];
+
+const STORAGE_KEY = 'rpg-map-editor-v2';
+const TILE = 8;
+const W = 800, H = 450;
+const COLS = Math.ceil(W / TILE); // 100
+const ROWS = Math.ceil(H / TILE); // ~57
+
+// state
+let currentMap = MAP_LIST[0];
+let mode = 'paintWalk'; // 'paintWalk' | 'erase' | 'rectExit'
+let allData = loadAll();
+let mapImage = new Image();
+let imageReady = false;
+let painting = false;
+let dragStart = null;
+let dragCurrent = null;
+let selectedExitIndex = -1;
+let undoStack = [];
+
+const canvas = document.getElementById('editor');
+const ctx = canvas.getContext('2d');
+const mapSelect = document.getElementById('mapSelect');
+const exitList = document.getElementById('exitList');
+const exitDetail = document.getElementById('exitDetail');
+const output = document.getElementById('output');
+const dumpAll = document.getElementById('dumpAll');
+const coordReadout = document.getElementById('coordReadout');
+const walkSummary = document.getElementById('walkSummary');
+const brushSizeInput = document.getElementById('brushSize');
+
+// ---- init ----
+MAP_LIST.forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    mapSelect.appendChild(opt);
+});
+mapSelect.value = currentMap;
+loadMap(currentMap);
+
+// ---- mode controls ----
+mapSelect.addEventListener('change', () => {
+    currentMap = mapSelect.value;
+    selectedExitIndex = -1;
+    undoStack = [];
+    loadMap(currentMap);
+});
+document.getElementById('modePaintWalk').addEventListener('click', () => setMode('paintWalk'));
+document.getElementById('modeErase').addEventListener('click', () => setMode('erase'));
+document.getElementById('modeRectExit').addEventListener('click', () => setMode('rectExit'));
+document.getElementById('undoBtn').addEventListener('click', undo);
+document.getElementById('fillAllBtn').addEventListener('click', fillAllWalkable);
+document.getElementById('clearWalkBtn').addEventListener('click', clearWalkable);
+document.getElementById('clearExitBtn').addEventListener('click', clearExits);
+document.getElementById('copyBtn').addEventListener('click', copyJSON);
+document.getElementById('loadBtn').addEventListener('click', loadJSON);
+document.getElementById('exportTilesBtn').addEventListener('click', exportTiles);
+document.getElementById('dumpAllBtn').addEventListener('click', dumpAllMaps);
+
+function setMode(m) {
+    mode = m;
+    document.getElementById('modePaintWalk').classList.toggle('active', m === 'paintWalk');
+    document.getElementById('modeErase').classList.toggle('active', m === 'erase');
+    document.getElementById('modeRectExit').classList.toggle('active', m === 'rectExit');
+    selectedExitIndex = -1;
+    canvas.style.cursor = (m === 'rectExit') ? 'crosshair' : 'cell';
+    render(); renderLists();
+}
+
+// ---- canvas events ----
+canvas.addEventListener('mousedown', (e) => {
+    if (e.button !== 0) return;
+    const p = getPoint(e);
+    if (mode === 'rectExit') {
+        const hit = findExitAt(p.x, p.y);
+        if (hit >= 0) { selectedExitIndex = hit; render(); renderLists(); return; }
+        dragStart = p;
+        dragCurrent = p;
+    } else {
+        painting = true;
+        pushUndo();
+        paintAt(p.x, p.y);
+    }
+});
+
+canvas.addEventListener('mousemove', (e) => {
+    const p = getPoint(e);
+    coordReadout.textContent = `座標: (${p.x}, ${p.y})`;
+    if (painting) {
+        paintAt(p.x, p.y);
+    } else if (dragStart) {
+        dragCurrent = p;
+        render();
+    }
+});
+
+canvas.addEventListener('mouseup', (e) => {
+    if (painting) {
+        painting = false;
+        saveAll();
+        render(); updateSummary(); updateOutput();
+        return;
+    }
+    if (dragStart) {
+        const p = getPoint(e);
+        const x = Math.min(dragStart.x, p.x);
+        const y = Math.min(dragStart.y, p.y);
+        const w = Math.abs(p.x - dragStart.x);
+        const h = Math.abs(p.y - dragStart.y);
+        if (w >= 10 && h >= 10 && mode === 'rectExit') {
+            pushUndo();
+            allData[currentMap].exits.push({
+                x, y, width: w, height: h,
+                to: '', direction: '', spawnX: 400, spawnY: 235
+            });
+            selectedExitIndex = allData[currentMap].exits.length - 1;
+            saveAll();
+        }
+        dragStart = null; dragCurrent = null;
+        render(); renderLists(); updateOutput();
+    }
+});
+
+canvas.addEventListener('mouseleave', () => {
+    coordReadout.textContent = '座標: -';
+    if (painting) { painting = false; saveAll(); render(); updateSummary(); updateOutput(); }
+    if (dragStart) { dragStart = null; dragCurrent = null; render(); }
+});
+
+document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undo(); }
+    else if (e.key === 'Escape') { selectedExitIndex = -1; render(); renderLists(); }
+    else if ((e.key === 'Delete' || e.key === 'Backspace') && selectedExitIndex >= 0) {
+        e.preventDefault(); deleteSelectedExit();
+    }
+});
+
+function getPoint(e) {
+    const r = canvas.getBoundingClientRect();
+    return {
+        x: Math.round((e.clientX - r.left) * canvas.width / r.width),
+        y: Math.round((e.clientY - r.top) * canvas.height / r.height)
+    };
+}
+
+function paintAt(x, y) {
+    const radius = Math.max(4, Math.floor(Number(brushSizeInput.value) / 2));
+    const tiles = allData[currentMap].walkTiles;
+    const value = (mode === 'erase') ? 0 : 1;
+    const cx = Math.floor(x / TILE);
+    const cy = Math.floor(y / TILE);
+    const tr = Math.ceil(radius / TILE);
+    for (let dy = -tr; dy <= tr; dy++) {
+        for (let dx = -tr; dx <= tr; dx++) {
+            const tx = cx + dx;
+            const ty = cy + dy;
+            if (tx < 0 || tx >= COLS || ty < 0 || ty >= ROWS) continue;
+            // 円形ブラシ判定（中心からの距離）
+            const px = tx * TILE + TILE / 2;
+            const py = ty * TILE + TILE / 2;
+            if (Math.hypot(px - x, py - y) > radius) continue;
+            tiles[ty * COLS + tx] = value;
+        }
+    }
+    render();
+}
+
+function fillAllWalkable() {
+    if (!confirm(`${currentMap} の全タイルを歩行可能にしますか？`)) return;
+    pushUndo();
+    const tiles = allData[currentMap].walkTiles;
+    tiles.fill(1);
+    saveAll(); render(); updateSummary(); updateOutput();
+}
+
+function clearWalkable() {
+    if (!confirm(`${currentMap} の歩行可能領域を全消去しますか？`)) return;
+    pushUndo();
+    allData[currentMap].walkTiles.fill(0);
+    saveAll(); render(); updateSummary(); updateOutput();
+}
+
+function clearExits() {
+    if (!confirm(`${currentMap} の exits を全消去しますか？`)) return;
+    pushUndo();
+    allData[currentMap].exits = [];
+    selectedExitIndex = -1;
+    saveAll(); render(); renderLists(); updateOutput();
+}
+
+function findExitAt(x, y) {
+    const exits = allData[currentMap].exits;
+    for (let i = exits.length - 1; i >= 0; i--) {
+        const r = exits[i];
+        if (x >= r.x && x <= r.x + r.width && y >= r.y && y <= r.y + r.height) return i;
+    }
+    return -1;
+}
+
+function deleteSelectedExit() {
+    if (selectedExitIndex < 0) return;
+    pushUndo();
+    allData[currentMap].exits.splice(selectedExitIndex, 1);
+    selectedExitIndex = -1;
+    saveAll(); render(); renderLists(); updateOutput();
+}
+
+function pushUndo() {
+    undoStack.push(JSON.stringify(allData[currentMap]));
+    if (undoStack.length > 30) undoStack.shift();
+}
+
+function undo() {
+    if (undoStack.length === 0) return;
+    const prev = JSON.parse(undoStack.pop());
+    // タイルは Uint8Array に戻す
+    if (Array.isArray(prev.walkTiles)) {
+        prev.walkTiles = Uint8Array.from(prev.walkTiles);
+    }
+    allData[currentMap] = prev;
+    selectedExitIndex = -1;
+    saveAll(); render(); renderLists(); updateSummary(); updateOutput();
+}
+
+function copyJSON() {
+    output.select();
+    document.execCommand('copy');
+    const btn = document.getElementById('copyBtn');
+    const orig = btn.textContent;
+    btn.textContent = '✓ コピー';
+    setTimeout(() => btn.textContent = orig, 1200);
+}
+
+function loadJSON() {
+    const txt = output.value.trim();
+    if (!txt) { alert('JSON を出力欄に貼ってからロードしてください'); return; }
+    try {
+        // 簡易パース: walkableRects と exits を抽出
+        const fakeJson = '{' + txt
+            .replace(/\/\/.*$/gm, '')
+            .replace(/(\w+):/g, '"$1":')
+            .replace(/'/g, '"')
+            .replace(/,\s*([\]}])/g, '$1')
+            .replace(/^[^{\[]*$/gm, '')
+            + '}';
+        // ↑ 厳密パースは諦め: walkableRects/exits を直接 eval（信頼ローカル）
+        const parsed = (new Function('return {' + txt + '}'))();
+        if (parsed.walkableRects) {
+            // 矩形 → タイル化
+            const tiles = new Uint8Array(COLS * ROWS);
+            parsed.walkableRects.forEach(r => rectToTiles(tiles, r));
+            allData[currentMap].walkTiles = tiles;
+        }
+        if (parsed.exits) {
+            allData[currentMap].exits = parsed.exits.map(e => ({...e}));
+        }
+        pushUndo();
+        saveAll(); render(); renderLists(); updateSummary(); updateOutput();
+        alert('読み込みました');
+    } catch (err) {
+        alert('JSON パースに失敗: ' + err.message);
+    }
+}
+
+function exportTiles() {
+    const data = {
+        map: currentMap,
+        cols: COLS,
+        rows: ROWS,
+        tile: TILE,
+        tiles: Array.from(allData[currentMap].walkTiles)
+    };
+    output.value = JSON.stringify(data);
+    alert('タイルマスクを出力欄に保存しました（再ロード可）');
+}
+
+function dumpAllMaps() {
+    const lines = [];
+    for (const m of MAP_LIST) {
+        const rects = tilesToRects(allData[m].walkTiles);
+        const exits = allData[m].exits;
+        lines.push(`// === ${m} ===`);
+        lines.push(`walkableRects: ${formatRects(rects)},`);
+        lines.push(`exits: ${formatExits(exits)},`);
+        lines.push('');
+    }
+    dumpAll.value = lines.join('\n');
+}
+
+// ---- rendering ----
+function render() {
+    ctx.clearRect(0, 0, W, H);
+    if (imageReady) {
+        ctx.drawImage(mapImage, 0, 0, W, H);
+    } else {
+        ctx.fillStyle = '#222';
+        ctx.fillRect(0, 0, W, H);
+    }
+    // 半透明オーバーレイ（暗くして塗りを見やすく）
+    ctx.fillStyle = 'rgba(0,0,16,0.25)';
+    ctx.fillRect(0, 0, W, H);
+
+    // walkable tiles (緑)
+    const tiles = allData[currentMap].walkTiles;
+    ctx.fillStyle = 'rgba(0,255,80,.35)';
+    for (let y = 0; y < ROWS; y++) {
+        for (let x = 0; x < COLS; x++) {
+            if (tiles[y * COLS + x]) {
+                ctx.fillRect(x * TILE, y * TILE, TILE, TILE);
+            }
+        }
+    }
+
+    // exits (黄)
+    const exits = allData[currentMap].exits;
+    exits.forEach((r, i) => {
+        const selected = i === selectedExitIndex;
+        ctx.fillStyle = selected ? 'rgba(255,80,80,.4)' : 'rgba(255,200,0,.25)';
+        ctx.fillRect(r.x, r.y, r.width, r.height);
+        ctx.strokeStyle = selected ? '#ff4444' : '#ffaa00';
+        ctx.lineWidth = selected ? 2 : 1;
+        ctx.strokeRect(r.x + 0.5, r.y + 0.5, r.width, r.height);
+        ctx.fillStyle = '#ffaa00';
+        ctx.font = '11px monospace';
+        ctx.fillText(`E${i}${r.to ? ':' + r.to : ''}`, r.x + 3, r.y + 12);
+    });
+
+    // ドラッグプレビュー（出口矩形描画中）
+    if (dragStart && dragCurrent && mode === 'rectExit') {
+        const x = Math.min(dragStart.x, dragCurrent.x);
+        const y = Math.min(dragStart.y, dragCurrent.y);
+        const w = Math.abs(dragCurrent.x - dragStart.x);
+        const h = Math.abs(dragCurrent.y - dragStart.y);
+        ctx.strokeStyle = '#ffaa00';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 4]);
+        ctx.strokeRect(x, y, w, h);
+        ctx.setLineDash([]);
+    }
+
+    // ブラシ円表示（ペイントモード）
+    if ((mode === 'paintWalk' || mode === 'erase') && coordReadout.textContent !== '座標: -') {
+        const m = coordReadout.textContent.match(/\((\d+),\s*(\d+)\)/);
+        if (m) {
+            const cx = Number(m[1]), cy = Number(m[2]);
+            const r = Math.max(4, Math.floor(Number(brushSizeInput.value) / 2));
+            ctx.strokeStyle = (mode === 'erase') ? '#ff8888' : '#88ff88';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+    }
+}
+
+// ---- exit list ----
+function renderLists() {
+    const exits = allData[currentMap].exits;
+    exitList.innerHTML = '';
+    exits.forEach((r, i) => {
+        const row = document.createElement('div');
+        row.className = 'rect-row' + (selectedExitIndex === i ? ' selected' : '');
+        const labelTxt = r.to ? '→ ' + r.to : '(未設定)';
+        row.innerHTML = `
+            <div class="swatch" style="background:rgba(255,200,0,.5)"></div>
+            <div class="info">E${i}: x:${r.x} y:${r.y} w:${r.width} h:${r.height} ${labelTxt}</div>
+        `;
+        const del = document.createElement('button');
+        del.textContent = '✕';
+        del.className = 'danger';
+        del.onclick = (e) => { e.stopPropagation(); selectedExitIndex = i; deleteSelectedExit(); };
+        row.appendChild(del);
+        row.onclick = () => { selectedExitIndex = i; render(); renderLists(); };
+        exitList.appendChild(row);
+    });
+    if (exits.length === 0) exitList.innerHTML = '<div class="muted" style="padding:6px">なし</div>';
+
+    renderExitDetail();
+}
+
+function renderExitDetail() {
+    exitDetail.innerHTML = '';
+    if (selectedExitIndex < 0) return;
+    const r = allData[currentMap].exits[selectedExitIndex];
+    if (!r) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'exit-fields';
+    const fields = [
+        ['to', 'text', '行き先 (例: shinjuku_station_gate)'],
+        ['direction', 'text', '方向 (north/south/east/west)'],
+        ['spawnX', 'number', '行き先のスポーンX'],
+        ['spawnY', 'number', '行き先のスポーンY'],
+        ['requireFacing', 'text', '入店向き (up/down/left/right、空欄可)']
+    ];
+    fields.forEach(([k, type, ph]) => {
+        const lab = document.createElement('label');
+        lab.textContent = k;
+        const inp = document.createElement('input');
+        inp.type = type;
+        inp.value = r[k] !== undefined && r[k] !== '' ? r[k] : '';
+        inp.placeholder = ph;
+        inp.oninput = () => {
+            const v = type === 'number' ? Number(inp.value) : inp.value;
+            if (k === 'requireFacing' && !inp.value) {
+                delete r[k];
+            } else {
+                r[k] = v;
+            }
+            saveAll(); render(); renderLists(); updateOutput();
+        };
+        wrap.appendChild(lab);
+        wrap.appendChild(inp);
+    });
+    exitDetail.appendChild(wrap);
+}
+
+// ---- output ----
+function updateOutput() {
+    const rects = tilesToRects(allData[currentMap].walkTiles);
+    const exits = allData[currentMap].exits;
+    const lines = [
+        `// ${currentMap}`,
+        `walkableRects: ${formatRects(rects)},`,
+        `exits: ${formatExits(exits)},`
+    ];
+    output.value = lines.join('\n');
+    updateSummary();
+}
+
+function updateSummary() {
+    const tiles = allData[currentMap].walkTiles;
+    let count = 0;
+    for (let i = 0; i < tiles.length; i++) if (tiles[i]) count++;
+    const rects = tilesToRects(tiles);
+    walkSummary.textContent = `塗りつぶされたタイル: ${count} / 出力矩形数: ${rects.length}`;
+}
+
+function formatRects(arr) {
+    if (arr.length === 0) return '[]';
+    return '[\n' + arr.map(r => `    { x: ${r.x}, y: ${r.y}, width: ${r.width}, height: ${r.height} }`).join(',\n') + '\n]';
+}
+
+function formatExits(arr) {
+    if (arr.length === 0) return '[]';
+    return '[\n' + arr.map(r => {
+        const parts = [
+            `x: ${r.x}`, `y: ${r.y}`,
+            `width: ${r.width}`, `height: ${r.height}`,
+            `to: '${r.to || ''}'`,
+            `direction: '${r.direction || ''}'`,
+            `spawnX: ${Number.isFinite(r.spawnX) ? r.spawnX : 400}`,
+            `spawnY: ${Number.isFinite(r.spawnY) ? r.spawnY : 235}`
+        ];
+        if (r.requireFacing) parts.push(`requireFacing: '${r.requireFacing}'`);
+        return `    { ${parts.join(', ')} }`;
+    }).join(',\n') + '\n]';
+}
+
+// ---- tiles <-> rects 変換（最大長方形貪欲アルゴリズム） ----
+function tilesToRects(tiles) {
+    // タイルマスクをコピー（破壊しないよう）
+    const grid = new Uint8Array(tiles);
+    const rects = [];
+    while (true) {
+        // まだ塗られているタイルから出発し、最大の矩形を見つける
+        let best = null;
+        // 各タイルから可能な最大矩形を試す（簡単な貪欲）
+        for (let y = 0; y < ROWS; y++) {
+            for (let x = 0; x < COLS; x++) {
+                if (!grid[y * COLS + x]) continue;
+                // 横方向の最大幅
+                let w = 0;
+                while (x + w < COLS && grid[y * COLS + x + w]) w++;
+                // 縦方向に同じ幅で連続するか
+                let h = 1;
+                outer: for (; y + h < ROWS; h++) {
+                    for (let dx = 0; dx < w; dx++) {
+                        if (!grid[(y + h) * COLS + x + dx]) break outer;
+                    }
+                }
+                const area = w * h;
+                if (!best || area > best.area) {
+                    best = { x, y, w, h, area };
+                }
+            }
+        }
+        if (!best || best.area === 0) break;
+        // 採用してマスクから除外
+        for (let dy = 0; dy < best.h; dy++) {
+            for (let dx = 0; dx < best.w; dx++) {
+                grid[(best.y + dy) * COLS + best.x + dx] = 0;
+            }
+        }
+        rects.push({
+            x: best.x * TILE,
+            y: best.y * TILE,
+            width: best.w * TILE,
+            height: best.h * TILE
+        });
+    }
+    return rects;
+}
+
+function rectToTiles(tiles, r) {
+    const x0 = Math.floor(r.x / TILE);
+    const y0 = Math.floor(r.y / TILE);
+    const x1 = Math.ceil((r.x + r.width) / TILE);
+    const y1 = Math.ceil((r.y + r.height) / TILE);
+    for (let y = y0; y < y1; y++) {
+        for (let x = x0; x < x1; x++) {
+            if (x >= 0 && x < COLS && y >= 0 && y < ROWS) {
+                tiles[y * COLS + x] = 1;
+            }
+        }
+    }
+}
+
+// ---- storage ----
+function loadAll() {
+    let parsed = {};
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) parsed = JSON.parse(raw);
+    } catch (e) { console.warn('Storage load failed', e); }
+
+    const data = {};
+    MAP_LIST.forEach(m => {
+        const stored = parsed[m] || {};
+        const walkTiles = new Uint8Array(COLS * ROWS);
+        if (Array.isArray(stored.walkTiles)) {
+            const len = Math.min(walkTiles.length, stored.walkTiles.length);
+            for (let i = 0; i < len; i++) walkTiles[i] = stored.walkTiles[i] ? 1 : 0;
+        }
+        data[m] = {
+            walkTiles,
+            exits: Array.isArray(stored.exits) ? stored.exits.map(e => ({...e})) : []
+        };
+    });
+    return data;
+}
+
+function saveAll() {
+    try {
+        const obj = {};
+        MAP_LIST.forEach(m => {
+            obj[m] = {
+                walkTiles: Array.from(allData[m].walkTiles),
+                exits: allData[m].exits
+            };
+        });
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+    } catch (e) { console.warn('Storage save failed', e); }
+}
+
+// ---- map loading ----
+function loadMap(name) {
+    imageReady = false;
+    mapImage = new Image();
+    mapImage.onload = () => { imageReady = true; render(); };
+    mapImage.onerror = () => { console.warn('Image failed to load:', name); render(); };
+    mapImage.src = `assets/maps/${name}.png`;
+    render(); renderLists(); updateOutput();
+}
+
+// 初期化時のサマリ
+updateSummary();
+updateOutput();
+</script>
+</body>
+</html>

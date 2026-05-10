@@ -226,10 +226,11 @@ class MagicSystem {
                 break;
 
             case 'healing':
-                // 回復魔法
-                const healAmount = Math.min(magic.power, character.maxHp - character.hp);
-                character.hp = Math.min(character.maxHp, character.hp + magic.power);
-                message = `${magic.name}！\nHPが ${healAmount} 回復した！`;
+                // 回復魔法（対象が明示されていれば対象を、なければ自分を回復）
+                const healTarget = (target && target !== character && typeof target.maxHp === 'number') ? target : character;
+                const healAmount = Math.min(magic.power, healTarget.maxHp - healTarget.hp);
+                healTarget.hp = Math.min(healTarget.maxHp, healTarget.hp + magic.power);
+                message = `${magic.name}！\n${healTarget.name || character.name}の HPが ${healAmount} 回復した！`;
                 break;
 
             case 'support':

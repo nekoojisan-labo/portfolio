@@ -2,6 +2,145 @@
 // 戦闘システム (Battle System)
 // ==========================================
 
+// ------------------------------------------------------------------
+// BattlePanel: #gameMessagePanel をバトル用に駆動するヘルパ
+//   - Mode A (commands): コマンドリストを #gameMessageBody に描画
+//   - Mode B (log)     : 直近のバトルログ複数行を #gameMessageBody に描画
+//   両モード共通で、パネルは battle 中つねに .active を維持する。
+// ------------------------------------------------------------------
+const BattlePanel = (() => {
+    function getEls() {
+        const panel = document.getElementById('gameMessagePanel');
+        if (!panel) return null;
+        return {
+            panel,
+            header: panel.querySelector('.game-msg-header'),
+            character: document.getElementById('gameMessageCharacter'),
+            body: document.getElementById('gameMessageBody'),
+            choices: document.getElementById('gameMessageChoices'),
+            controls: panel.querySelector('.game-msg-controls'),
+            indicator: document.getElementById('gameMessageNextIndicator'),
+            hint: document.getElementById('gameMessageHint')
+        };
+    }
+
+    function activate(headerLabel) {
+        const els = getEls();
+        if (!els) return;
+        els.panel.classList.add('active');
+        els.panel.classList.add('battle-mode');
+        els.panel.setAttribute('aria-hidden', 'false');
+        els.panel.dataset.battleMode = '1';
+        if (els.header) els.header.classList.add('active');
+        if (els.character) {
+            els.character.textContent = headerLabel || '戦闘';
+            els.character.classList.add('battle-mode-label');
+        }
+        if (els.choices) {
+            els.choices.classList.remove('active');
+            els.choices.innerHTML = '';
+        }
+    }
+
+    function setHeader(label) {
+        const els = getEls();
+        if (!els || !els.character) return;
+        els.character.textContent = label || '戦闘';
+    }
+
+    // Mode A: コマンドリストを描画
+    function renderCommands(items, opts) {
+        const els = getEls();
+        if (!els || !els.body) return;
+        opts = opts || {};
+        if (opts.headerLabel) setHeader(opts.headerLabel);
+
+        els.panel.classList.add('active', 'battle-mode');
+        els.panel.classList.remove('battle-log-mode');
+        els.body.classList.add('battle-cmd-mode');
+        els.body.innerHTML = '';
+
+        if (opts.title) {
+            const titleEl = document.createElement('div');
+            titleEl.className = 'battle-cmd-title';
+            titleEl.textContent = opts.title;
+            els.body.appendChild(titleEl);
+        }
+
+        const selectedIndex = typeof opts.selectedIndex === 'number' ? opts.selectedIndex : 0;
+        items.forEach((it, index) => {
+            const div = document.createElement('div');
+            div.className = 'command-item' + (index === selectedIndex ? ' selected' : '');
+            if (it.command) div.dataset.command = it.command;
+            if (it.html != null) {
+                div.innerHTML = it.html;
+            } else {
+                div.textContent = it.label || '';
+            }
+            if (it.color) div.style.color = it.color;
+            if (typeof it.onClick === 'function') {
+                div.onclick = it.onClick;
+            }
+            els.body.appendChild(div);
+        });
+    }
+
+    function setSelectedIndex(index) {
+        const els = getEls();
+        if (!els || !els.body) return;
+        const items = els.body.querySelectorAll('.command-item');
+        items.forEach((el, i) => {
+            if (i === index) el.classList.add('selected');
+            else el.classList.remove('selected');
+        });
+    }
+
+    // Mode B: バトルログを描画（直近 maxLines 行）
+    function renderLog(lines, opts) {
+        const els = getEls();
+        if (!els || !els.body) return;
+        opts = opts || {};
+
+        els.panel.classList.add('active', 'battle-mode');
+        els.panel.classList.add('battle-log-mode');
+        els.body.classList.remove('battle-cmd-mode');
+        // 直近3〜4行を表示
+        const max = opts.maxLines || 4;
+        const recent = (lines || []).slice(-max);
+        const safe = recent.map(l => String(l == null ? '' : l)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;'));
+        els.body.innerHTML = safe.join('<br>');
+        els.body.scrollTop = els.body.scrollHeight;
+    }
+
+    function deactivate() {
+        const els = getEls();
+        if (!els) return;
+        els.panel.classList.remove('active', 'battle-mode', 'battle-log-mode');
+        els.panel.setAttribute('aria-hidden', 'true');
+        delete els.panel.dataset.battleMode;
+        if (els.header) els.header.classList.remove('active');
+        if (els.character) {
+            els.character.textContent = '';
+            els.character.classList.remove('battle-mode-label');
+        }
+        if (els.body) {
+            els.body.classList.remove('battle-cmd-mode');
+            els.body.innerHTML = '';
+        }
+    }
+
+    function isBattleMode() {
+        const panel = document.getElementById('gameMessagePanel');
+        return !!(panel && panel.classList.contains('battle-mode'));
+    }
+
+    return { activate, setHeader, renderCommands, setSelectedIndex, renderLog, deactivate, isBattleMode };
+})();
+window.BattlePanel = BattlePanel;
+
 class BattleSystem {
     constructor() {
         this.inBattle = false;
@@ -17,10 +156,33 @@ class BattleSystem {
         this.currentMemberIndex = 0; // 現在コマンド選択中のメンバー
         this.allCommandsSelected = false; // 全員のコマンド選択完了フラグ
 
+        // 神威スキル選択フェーズ管理（コマンド選択時にスキルを事前確定する）
+        this.kamuiPlanning = false;
+        this.kamuiPlanningMember = null;
+        this.kamuiSkillExecuting = false; // 二重実行防止
+        this.executingTurn = false;       // ターン実行中フラグ（重複起動防止）
+
+        // コマンドメニューの表示モード: 'command' | 'skill' | 'target'
+        this.commandPhase = 'command';
+        this.availableSkills = [];
+        this.availableTargets = [];
+        this.pendingMagic = null;
+
         // エンカウント設定
         this.encounterSteps = 0;
         this.encounterThreshold = this.getRandomEncounterSteps('medium');
         this.firstEncounter = true;  // 初回エンカウントフラグ
+        this.enemyImageMap = {
+            watcher: 'assets/enemies/watcher.png',
+            drone: 'assets/enemies/watcher.png',
+            android: 'assets/enemies/deus_machina.png',
+            mecha: 'assets/enemies/cerberus.png',
+            construct: 'assets/enemies/dust_golem.png',
+            hybrid: 'assets/enemies/alraune.png',
+            boss: 'assets/enemies/ark_prime.png',
+            corrupted_drone_boss: 'assets/enemies/watcher.png',
+            rogue_ai_core: 'assets/enemies/abyss_ruler.png'
+        };
 
         // ボス戦設定
         this.isBossBattle = false;
@@ -220,57 +382,56 @@ class BattleSystem {
     }
     
     // ランダムエンカウント歩数を決定
+    // 注: countStep は1フレーム単位でカウントされるため、実距離としては
+    //     1 タイル ≈ 10〜12 フレームの感覚で値を設定する
     getRandomEncounterSteps(encounterRate = 'medium') {
-        // エンカウント率に応じて歩数を調整
         const rateSettings = {
-            very_high: { min: 8, max: 15 },   // 8-15歩（都庁など危険エリア）
-            high: { min: 15, max: 25 },       // 15-25歩（地下鉄など）
-            medium: { min: 25, max: 40 },     // 25-40歩（通常エリア）
-            low: { min: 40, max: 60 },        // 40-60歩（植物園、神社など）
-            none: { min: 9999, max: 9999 }    // エンカウントなし
+            very_high: { min: 90,  max: 140 },  // 危険エリア（都庁など）
+            high:      { min: 160, max: 240 },  // 地下鉄など
+            medium:    { min: 260, max: 400 },  // 通常エリア
+            low:       { min: 500, max: 750 },  // 植物園・神社など
+            none:      { min: 9999, max: 9999 }
         };
-        
+
         const settings = rateSettings[encounterRate] || rateSettings.medium;
         return Math.floor(Math.random() * (settings.max - settings.min + 1)) + settings.min;
     }
-    
+
     // 歩数をカウント
     countStep(currentArea = 'city', encounterRate = 'medium') {
         if (this.inBattle) return;
-        
-        // エンカウント率がnoneの場合は何もしない
+
         if (encounterRate === 'none') {
-            this.encounterSteps = 0;  // 歩数をリセット
+            this.encounterSteps = 0;
             return;
         }
-        
+
         this.encounterSteps++;
-        
-        // 初回エンカウントは少し遅らせる
-        const threshold = this.firstEncounter ? 
-            this.encounterThreshold + 20 : 
-            this.encounterThreshold;
-        
-        // エンカウントチェック
+
+        // 初回エンカウントは大幅に遅らせる（ゲーム開始直後の即戦闘を防ぐ）
+        const threshold = this.firstEncounter
+            ? this.encounterThreshold + 120
+            : this.encounterThreshold;
+
         if (this.encounterSteps >= threshold) {
             this.firstEncounter = false;
             this.encounterSteps = 0;
             this.encounterThreshold = this.getRandomEncounterSteps(encounterRate);
-            
-            // エンカウント発生率をさらに調整（確率で発生）
+
+            // 閾値超え後にもう一段の発生確率（低めに設定）
             const encounterChance = {
-                very_high: 0.9,  // 90%の確率で発生
-                high: 0.75,       // 75%の確率で発生
-                medium: 0.6,      // 60%の確率で発生
-                low: 0.4          // 40%の確率で発生
+                very_high: 0.7,
+                high:      0.55,
+                medium:    0.4,
+                low:       0.25
             };
-            
-            const chance = encounterChance[encounterRate] || 0.6;
+
+            const chance = encounterChance[encounterRate] || 0.4;
             if (Math.random() < chance) {
                 this.triggerRandomEncounter(currentArea);
             } else {
-                // エンカウントしなかった場合は次の閾値を少し短く
-                this.encounterThreshold = Math.floor(this.encounterThreshold * 0.7);
+                // 不発時はわずかに早める程度（旧来の0.7から0.92へ）
+                this.encounterThreshold = Math.floor(this.encounterThreshold * 0.92);
             }
         }
     }
@@ -365,6 +526,19 @@ class BattleSystem {
 
     // プレイヤーターン開始
     startPlayerTurn() {
+        // 多重起動の検出
+        if (this.executingTurn) {
+            console.warn('[Battle] startPlayerTurn called while executingTurn=true; resetting flag');
+            this.executingTurn = false;
+        }
+        // 計画フェーズの残骸を掃除
+        this.kamuiPlanning = false;
+        this.kamuiPlanningMember = null;
+        this.kamuiSkillExecuting = false;
+        this.kamuiSkillMenuActive = false;
+        const kamuiMenu = document.getElementById('kamuiSkillMenu');
+        if (kamuiMenu) kamuiMenu.style.display = 'none';
+
         // パーティメンバーを取得
         const partyMembers = this.getPartyMembers();
 
@@ -444,6 +618,11 @@ class BattleSystem {
 
     // ターン実行（全員のコマンドを速度順に実行）
     executeTurn() {
+        if (this.executingTurn) {
+            console.warn('[Battle] executeTurn already in progress, ignoring duplicate call');
+            return;
+        }
+        this.executingTurn = true;
         console.log('Executing turn with commands:', this.partyCommands);
 
         // 全てのハイライトをクリア
@@ -473,6 +652,7 @@ class BattleSystem {
     executeActionsSequentially(actions, actionIndex) {
         if (actionIndex >= actions.length) {
             // 全員の行動が終わったら敵のターンへ
+            this.executingTurn = false;
             setTimeout(() => this.enemyTurn(window.player), 1000);
             return;
         }
@@ -487,22 +667,27 @@ class BattleSystem {
         switch (command) {
             case 'attack':
                 this.memberAttack(member, () => {
-                    // 次の行動へ
                     this.executeActionsSequentially(actions, actionIndex + 1);
                 });
                 break;
             case 'kamui':
+                // magicId / targetIndex は計画フェーズで確定済み
                 this.memberKamui(member, () => {
                     this.executeActionsSequentially(actions, actionIndex + 1);
-                });
+                }, action.magicId, action.targetIndex);
                 break;
             case 'defend':
                 this.memberDefend(member, () => {
                     this.executeActionsSequentially(actions, actionIndex + 1);
                 });
                 break;
+            case 'skip':
+                // 行動不能などスキップ
+                setTimeout(() => {
+                    this.executeActionsSequentially(actions, actionIndex + 1);
+                }, 600);
+                break;
             default:
-                // 不明なコマンドの場合は次へ
                 this.executeActionsSequentially(actions, actionIndex + 1);
                 break;
         }
@@ -639,23 +824,37 @@ class BattleSystem {
     }
 
     // メンバーのカムイ
-    memberKamui(member, callback, magicId = null) {
+    memberKamui(member, callback, magicId = null, targetIndex = 'enemy') {
         // 魔法IDが指定されていない場合は、習得済みカムイスキル一覧を表示
         if (!magicId) {
             this.showKamuiSkillSelection(member, callback);
             return;
         }
 
+        // 対象を解決
+        let target = null;
+        if (targetIndex === 'enemy') {
+            target = this.currentEnemy;
+        } else if (targetIndex === 'self') {
+            target = member;
+        } else if (typeof targetIndex === 'number') {
+            const partyMembers = this.getPartyMembers();
+            target = partyMembers[targetIndex] || member;
+        } else {
+            target = this.currentEnemy;
+        }
+
         console.log('[DEBUG] memberKamui called with:', {
             magicId,
             memberName: member.name,
             memberMp: member.mp,
-            enemyName: this.currentEnemy ? this.currentEnemy.name : 'none',
+            targetIndex,
+            targetName: target ? target.name : 'none',
             inBattle: true
         });
 
         // 魔法システムから使用
-        const result = window.magicSystem.useMagic(magicId, member, this.currentEnemy, true);
+        const result = window.magicSystem.useMagic(magicId, member, target, true);
 
         console.log('[DEBUG] useMagic result:', result);
 
@@ -668,16 +867,208 @@ class BattleSystem {
         this.addBattleLog(`${member.name}は ${result.magic.name}を よびだした！`);
         this.addBattleLog(result.message);
 
-        this.showDamageEffect(result.damage, true, true);
+        // ダメージ系スキルの時のみ敵にエフェクト表示
+        if (result.damage && result.damage > 0) {
+            this.showDamageEffect(result.damage, true, true);
+        }
         this.updateBattleUI();
 
-        if (this.currentEnemy.currentHp <= 0) {
+        // 敵を倒したかは攻撃系スキル時のみチェック
+        if (this.currentEnemy && this.currentEnemy.currentHp <= 0 && result.damage > 0) {
             this.currentEnemy.currentHp = 0;
             this.updateBattleUI();
             setTimeout(() => this.battleVictory(window.player), 1500);
         } else {
             setTimeout(callback, 1500);
         }
+    }
+
+    // ===== カムイスキル「計画フェーズ」=====
+    // 「特技」コマンドを選んだ瞬間に battle-commands のリストを
+    // スキル選択 → 対象選択 と段階的に切り替える。各段階の表示は
+    // 通常コマンドと同じ command-item 形式で統一。
+    beginKamuiPlanning() {
+        if (this.kamuiPlanning) return;
+        const partyMembers = this.getPartyMembers();
+        const member = partyMembers[this.currentMemberIndex];
+        if (!member) return;
+
+        if (!window.magicSystem) {
+            this.addBattleLog('魔法システムが初期化されていません');
+            return;
+        }
+        const skills = window.magicSystem.getLearnedMagic(member);
+        if (!skills || skills.length === 0) {
+            this.addBattleLog(`${member.name || 'カイト'}は スキルを 習得していない！`);
+            return;
+        }
+
+        this.kamuiPlanning = true;
+        this.kamuiPlanningMember = member;
+        this.availableSkills = skills;
+        this.commandPhase = 'skill';
+        this.selectedCommand = 0;
+        this.waitingForCommand = true;
+
+        this.renderSkillPhase();
+    }
+
+    // スキルリストをメッセージパネルに描画
+    renderSkillPhase() {
+        const items = this.availableSkills.map((skill, index) => {
+            const mpText = skill.mpCost ? ` <span style="color:#88aaff; font-size:11px;">(MP:${skill.mpCost})</span>` : '';
+            return {
+                html: `${skill.emoji || ''} ${skill.name}${mpText}`,
+                onClick: () => {
+                    this.selectedCommand = index;
+                    this.refreshCurrentPhaseSelection();
+                    this.confirmSkillSelection();
+                }
+            };
+        });
+
+        // キャンセル項目
+        items.push({
+            html: '↩ もどる',
+            color: '#ff8888',
+            onClick: () => this.cancelKamuiPlanning()
+        });
+
+        const memberName = (this.kamuiPlanningMember && this.kamuiPlanningMember.name) || 'カイト';
+        BattlePanel.renderCommands(items, {
+            headerLabel: `${memberName} のじゅつ`,
+            title: '⚡ 神威スキル',
+            selectedIndex: this.selectedCommand
+        });
+    }
+
+    // スキル決定 → ターゲットが必要なら 'target' フェーズに、不要ならコマンド確定
+    confirmSkillSelection() {
+        if (!this.kamuiPlanning) return;
+        const skill = this.availableSkills[this.selectedCommand];
+        if (!skill) return;
+
+        // MP 不足なら何もしない（赤い警告のみ）
+        const member = this.kamuiPlanningMember;
+        if (member && member.mp < skill.mpCost) {
+            this.addBattleLog('MPが たりない！');
+            return;
+        }
+
+        this.pendingMagic = skill;
+
+        // 対象選択が必要な種別か判定
+        if (skill.type === 'healing') {
+            // 味方を選ぶ
+            this.availableTargets = this.getPartyMembers().map((m, i) => ({ member: m, index: i, scope: 'ally' }));
+            this.commandPhase = 'target';
+            this.selectedCommand = 0;
+            this.renderTargetPhase('ally');
+        } else if (skill.type === 'support') {
+            // 自分のみ（自動確定）
+            this.commitKamuiCommand(skill.id, 'self');
+        } else {
+            // offensive / kamui: 敵が単体のみなので自動的に enemy
+            this.commitKamuiCommand(skill.id, 'enemy');
+        }
+    }
+
+    renderTargetPhase(scope) {
+        const items = this.availableTargets.map((entry, index) => {
+            const tgt = entry.member;
+            const hp = (tgt.hp != null && tgt.maxHp != null)
+                ? `<span style="color:#88ff88; font-size:11px;">HP:${tgt.hp}/${tgt.maxHp}</span>`
+                : '';
+            return {
+                html: `${tgt.name || 'カイト'} ${hp}`,
+                onClick: () => {
+                    this.selectedCommand = index;
+                    this.refreshCurrentPhaseSelection();
+                    this.commitKamuiCommand(this.pendingMagic.id, entry.index);
+                }
+            };
+        });
+
+        // キャンセル項目
+        items.push({
+            html: '↩ もどる',
+            color: '#ff8888',
+            onClick: () => {
+                this.commandPhase = 'skill';
+                this.selectedCommand = 0;
+                this.renderSkillPhase();
+            }
+        });
+
+        const title = scope === 'ally' ? '🎯 対象を選ぶ（味方）' : '🎯 対象を選ぶ';
+        BattlePanel.renderCommands(items, {
+            headerLabel: 'たいしょう',
+            title,
+            selectedIndex: this.selectedCommand
+        });
+    }
+
+    commitKamuiCommand(magicId, targetIndex) {
+        if (!this.kamuiPlanning) return;
+        const member = this.kamuiPlanningMember;
+
+        this.partyCommands[this.currentMemberIndex] = {
+            member: member,
+            command: 'kamui',
+            magicId: magicId,
+            targetIndex: targetIndex
+        };
+
+        // 計画フェーズを終了
+        this.kamuiPlanning = false;
+        this.kamuiPlanningMember = null;
+        this.pendingMagic = null;
+        this.availableSkills = [];
+        this.availableTargets = [];
+        this.commandPhase = 'command';
+        this.waitingForCommand = false;
+
+        const commands = document.getElementById('battleCommands');
+        if (commands) commands.style.display = 'none';
+
+        // パネルをログモードに戻して直近のメッセージを表示できるようにする
+        const body = document.getElementById('gameMessageBody');
+        if (body) body.classList.remove('battle-cmd-mode');
+
+        this.currentMemberIndex++;
+        setTimeout(() => this.showNextMemberCommand(), 200);
+    }
+
+    confirmKamuiPlanning(magicId) {
+        // 旧API互換: ターゲットなしの単純確定
+        this.commitKamuiCommand(magicId, 'enemy');
+    }
+
+    cancelKamuiPlanning() {
+        if (!this.kamuiPlanning) return;
+
+        this.kamuiPlanning = false;
+        this.kamuiPlanningMember = null;
+        this.pendingMagic = null;
+        this.availableSkills = [];
+        this.availableTargets = [];
+        this.commandPhase = 'command';
+        this.selectedCommand = 0;
+
+        this.waitingForCommand = true;
+        this.showCommands();
+        this.updateCurrentMemberDisplay();
+    }
+
+    // 現在のフェーズの選択ハイライトを更新（パネル内のコマンドリスト）
+    refreshCurrentPhaseSelection() {
+        BattlePanel.setSelectedIndex(this.selectedCommand);
+        // 旧コマンド領域にも互換のため反映（DOM 残骸の整合性維持用）
+        const items = document.querySelectorAll('#battleCommands .command-item');
+        items.forEach((item, i) => {
+            if (i === this.selectedCommand) item.classList.add('selected');
+            else item.classList.remove('selected');
+        });
     }
 
     // カムイスキル選択UIを表示
@@ -762,31 +1153,45 @@ class BattleSystem {
         });
     }
 
-    // カムイスキルを実行
+    // カムイスキルを実行（決定キー / クリックから呼ばれる）
     executeKamuiSkill(magicId) {
-        const menu = document.getElementById('kamuiSkillMenu');
-        if (menu) {
-            menu.style.display = 'none';
+        if (this.kamuiSkillExecuting) return; // 連打による多重実行を防止
+        this.kamuiSkillExecuting = true;
+        try {
+            // 計画フェーズなら確定処理（コマンド保存→次メンバー）
+            if (this.kamuiPlanning) {
+                this.confirmKamuiPlanning(magicId);
+                return;
+            }
+
+            // ターン実行中の途中起動（旧フロー互換）
+            const menu = document.getElementById('kamuiSkillMenu');
+            if (menu) menu.style.display = 'none';
+            this.kamuiSkillMenuActive = false;
+            this.memberKamui(this.currentKamuiMember, this.currentKamuiCallback, magicId);
+        } finally {
+            // 同フレーム連打を防止しつつ、次の入力は受け付けたい
+            setTimeout(() => { this.kamuiSkillExecuting = false; }, 150);
         }
-
-        this.kamuiSkillMenuActive = false;
-
-        // カムイを実行
-        this.memberKamui(this.currentKamuiMember, this.currentKamuiCallback, magicId);
     }
 
-    // カムイスキルメニューを閉じる
+    // カムイスキルメニューを閉じる（戻るキー / X から呼ばれる）
     closeKamuiSkillMenu() {
-        const menu = document.getElementById('kamuiSkillMenu');
-        if (menu) {
-            menu.style.display = 'none';
+        // 計画フェーズ中ならコマンド選択へ戻る（スキップしない）
+        if (this.kamuiPlanning) {
+            this.cancelKamuiPlanning();
+            return;
         }
 
+        // 旧フロー（ターン実行中の途中起動）。callbackがあれば次のアクションへ
+        const menu = document.getElementById('kamuiSkillMenu');
+        if (menu) menu.style.display = 'none';
         this.kamuiSkillMenuActive = false;
 
-        // コールバックを呼び出して次のアクションへ
         if (this.currentKamuiCallback) {
-            this.currentKamuiCallback();
+            const cb = this.currentKamuiCallback;
+            this.currentKamuiCallback = null;
+            cb();
         }
     }
 
@@ -803,32 +1208,52 @@ class BattleSystem {
         if (battleScreen) {
             battleScreen.classList.add('active');
             document.getElementById('gameUI').style.display = 'none';
-            
+
             // 敵スプライトをリセット
             const enemySprite = document.getElementById('enemySprite');
             if (enemySprite) {
                 enemySprite.style.opacity = '1';
                 enemySprite.style.filter = 'none';
-                enemySprite.textContent = this.currentEnemy.emoji;
+                const imagePath = this.getEnemyImagePath(this.currentEnemy);
+                if (imagePath) {
+                    enemySprite.innerHTML = `<img src="${imagePath}" alt="${this.currentEnemy.name}" style="width: 180px; max-height: 140px; object-fit: contain; filter: drop-shadow(0 0 14px rgba(255, 80, 80, 0.55));">`;
+                } else {
+                    enemySprite.textContent = this.currentEnemy.emoji;
+                }
             }
-            
+
             // 敵情報更新
             document.getElementById('enemyName').textContent = this.currentEnemy.name;
-            
-            // コマンドを初期状態で非表示に
+
+            // 旧コマンド領域は使わないが互換のため非表示維持
             const commands = document.getElementById('battleCommands');
             if (commands) {
                 commands.style.display = 'none';
             }
-            
-            // バトルメッセージをクリア
+
+            // 旧バトルメッセージもクリア
             const battleMessage = document.getElementById('battleMessage');
             if (battleMessage) {
                 battleMessage.textContent = '';
             }
-            
+
+            // メッセージパネルをバトルモードで起動（最初はログモード）
+            BattlePanel.activate('戦闘');
+            BattlePanel.renderLog([`${this.currentEnemy.name} が あらわれた！`]);
+
             this.updateBattleUI();
         }
+    }
+
+    getEnemyImagePath(enemy) {
+        if (!enemy) return null;
+        if (enemy.image) return enemy.image;
+        if (enemy.bossId && this.enemyImageMap[enemy.bossId]) return this.enemyImageMap[enemy.bossId];
+        if (enemy.type && this.enemyImageMap[enemy.type]) return this.enemyImageMap[enemy.type];
+        if (enemy.name && enemy.name.includes('ドローン')) return 'assets/enemies/watcher.png';
+        if (enemy.name && enemy.name.includes('デウス')) return 'assets/enemies/deus_machina.png';
+        if (enemy.name && enemy.name.includes('アーク')) return 'assets/enemies/ark_prime.png';
+        return null;
     }
     
     // プレイヤーの攻撃
@@ -1064,11 +1489,14 @@ class BattleSystem {
     battleVictory(player) {
         this.waitingForCommand = false;
 
-        // コマンドを非表示に
+        // コマンドを非表示に（旧UI互換）
         const commands = document.getElementById('battleCommands');
         if (commands) {
             commands.style.display = 'none';
         }
+        // パネルをログモードに切り替え
+        const body = document.getElementById('gameMessageBody');
+        if (body) body.classList.remove('battle-cmd-mode');
 
         // 勝利メッセージ
         this.addBattleLog(`${this.currentEnemy.name}を たおした！`);
@@ -1306,6 +1734,26 @@ class BattleSystem {
         this.isBossBattle = false;
         this.onBossDefeat = null;
 
+        // 戦闘UIに残存しているフラグ・要素を強制クリア（フィールド復帰時の入力封じ防止）
+        this.kamuiSkillMenuActive = false;
+        this.kamuiPlanning = false;
+        this.kamuiPlanningMember = null;
+        this.kamuiSkillExecuting = false;
+        this.executingTurn = false;
+        this.allCommandsSelected = false;
+        this.partyCommands = [];
+        this.currentMemberIndex = 0;
+        this.currentKamuiCallback = null;
+        this.currentKamuiMember = null;
+
+        const kamuiMenu = document.getElementById('kamuiSkillMenu');
+        if (kamuiMenu) kamuiMenu.style.display = 'none';
+
+        // index.html 側の入力状態（押しっぱなしキー / メッセージ表示中フラグ等）をリセット
+        if (typeof window.resetBattleUIState === 'function') {
+            window.resetBattleUIState();
+        }
+
         // 戦闘後は少し安全期間を設ける
         this.encounterSteps = 0;
         this.encounterThreshold = Math.floor(this.getRandomEncounterSteps('medium') * 1.5);
@@ -1315,6 +1763,9 @@ class BattleSystem {
             battleScreen.classList.remove('active');
             document.getElementById('gameUI').style.display = 'block';
         }
+
+        // メッセージパネルをバトルモードから解除
+        BattlePanel.deactivate();
 
         // フィールドBGMに戻す（新しいBGMシステムを使用）
         if (window.bgmSystem) {
@@ -1357,8 +1808,31 @@ class BattleSystem {
     // ゲームオーバー
     gameOver() {
         this.addBattleLog('カイトは たおれた...');
+        // 戦闘UI状態を解除
+        this.kamuiSkillMenuActive = false;
+        this.kamuiPlanning = false;
+        this.kamuiSkillExecuting = false;
+        this.executingTurn = false;
+        const kamuiMenu = document.getElementById('kamuiSkillMenu');
+        if (kamuiMenu) kamuiMenu.style.display = 'none';
+
         setTimeout(() => {
-            if (confirm('ゲームオーバー。タイトルに戻りますか？')) {
+            if (typeof window.showGameModal === 'function') {
+                window.showGameModal({
+                    title: 'GAME OVER',
+                    body: 'パーティは 全滅した…\nタイトルに戻りますか？',
+                    options: [
+                        { label: 'タイトルへ', value: 'title' },
+                        { label: '閉じる', value: 'close' }
+                    ],
+                    defaultIndex: 0,
+                    onSelect: (value) => {
+                        if (value === 'title') {
+                            location.reload();
+                        }
+                    }
+                });
+            } else if (confirm('ゲームオーバー。タイトルに戻りますか？')) {
                 location.reload();
             }
         }, 2000);
@@ -1367,15 +1841,49 @@ class BattleSystem {
     // バトルログ追加
     addBattleLog(message) {
         this.battleLog.push(message);
+
+        // 旧バトルメッセージ枠（DOM互換）にも反映
         const battleMessage = document.getElementById('battleMessage');
         if (battleMessage) {
-            // 最新の3行を表示
             const recentLogs = this.battleLog.slice(-4);
             battleMessage.textContent = recentLogs.join('\n');
-            
-            // スクロールを最下部に
             battleMessage.scrollTop = battleMessage.scrollHeight;
         }
+
+        // バトル中はメッセージパネルにも描画する。
+        if (this.inBattle) {
+            const body = document.getElementById('gameMessageBody');
+            const isCommandMode = body && body.classList.contains('battle-cmd-mode');
+            if (!isCommandMode) {
+                // ログモード: 直近の数行をパネルに表示
+                BattlePanel.renderLog(this.battleLog);
+            } else {
+                // コマンド入力中はリストを潰さず、ヘッダ右側に最新ログを点滅表示
+                this._flashCommandHeaderMessage(message);
+            }
+        }
+    }
+
+    // コマンド入力中に小さく警告ログを表示する
+    _flashCommandHeaderMessage(message) {
+        const headerLabel = document.getElementById('gameMessageCharacter');
+        if (!headerLabel) return;
+        // 直近の本来のラベルを保持
+        if (headerLabel.dataset.battleOriginalLabel == null) {
+            headerLabel.dataset.battleOriginalLabel = headerLabel.textContent || '';
+        }
+        // 表示
+        headerLabel.dataset.battleFlashing = '1';
+        headerLabel.textContent = `${headerLabel.dataset.battleOriginalLabel} — ${message}`;
+        // 既存のタイマを破棄して上書き
+        if (this._flashTimer) clearTimeout(this._flashTimer);
+        this._flashTimer = setTimeout(() => {
+            const orig = headerLabel.dataset.battleOriginalLabel || '';
+            headerLabel.textContent = orig;
+            delete headerLabel.dataset.battleFlashing;
+            delete headerLabel.dataset.battleOriginalLabel;
+            this._flashTimer = null;
+        }, 1800);
     }
     
     // ダメージエフェクト表示
@@ -1441,13 +1949,16 @@ class BattleSystem {
             const mpRatio = Math.max(0, Math.min(1, (member.mp || member.maxMp) / (member.maxMp || 50)));
 
             const statusBox = document.createElement('div');
+            // キャンバス右上に配置するためコンパクト化
             statusBox.style.cssText = `
-                background: rgba(0, 0, 0, 0.9);
+                background: rgba(0, 0, 0, 0.78);
                 border: 2px solid #00ffff;
                 border-radius: 5px;
-                padding: 8px;
-                min-width: 220px;
-                box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+                padding: 5px 8px;
+                min-width: 0;
+                width: 190px;
+                box-shadow: 0 0 12px rgba(0, 255, 255, 0.25);
+                font-size: 12px;
             `;
 
             // HP色を設定
@@ -1456,16 +1967,16 @@ class BattleSystem {
             else if (hpRatio <= 0.5) hpColor = '#ffff44';
 
             statusBox.innerHTML = `
-                <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 14px; color: #00ffff;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 3px; font-size: 12px; color: #00ffff;">
                     <span>${member.name || 'カイト'}</span>
                     <span>Lv.${member.level || 1}</span>
                 </div>
-                <div style="margin-bottom: 3px;">
-                    <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 2px;">
+                <div style="margin-bottom: 2px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 1px;">
                         <span style="color: #aaa;">HP</span>
                         <span style="color: #fff;">${Math.max(0, member.hp || member.maxHp)}/${member.maxHp || 100}</span>
                     </div>
-                    <div style="background: #333; height: 8px; border-radius: 4px; overflow: hidden;">
+                    <div style="background: #333; height: 6px; border-radius: 3px; overflow: hidden;">
                         <div style="
                             width: ${hpRatio * 100}%;
                             height: 100%;
@@ -1475,11 +1986,11 @@ class BattleSystem {
                     </div>
                 </div>
                 <div>
-                    <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 2px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 1px;">
                         <span style="color: #aaa;">MP</span>
                         <span style="color: #fff;">${member.mp || member.maxMp}/${member.maxMp || 50}</span>
                     </div>
-                    <div style="background: #333; height: 6px; border-radius: 3px; overflow: hidden;">
+                    <div style="background: #333; height: 4px; border-radius: 2px; overflow: hidden;">
                         <div style="
                             width: ${mpRatio * 100}%;
                             height: 100%;
@@ -1494,20 +2005,34 @@ class BattleSystem {
         });
     }
     
-    // コマンド表示
+    // コマンド表示（標準のメインコマンドリストをパネルに描画）
     showCommands() {
-        const commands = document.getElementById('battleCommands');
-        if (commands) {
-            commands.style.display = 'block';
-            this.waitingForCommand = true;
-            
-            // コマンド選択を初期化
-            this.selectedCommand = 0;
-            
-            // グローバルのsetupBattleCommands関数を呼び出す
-            if (window.setupBattleCommands) {
-                window.setupBattleCommands();
-            }
+        // フェーズを通常のコマンドモードに戻す
+        this.commandPhase = 'command';
+        this.waitingForCommand = true;
+        this.selectedCommand = 0;
+
+        // 現在行動中のメンバー名をヘッダに表示
+        const partyMembers = this.getPartyMembers();
+        const currentMember = partyMembers[this.currentMemberIndex] || partyMembers[0];
+        const headerLabel = currentMember ? `${currentMember.name || 'カイト'} のコマンド` : 'コマンド';
+
+        const standard = [
+            { command: 'attack', label: 'こうげき' },
+            { command: 'kamui',  label: 'カムイ' },
+            { command: 'defend', label: 'ぼうぎょ' },
+            { command: 'item',   label: 'どうぐ' },
+            { command: 'escape', label: 'にげる' }
+        ];
+
+        BattlePanel.renderCommands(standard, {
+            headerLabel,
+            selectedIndex: 0
+        });
+
+        // index.html 側で onclick / 選択ハイライトを設定（互換）
+        if (window.setupBattleCommands) {
+            window.setupBattleCommands();
         }
     }
 }

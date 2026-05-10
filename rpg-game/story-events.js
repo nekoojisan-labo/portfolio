@@ -21,94 +21,151 @@ class StoryEventSystem {
     }
 
     initializeUI() {
-        // イベント用オーバーレイを作成
-        this.eventOverlay = document.createElement('div');
-        this.eventOverlay.id = 'eventOverlay';
-        this.eventOverlay.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            flex-direction: column;
-        `;
+        // ゲーム画面下のメッセージパネルを参照（HTML側で定義済み）
+        this.panelEl = document.getElementById('gameMessagePanel');
+        if (!this.panelEl) {
+            console.warn('[StoryEvents] gameMessagePanel not found in DOM');
+            return;
+        }
 
-        // イベントテキストボックス
-        this.eventTextBox = document.createElement('div');
-        this.eventTextBox.style.cssText = `
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            border: 3px solid #00ffff;
-            border-radius: 10px;
-            padding: 30px;
-            max-width: 700px;
-            width: 90%;
-            box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
-            font-family: 'Arial', sans-serif;
-        `;
+        this.headerEl = this.panelEl.querySelector('.game-msg-header');
+        this.eventCharacterName = document.getElementById('gameMessageCharacter');
+        this.eventText = document.getElementById('gameMessageBody');
+        this.eventChoices = document.getElementById('gameMessageChoices');
+        this.nextIndicator = document.getElementById('gameMessageNextIndicator');
+        this.hintEl = document.getElementById('gameMessageHint');
+        this.controlsEl = this.panelEl.querySelector('.game-msg-controls');
 
-        // キャラクター名表示
-        this.eventCharacterName = document.createElement('div');
-        this.eventCharacterName.style.cssText = `
-            color: #00ffff;
-            font-size: 20px;
-            font-weight: bold;
-            margin-bottom: 15px;
-            text-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
-        `;
-
-        // イベントテキスト
-        this.eventText = document.createElement('div');
-        this.eventText.style.cssText = `
-            color: #ffffff;
-            font-size: 18px;
-            line-height: 1.8;
-            margin-bottom: 20px;
-            min-height: 100px;
-        `;
-
-        // 選択肢コンテナ
-        this.eventChoices = document.createElement('div');
-        this.eventChoices.style.cssText = `
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        `;
-
-        // 続行ボタン
+        // 互換性のため eventOverlay/eventTextBox/continueButton 参照は残す（旧コードからの呼び出し対策）
+        this.eventOverlay = this.panelEl;
+        this.eventTextBox = this.panelEl;
         this.continueButton = document.createElement('button');
-        this.continueButton.textContent = '次へ →';
-        this.continueButton.style.cssText = `
-            background: linear-gradient(135deg, #00ffff 0%, #0080ff 100%);
-            border: none;
-            border-radius: 5px;
-            padding: 12px 30px;
-            color: #000000;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            align-self: flex-end;
-            transition: all 0.3s;
-        `;
-        this.continueButton.onmouseover = () => {
-            this.continueButton.style.transform = 'scale(1.05)';
-            this.continueButton.style.boxShadow = '0 0 20px rgba(0, 255, 255, 0.8)';
-        };
-        this.continueButton.onmouseout = () => {
-            this.continueButton.style.transform = 'scale(1)';
-            this.continueButton.style.boxShadow = 'none';
-        };
+        this.continueButton.style.display = 'none';
 
-        this.eventTextBox.appendChild(this.eventCharacterName);
-        this.eventTextBox.appendChild(this.eventText);
-        this.eventTextBox.appendChild(this.eventChoices);
-        this.eventTextBox.appendChild(this.continueButton);
-        this.eventOverlay.appendChild(this.eventTextBox);
-        document.body.appendChild(this.eventOverlay);
+        // パネルクリックで進行
+        this.panelEl.addEventListener('click', (e) => {
+            if (e.target && e.target.classList && e.target.classList.contains('game-msg-choice')) return;
+            // オープニング中は同じパネルを使い回しているので、
+            // story-event 側の handleAdvance には流さない
+            if (window.openingTypewriterActive) return;
+            this.handleAdvance();
+        });
+
+        // タイプライター・ページ管理用の状態
+        this.typeTimer = null;
+        this.typeFullText = '';
+        this.typeIndex = 0;
+        this.typeDone = false;
+        this.currentScenePages = [];
+        this.currentScenePageIndex = 0;
+
+        // キーハンドラ（イベント中のみ有効化）
+        this.keyHandler = null;
+    }
+
+    static escapeHTML(text) {
+        return (text || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+    }
+
+    static paginateText(text) {
+        const trimmed = (text || '').trim();
+        if (!trimmed) return [''];
+        const paragraphs = trimmed.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
+        if (paragraphs.length === 0) return [trimmed];
+        const MAX_PARA = 2;
+        const MAX_CHARS = 110;
+        const pages = [];
+        let buffer = [], chars = 0;
+        const flush = () => {
+            if (buffer.length) {
+                pages.push(buffer.join('\n\n'));
+                buffer = []; chars = 0;
+            }
+        };
+        paragraphs.forEach(p => {
+            if (buffer.length >= MAX_PARA || (chars + p.length > MAX_CHARS && buffer.length > 0)) {
+                flush();
+            }
+            buffer.push(p);
+            chars += p.length;
+        });
+        flush();
+        return pages.length ? pages : [trimmed];
+    }
+
+    setNextIndicator(show) {
+        if (this.nextIndicator) {
+            this.nextIndicator.classList.toggle('hidden', !show);
+        }
+    }
+
+    renderTypewriter(partial, showCursor) {
+        const html = StoryEventSystem.escapeHTML(partial).replace(/\n/g, '<br>');
+        const cursor = showCursor
+            ? '<span class="game-msg-typewriter-cursor">▌</span>'
+            : '';
+        this.eventText.innerHTML = html + cursor;
+        this.eventText.scrollTop = this.eventText.scrollHeight;
+    }
+
+    finishTypewriter() {
+        if (this.typeTimer) {
+            clearInterval(this.typeTimer);
+            this.typeTimer = null;
+        }
+        this.typeIndex = this.typeFullText.length;
+        this.renderTypewriter(this.typeFullText, false);
+        this.typeDone = true;
+        this.setNextIndicator(true);
+    }
+
+    startTypewriter(text) {
+        if (this.typeTimer) {
+            clearInterval(this.typeTimer);
+            this.typeTimer = null;
+        }
+        this.typeFullText = text || '';
+        this.typeIndex = 0;
+        this.typeDone = false;
+        this.renderTypewriter('', true);
+        this.setNextIndicator(false);
+
+        const INTERVAL = 45;
+        this.typeTimer = setInterval(() => {
+            this.typeIndex++;
+            if (this.typeIndex >= this.typeFullText.length) {
+                this.finishTypewriter();
+                return;
+            }
+            this.renderTypewriter(
+                this.typeFullText.substring(0, this.typeIndex),
+                true
+            );
+        }, INTERVAL);
+    }
+
+    // クリック / キー入力での進行（タイプ中→全文表示、完了済→次ページorシーン）
+    handleAdvance() {
+        if (!this.currentEvent) return;
+        const scene = this.currentEvent.data.scenes[this.currentEvent.sceneIndex];
+        // 選択肢のあるシーンでは進行しない
+        if (scene && scene.choices) return;
+
+        if (this.typeTimer && !this.typeDone) {
+            this.finishTypewriter();
+            return;
+        }
+        // 現シーンに次ページが残っていれば次ページへ
+        if (this.currentScenePageIndex + 1 < this.currentScenePages.length) {
+            this.currentScenePageIndex++;
+            this.startTypewriter(this.currentScenePages[this.currentScenePageIndex]);
+            return;
+        }
+        // 次のシーンへ
+        this.nextScene();
     }
 
     // イベントを登録
@@ -338,63 +395,69 @@ class StoryEventSystem {
             return;
         }
 
-        // UIを表示
-        this.eventOverlay.style.display = 'flex';
-        this.eventCharacterName.textContent = scene.character;
-        this.eventText.innerHTML = scene.text.replace(/\n/g, '<br>');
+        // パネルを表示
+        this.panelEl.classList.add('active');
+        this.panelEl.setAttribute('aria-hidden', 'false');
+
+        // ヘッダ（キャラ名）
+        const characterName = scene.character || '';
+        if (characterName) {
+            this.eventCharacterName.textContent = characterName;
+            this.headerEl.classList.add('active');
+        } else {
+            this.headerEl.classList.remove('active');
+        }
 
         // 選択肢をクリア
         this.eventChoices.innerHTML = '';
 
-        // 選択肢がある場合
         if (scene.choices) {
-            this.continueButton.style.display = 'none';
-            scene.choices.forEach((choice, index) => {
+            // 選択肢シーン: 本文をタイプ表示後、選択肢を出す
+            this.eventChoices.classList.add('active');
+            this.controlsEl.style.display = 'none';
+
+            this.currentScenePages = [scene.text || ''];
+            this.currentScenePageIndex = 0;
+            this.startTypewriter(this.currentScenePages[0]);
+
+            scene.choices.forEach(choice => {
                 const button = document.createElement('button');
                 button.textContent = choice.text;
-                button.style.cssText = `
-                    background: linear-gradient(135deg, #0080ff 0%, #0040ff 100%);
-                    border: 2px solid #00ffff;
-                    border-radius: 5px;
-                    padding: 12px 20px;
-                    color: #ffffff;
-                    font-size: 16px;
-                    cursor: pointer;
-                    transition: all 0.3s;
-                `;
-                button.onmouseover = () => {
-                    button.style.transform = 'translateX(10px)';
-                    button.style.borderColor = '#ffff00';
-                };
-                button.onmouseout = () => {
-                    button.style.transform = 'translateX(0)';
-                    button.style.borderColor = '#00ffff';
-                };
-                button.onclick = () => {
+                button.className = 'game-msg-choice';
+                button.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (this.typeTimer && !this.typeDone) {
+                        this.finishTypewriter();
+                    }
                     if (choice.action) {
                         choice.action(this.currentEvent.context);
                     }
                     this.nextScene();
-                };
+                });
                 this.eventChoices.appendChild(button);
             });
         } else {
-            // 通常の続行ボタン
-            this.continueButton.style.display = 'block';
-            this.continueButton.onclick = () => this.nextScene();
+            // 通常シーン: 本文を必要に応じてページ分割し、タイプ表示で順次見せる
+            this.eventChoices.classList.remove('active');
+            this.controlsEl.style.display = 'flex';
+            this.currentScenePages = StoryEventSystem.paginateText(scene.text || '');
+            this.currentScenePageIndex = 0;
+            this.startTypewriter(this.currentScenePages[0]);
         }
 
-        // キーボードイベント（Zキー、Spaceキー、Enterキーで次へ）
-        const keyHandler = (e) => {
-            if (e.key === 'z' || e.key === 'Z' || e.key === ' ' || e.key === 'Enter') {
-                if (!scene.choices) {
+        // キーボード進行（イベント全体で1度だけ登録）
+        if (!this.keyHandler) {
+            this.keyHandler = (e) => {
+                if (!this.currentEvent) return;
+                const sc = this.currentEvent.data.scenes[this.currentEvent.sceneIndex];
+                if (!sc || sc.choices) return;
+                if (e.key === 'z' || e.key === 'Z' || e.key === ' ' || e.key === 'Enter') {
                     e.preventDefault();
-                    this.nextScene();
-                    document.removeEventListener('keydown', keyHandler);
+                    this.handleAdvance();
                 }
-            }
-        };
-        document.addEventListener('keydown', keyHandler);
+            };
+            document.addEventListener('keydown', this.keyHandler);
+        }
     }
 
     // 次のシーンへ
@@ -430,8 +493,30 @@ class StoryEventSystem {
             }
         }
 
-        // UIを隠す
-        this.eventOverlay.style.display = 'none';
+        // パネルを隠す
+        this.panelEl.classList.remove('active');
+        this.panelEl.setAttribute('aria-hidden', 'true');
+        this.headerEl.classList.remove('active');
+        this.eventChoices.classList.remove('active');
+        this.eventChoices.innerHTML = '';
+        this.eventText.innerHTML = '';
+        this.eventCharacterName.textContent = '';
+        this.setNextIndicator(false);
+
+        // タイプライター停止
+        if (this.typeTimer) {
+            clearInterval(this.typeTimer);
+            this.typeTimer = null;
+        }
+        this.typeDone = false;
+        this.currentScenePages = [];
+        this.currentScenePageIndex = 0;
+
+        // キーハンドラ解除
+        if (this.keyHandler) {
+            document.removeEventListener('keydown', this.keyHandler);
+            this.keyHandler = null;
+        }
 
         // ゲーム再開
         if (window.pauseGame !== undefined) {

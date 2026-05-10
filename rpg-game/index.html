@@ -35,15 +35,81 @@
             box-shadow: 0 0 20px rgba(15, 52, 96, 0.5);
             overflow: hidden;
             position: relative;
+            display: flex;
+            flex-direction: column;
+            width: min(800px, 100vw);
+            max-height: 100vh;
+            /* テキスト選択・ドラッグを禁止（ゲーム操作中の誤動作防止） */
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-user-drag: none;
+        }
+
+        .game-container *,
+        .game-container *::before,
+        .game-container *::after {
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        /* canvas / 画像のドラッグも禁止（要素をドラッグして他所へ持っていけないように） */
+        .game-container canvas,
+        .game-container img {
+            pointer-events: auto;
+            -webkit-user-drag: none;
+            user-drag: none;
+            draggable: false;
+        }
+
+        /* 選択ハイライト自体も無効化（万が一選択されても見た目が変わらない） */
+        .game-container ::selection {
+            background: transparent;
+        }
+        .game-container ::-moz-selection {
+            background: transparent;
+        }
+
+        /* opening-mode は message-panel にテキスト表示するため、
+           viewport の寸法を変えない（820px 固定レイアウト維持） */
+
+        .game-viewport {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 800 / 450;
+            overflow: hidden;
+            background: #1a1a2e;
+            flex-shrink: 0;
         }
 
         #gameCanvas {
             display: block;
+            width: 100%;
+            height: 100%;
             background: #1a1a2e;
             image-rendering: pixelated;
             image-rendering: -moz-crisp-edges;
             image-rendering: crisp-edges;
             transition: opacity 0.3s ease;
+            /* 画像としてのドラッグ・選択・右クリック保存を全面的に抑止 */
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            -webkit-user-drag: none;
+            -khtml-user-drag: none;
+            -moz-user-drag: none;
+            -o-user-drag: none;
+            user-drag: none;
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: none;
+            pointer-events: auto;
         }
 
         .ui-overlay {
@@ -175,10 +241,9 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: 60%;
+            height: 100%;
             background: linear-gradient(180deg, #112233 0%, #001122 100%);
-            border-bottom: 2px solid #00ffff;
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+            box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.5);
         }
 
         .battle-grid {
@@ -194,10 +259,11 @@
 
         .enemy-area {
             position: absolute;
-            top: 20%;
+            top: 25%;
             left: 50%;
             transform: translateX(-50%);
             text-align: center;
+            z-index: 5;
         }
 
         .enemy-sprite {
@@ -225,39 +291,25 @@
 
         .battle-ui {
             position: absolute;
-            bottom: 0;
+            top: 0;
             left: 0;
             width: 100%;
-            height: 40%;
+            height: 100%;
+            pointer-events: none;
         }
 
+        .battle-ui > * {
+            pointer-events: auto;
+        }
+
+        /* 旧バトルメッセージ・バトルコマンドはメッセージパネルに統合済み。
+           DOMの残骸が他コードから参照されても無害なよう display:none で隠す。 */
         .battle-message {
-            position: absolute;
-            top: 0;
-            left: 10px;
-            right: 10px;
-            height: 80px;
-            background: rgba(0, 0, 0, 0.9);
-            border: 2px solid #00ffff;
-            border-radius: 5px;
-            padding: 10px;
-            color: #ffffff;
-            font-size: 14px;
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
-            overflow-y: auto;
-            white-space: pre-line;
+            display: none !important;
         }
 
         .battle-commands {
-            position: absolute;
-            bottom: 90px;
-            left: 10px;
-            width: 220px;
-            background: rgba(0, 0, 0, 0.9);
-            border: 2px solid #00ffff;
-            border-radius: 5px;
-            padding: 10px;
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+            display: none !important;
         }
 
         .command-item {
@@ -287,15 +339,95 @@
         }
 
         .battle-status {
+            display: none;
+        }
+
+        /* バトル中のパーティステータス（キャンバス右上にコンパクト表示） */
+        #battlePartyStatus {
             position: absolute;
-            bottom: 10px;
+            top: 10px;
             right: 10px;
-            width: 250px;
-            background: rgba(0, 0, 0, 0.9);
-            border: 2px solid #00ffff;
-            border-radius: 5px;
-            padding: 10px;
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-width: 240px;
+            z-index: 10;
+        }
+
+        /* メッセージパネルがバトルモードのときのスタイル */
+        .game-message-panel.battle-mode .game-msg-header {
+            padding: 6px 16px 4px;
+        }
+
+        .game-message-panel.battle-mode .game-msg-character {
+            font-size: 14px;
+        }
+
+        .game-message-panel.battle-mode .game-msg-body {
+            padding: 4px 14px 4px;
+            font-size: 13px;
+            line-height: 1.4;
+            min-height: 0;
+            max-height: none;
+            overflow: hidden;
+            flex: 1;
+        }
+
+        .game-message-panel.battle-mode .game-msg-controls {
+            display: none;
+        }
+
+        .game-message-panel.battle-mode.battle-log-mode .game-msg-controls {
+            display: flex;
+            padding: 2px 14px 4px;
+        }
+
+        /* バトル中のコマンドリスト（パネル内に縦並び・5項目を高さ220pxに収める） */
+        .game-message-panel.battle-mode .game-msg-body.battle-cmd-mode {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            padding: 4px 14px 4px;
+            white-space: normal;
+            overflow: hidden;
+        }
+
+        .game-message-panel.battle-mode .game-msg-body.battle-cmd-mode .battle-cmd-title {
+            font-weight: bold;
+            color: #ffff00;
+            font-size: 11px;
+            margin-bottom: 2px;
+            letter-spacing: 0.5px;
+        }
+
+        .game-message-panel.battle-mode .game-msg-body.battle-cmd-mode .command-item {
+            padding: 3px 8px 3px 22px;
+            border: 1px solid rgba(0, 255, 255, 0.25);
+            background: rgba(0, 30, 60, 0.45);
+            font-size: 13px;
+            line-height: 1.3;
+            color: #e0eef5;
+            border-radius: 4px;
+        }
+
+        .game-message-panel.battle-mode .game-msg-body.battle-cmd-mode .command-item:hover {
+            background: rgba(0, 60, 120, 0.6);
+            border-color: rgba(0, 255, 255, 0.55);
+            padding-left: 24px;
+        }
+
+        .game-message-panel.battle-mode .game-msg-body.battle-cmd-mode .command-item.selected {
+            background: rgba(0, 80, 160, 0.7);
+            border-color: #00ffff;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.35) inset;
+        }
+
+        .game-message-panel.battle-mode .game-msg-body.battle-cmd-mode .command-item.selected::before {
+            left: 8px;
+        }
+
+        .game-message-panel.battle-mode .game-msg-character.battle-mode-label {
+            color: #ffff66;
         }
 
         .status-row {
@@ -332,6 +464,12 @@
         }
 
         /* Kamui Skill Menu Styles */
+        .kamui-skill-list {
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+
         .kamui-skill-item {
             background: rgba(0, 50, 100, 0.8);
             border: 2px solid #00aaff;
@@ -342,6 +480,8 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
+            box-sizing: border-box;
+            min-width: 0;
         }
 
         .kamui-skill-item:hover {
@@ -404,6 +544,176 @@
             align-items: center;
             text-align: center;
             z-index: 1000;
+        }
+
+        #titleScreen {
+            background:
+                linear-gradient(180deg, rgba(0, 0, 0, 0.16), rgba(0, 0, 0, 0.68)),
+                url('assets/title/title-screen.png') center / cover no-repeat;
+        }
+
+        #titleScreen h1 {
+            font-size: 42px;
+            letter-spacing: 0;
+            color: #e9ffff;
+            text-shadow: 0 0 14px rgba(0, 255, 255, 0.95), 0 4px 18px rgba(0, 0, 0, 0.85);
+        }
+
+        #titleScreen h2 {
+            font-size: 20px;
+            color: #ffffff;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.8), 0 3px 14px rgba(0, 0, 0, 0.85);
+        }
+
+        #titleScreen p {
+            max-width: 620px;
+            padding: 0 24px;
+            color: #d7e6ec !important;
+            text-shadow: 0 3px 12px rgba(0, 0, 0, 0.9);
+        }
+
+        #openingScreen {
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            transition: background-image 0.25s ease;
+            justify-content: center;
+        }
+
+        /* RPG風メッセージボックス */
+        .opening-story-panel {
+            width: calc(100% - 24px);
+            margin: 8px 12px 12px;
+            height: 268px;
+            min-height: 268px;
+            background: linear-gradient(180deg, rgba(0, 8, 24, 0.94), rgba(0, 0, 12, 0.96));
+            border: 2px solid #00ffff;
+            border-radius: 10px;
+            box-shadow: 0 0 24px rgba(0, 255, 255, 0.35), inset 0 0 12px rgba(0, 255, 255, 0.08);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            box-sizing: border-box;
+            overflow: hidden;
+            cursor: pointer;
+            transition: box-shadow 0.2s ease;
+        }
+
+        .opening-story-panel:hover {
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.55), inset 0 0 14px rgba(0, 255, 255, 0.12);
+        }
+
+        .opening-story-panel:active {
+            box-shadow: 0 0 18px rgba(0, 255, 255, 0.5), inset 0 0 10px rgba(0, 255, 255, 0.18);
+        }
+
+        .opening-text-area {
+            flex: 1;
+            padding: 14px 26px 6px;
+            text-align: left;
+            line-height: 1.75;
+            font-size: 15px;
+            color: #e0eef5;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .opening-msg-header {
+            flex-shrink: 0;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.18);
+            padding-bottom: 8px;
+            margin-bottom: 8px;
+        }
+
+        .opening-msg-title {
+            color: #00ffff;
+            font-size: 18px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            text-shadow: 0 0 8px rgba(0, 255, 255, 0.6);
+            margin: 0 0 2px 0;
+        }
+
+        .opening-msg-subtitle {
+            color: #88aab8;
+            font-size: 12px;
+            margin: 0;
+        }
+
+        .opening-msg-body-scroll {
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
+            padding-right: 4px;
+        }
+
+        .opening-msg-body-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .opening-msg-body-scroll::-webkit-scrollbar-thumb {
+            background: rgba(0, 255, 255, 0.4);
+            border-radius: 3px;
+        }
+
+        .opening-msg-body {
+            color: #e0eef5;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .opening-controls {
+            padding: 6px 18px 10px;
+            border-top: 1px solid rgba(0, 255, 255, 0.18);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .opening-hint {
+            font-size: 11px;
+            color: #6a8a96;
+            letter-spacing: 0.5px;
+        }
+
+        .opening-next-indicator {
+            color: #00ffff;
+            font-size: 16px;
+            text-shadow: 0 0 8px rgba(0, 255, 255, 0.7);
+            animation: openingNextPulse 1s ease-in-out infinite;
+        }
+
+        .opening-next-indicator.hidden {
+            visibility: hidden;
+        }
+
+        @keyframes openingNextPulse {
+            0%, 100% {
+                transform: translateY(0);
+                opacity: 0.6;
+            }
+            50% {
+                transform: translateY(3px);
+                opacity: 1;
+            }
+        }
+
+        .opening-typewriter-cursor {
+            display: inline-block;
+            color: #00ffff;
+            animation: cursorBlink 0.7s steps(2, end) infinite;
+            margin-left: 2px;
+        }
+
+        .opening-typewriter-cursor.hidden {
+            display: none;
+        }
+
+        @keyframes cursorBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
         }
 
         .title-screen h1 {
@@ -482,54 +792,71 @@
             background: linear-gradient(135deg, #1a1a2e, #0a0a0a);
             border: 3px solid #00ffff;
             border-radius: 10px;
-            padding: 30px;
-            min-width: 400px;
-            max-width: 500px;
+            padding: 14px 16px;
+            width: min(440px, 92%);
+            max-width: 92%;
+            max-height: calc(100% - 12px);
+            overflow: hidden;
+            box-sizing: border-box;
             box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+            display: flex;
+            flex-direction: column;
         }
-        
+
         .menu-title {
-            font-size: 24px;
+            font-size: 18px;
             color: #00ffff;
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 8px;
             text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+            flex-shrink: 0;
         }
-        
+
         .menu-stats {
             background: rgba(0, 0, 0, 0.5);
             border: 2px solid #0f3460;
             border-radius: 5px;
-            padding: 15px;
-            margin-bottom: 20px;
+            padding: 8px 10px;
+            margin-bottom: 8px;
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 8px;
+            gap: 4px 10px;
+            box-sizing: border-box;
+            min-width: 0;
+        }
+
+        .menu-stat-row > span {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .menu-stat-row {
             display: flex;
             justify-content: space-between;
-            font-size: 14px;
+            font-size: 12px;
         }
-        
+
         .menu-options {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            max-width: 600px;
+            gap: 6px;
+            width: 100%;
+            max-width: 100%;
             margin: 0 auto;
+            box-sizing: border-box;
         }
-        
+
         .menu-option {
             background: rgba(0, 255, 255, 0.1);
             border: 2px solid #00ffff;
             border-radius: 5px;
-            padding: 12px;
+            padding: 8px;
             cursor: pointer;
             transition: all 0.2s;
             text-align: center;
-            font-size: 16px;
+            font-size: 14px;
         }
         
         .menu-option:hover {
@@ -544,33 +871,39 @@
         }
         
         .menu-close {
-            margin-top: 15px;
+            margin-top: 8px;
             text-align: center;
-            font-size: 12px;
+            font-size: 11px;
             color: #aaa;
+            flex-shrink: 0;
         }
-        
+
         /* Item Menu Styles */
         .item-list {
-            max-height: 300px;
+            max-height: 240px;
             overflow-y: auto;
             background: rgba(0, 0, 0, 0.5);
             border: 2px solid #0f3460;
             border-radius: 5px;
-            padding: 10px;
+            padding: 8px;
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
         }
-        
+
         .item-entry {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 10px;
-            margin: 5px 0;
+            padding: 6px 8px;
+            margin: 4px 0;
             background: rgba(0, 255, 255, 0.1);
             border: 2px solid #00ffff;
             border-radius: 5px;
             cursor: pointer;
             transition: all 0.2s;
+            box-sizing: border-box;
+            min-width: 0;
         }
         
         .item-entry:hover {
@@ -585,32 +918,41 @@
         
         .item-info {
             flex: 1;
+            min-width: 0;
+            overflow: hidden;
         }
-        
+
         .item-name {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: bold;
-            margin-bottom: 3px;
+            margin-bottom: 2px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
-        
+
         .item-description {
-            font-size: 12px;
+            font-size: 11px;
             color: #aaa;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
-        
+
         .item-quantity {
-            font-size: 18px;
+            font-size: 16px;
             color: #ffff00;
-            margin-left: 15px;
-            min-width: 40px;
+            margin-left: 12px;
+            min-width: 36px;
             text-align: right;
         }
         
         .empty-inventory {
             text-align: center;
-            padding: 40px;
+            padding: 20px;
             color: #888;
             font-style: italic;
+            font-size: 13px;
         }
         
         /* Kamui Effect */
@@ -642,6 +984,303 @@
             }
         }
         
+        /* Shop UI (in-viewport, no scrolling, pagination) */
+        .shop-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.78);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 800;
+            box-sizing: border-box;
+            padding: 12px;
+        }
+
+        .shop-container {
+            position: relative;
+            background: linear-gradient(180deg, rgba(0, 8, 24, 0.94), rgba(0, 0, 12, 0.96));
+            border: 2px solid #00ffff;
+            border-radius: 10px;
+            box-shadow: 0 0 24px rgba(0, 255, 255, 0.45), inset 0 0 12px rgba(0, 255, 255, 0.08);
+            color: #e0eef5;
+            font-family: 'Courier New', monospace;
+            box-sizing: border-box;
+            width: min(560px, 92%);
+            max-height: 92%;
+            display: flex;
+            flex-direction: column;
+            padding: 12px 14px;
+        }
+
+        .shop-title {
+            font-size: 18px;
+            color: #00ffff;
+            text-align: center;
+            margin: 0 0 4px;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.6);
+            letter-spacing: 1px;
+        }
+
+        .shop-keeper-line {
+            font-size: 12px;
+            color: #aac8d3;
+            text-align: center;
+            margin: 0 0 6px;
+            font-style: italic;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .shop-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: #88aab8;
+            border-top: 1px solid rgba(0, 255, 255, 0.18);
+            border-bottom: 1px solid rgba(0, 255, 255, 0.18);
+            padding: 4px 0;
+            margin-bottom: 6px;
+        }
+
+        .shop-gold {
+            color: #ffff00;
+            text-shadow: 0 0 6px rgba(255, 255, 0, 0.4);
+        }
+
+        .shop-page-indicator {
+            color: #00ffff;
+            text-shadow: 0 0 6px rgba(0, 255, 255, 0.4);
+        }
+
+        .shop-items {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin: 4px 0 6px;
+        }
+
+        .shop-item-entry {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 10px;
+            background: rgba(0, 30, 60, 0.45);
+            border: 2px solid rgba(0, 255, 255, 0.25);
+            border-radius: 6px;
+            box-sizing: border-box;
+            min-height: 50px;
+            transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .shop-item-entry.selected {
+            background: rgba(0, 80, 160, 0.7);
+            border-color: #00ffff;
+            box-shadow: 0 0 12px rgba(0, 255, 255, 0.4) inset;
+        }
+
+        .shop-item-entry.disabled {
+            opacity: 0.55;
+        }
+
+        .shop-item-info {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            padding-right: 8px;
+        }
+
+        .shop-item-name {
+            font-size: 13px;
+            font-weight: bold;
+            color: #e0eef5;
+            margin: 0 0 2px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .shop-item-desc {
+            font-size: 11px;
+            color: #99b3bf;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .shop-item-price {
+            font-size: 14px;
+            font-weight: bold;
+            color: #ffff00;
+            min-width: 64px;
+            text-align: right;
+            white-space: nowrap;
+            text-shadow: 0 0 6px rgba(255, 255, 0, 0.35);
+        }
+
+        .shop-empty-row {
+            min-height: 50px;
+        }
+
+        .shop-hint {
+            font-size: 11px;
+            color: #6a8a96;
+            text-align: center;
+            letter-spacing: 0.5px;
+            margin-top: auto;
+            padding-top: 4px;
+            border-top: 1px solid rgba(0, 255, 255, 0.12);
+        }
+
+        .shop-inn-body {
+            text-align: center;
+            font-size: 14px;
+            line-height: 1.7;
+            color: #e0eef5;
+            padding: 14px 6px;
+        }
+
+        .shop-inn-price {
+            color: #ffff00;
+            font-size: 16px;
+            font-weight: bold;
+            margin: 6px 0;
+            text-shadow: 0 0 6px rgba(255, 255, 0, 0.4);
+        }
+
+        .shop-inn-options {
+            display: flex;
+            justify-content: center;
+            gap: 18px;
+            margin-top: 10px;
+        }
+
+        .shop-inn-option {
+            background: rgba(0, 30, 60, 0.45);
+            border: 2px solid rgba(0, 255, 255, 0.25);
+            border-radius: 6px;
+            padding: 8px 18px;
+            color: #e0eef5;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .shop-inn-option.selected {
+            background: rgba(0, 80, 160, 0.7);
+            border-color: #00ffff;
+            box-shadow: 0 0 12px rgba(0, 255, 255, 0.4) inset;
+        }
+
+        /* Generic in-viewport confirm/notice modal (game over, alerts) */
+        .game-modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.78);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1500;
+            box-sizing: border-box;
+            padding: 12px;
+        }
+
+        .game-modal-container {
+            background: linear-gradient(180deg, rgba(0, 8, 24, 0.94), rgba(0, 0, 12, 0.96));
+            border: 2px solid #00ffff;
+            border-radius: 10px;
+            box-shadow: 0 0 24px rgba(0, 255, 255, 0.45), inset 0 0 12px rgba(0, 255, 255, 0.08);
+            color: #e0eef5;
+            font-family: 'Courier New', monospace;
+            box-sizing: border-box;
+            width: min(440px, 92%);
+            max-height: 92%;
+            display: flex;
+            flex-direction: column;
+            padding: 16px 18px;
+        }
+
+        .game-modal-title {
+            font-size: 16px;
+            color: #00ffff;
+            text-align: center;
+            margin: 0 0 8px;
+            text-shadow: 0 0 8px rgba(0, 255, 255, 0.5);
+            letter-spacing: 1px;
+        }
+
+        .game-modal-body {
+            font-size: 14px;
+            line-height: 1.7;
+            color: #e0eef5;
+            text-align: center;
+            padding: 6px 4px 10px;
+            white-space: pre-wrap;
+        }
+
+        .game-modal-options {
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            margin-top: 4px;
+        }
+
+        .game-modal-option {
+            background: rgba(0, 30, 60, 0.45);
+            border: 2px solid rgba(0, 255, 255, 0.25);
+            border-radius: 6px;
+            padding: 8px 16px;
+            color: #e0eef5;
+            font-size: 13px;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .game-modal-option.selected {
+            background: rgba(0, 80, 160, 0.7);
+            border-color: #00ffff;
+            box-shadow: 0 0 12px rgba(0, 255, 255, 0.4) inset;
+        }
+
+        .game-modal-hint {
+            font-size: 11px;
+            color: #6a8a96;
+            text-align: center;
+            letter-spacing: 0.5px;
+            margin-top: 8px;
+            padding-top: 6px;
+            border-top: 1px solid rgba(0, 255, 255, 0.12);
+        }
+
+        @media (max-width: 800px) {
+            .shop-container {
+                width: min(440px, 94%);
+                padding: 10px 12px;
+            }
+
+            .shop-title {
+                font-size: 16px;
+            }
+
+            .shop-item-name {
+                font-size: 12px;
+            }
+
+            .shop-item-desc {
+                font-size: 10px;
+            }
+        }
+
         /* Back to Portfolio Button */
         .back-button {
             position: absolute;
@@ -668,19 +1307,159 @@
             box-shadow: 0 6px 12px rgba(15, 52, 96, 0.5);
         }
 
-        /* オンスクリーンコントローラー（モバイル用） */
-        .on-screen-controller {
-            position: fixed;
-            bottom: 15px;
-            left: 0;
-            right: 0;
-            display: flex; /* 常に表示 */
-            justify-content: space-between;
-            align-items: flex-end;
-            padding: 0 20px;
+        /* ===== メッセージパネル（ストーリー会話・バトル/ステータス効果説明） =====
+           常に同じ高さを確保し、表示・非表示は visibility/opacity で切り替える。
+           これにより、画面全体の縦寸法が状態間で変わらない。 */
+        .game-message-panel {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            width: calc(100% - 24px);
+            margin: 8px 12px 0;
+            height: 220px;
+            box-sizing: border-box;
+            background: transparent;
+            border: 2px solid transparent;
+            border-radius: 10px;
+            box-shadow: none;
+            cursor: default;
+            transition: box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+            overflow: hidden;
+            flex-shrink: 0;
+            visibility: hidden;
+            opacity: 0;
             pointer-events: none;
-            z-index: 10000;
-            opacity: 0.75; /* 半透明でマップが見やすく */
+        }
+
+        .game-message-panel.active {
+            background: linear-gradient(180deg, rgba(0, 8, 24, 0.94), rgba(0, 0, 12, 0.96));
+            border-color: #00ffff;
+            box-shadow: 0 0 18px rgba(0, 255, 255, 0.32), inset 0 0 12px rgba(0, 255, 255, 0.08);
+            cursor: pointer;
+            visibility: visible;
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .game-message-panel.active:hover {
+            box-shadow: 0 0 26px rgba(0, 255, 255, 0.55), inset 0 0 14px rgba(0, 255, 255, 0.12);
+        }
+
+        .game-msg-header {
+            padding: 10px 20px 6px;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.18);
+            display: none;
+        }
+
+        .game-msg-header.active {
+            display: block;
+        }
+
+        .game-msg-character {
+            color: #00ffff;
+            font-size: 16px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            text-shadow: 0 0 8px rgba(0, 255, 255, 0.6);
+        }
+
+        .game-msg-body {
+            padding: 12px 20px 6px;
+            color: #e0eef5;
+            font-size: 15px;
+            line-height: 1.75;
+            white-space: pre-wrap;
+            word-break: break-word;
+            min-height: 70px;
+            max-height: 160px;
+            overflow-y: auto;
+        }
+
+        .game-msg-body::-webkit-scrollbar { width: 6px; }
+        .game-msg-body::-webkit-scrollbar-thumb { background: rgba(0, 255, 255, 0.4); border-radius: 3px; }
+
+        .game-msg-typewriter-cursor {
+            display: inline-block;
+            color: #00ffff;
+            animation: gameMsgCursorBlink 0.7s steps(2, end) infinite;
+            margin-left: 2px;
+        }
+
+        .game-msg-typewriter-cursor.hidden { display: none; }
+
+        .game-msg-choices {
+            display: none;
+            flex-direction: column;
+            gap: 6px;
+            padding: 4px 20px 8px;
+        }
+
+        .game-msg-choices.active { display: flex; }
+
+        .game-msg-choice {
+            background: linear-gradient(135deg, rgba(0, 80, 160, 0.85), rgba(0, 40, 100, 0.9));
+            border: 2px solid #00ffff;
+            border-radius: 6px;
+            padding: 8px 14px;
+            color: #e0eef5;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+        }
+
+        .game-msg-choice:hover {
+            border-color: #ffff00;
+            transform: translateX(4px);
+        }
+
+        .game-msg-controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 4px 18px 8px;
+            border-top: 1px solid rgba(0, 255, 255, 0.18);
+        }
+
+        .game-msg-hint {
+            font-size: 11px;
+            color: #6a8a96;
+            letter-spacing: 0.5px;
+        }
+
+        .game-msg-next-indicator {
+            color: #00ffff;
+            font-size: 16px;
+            text-shadow: 0 0 8px rgba(0, 255, 255, 0.7);
+            animation: gameMsgNextPulse 1s ease-in-out infinite;
+        }
+
+        .game-msg-next-indicator.hidden { visibility: hidden; }
+
+        @keyframes gameMsgCursorBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        @keyframes gameMsgNextPulse {
+            0%, 100% { transform: translateY(0); opacity: 0.6; }
+            50% { transform: translateY(3px); opacity: 1; }
+        }
+
+        /* オンスクリーンコントローラー（ゲーム画面の下に常設） */
+        .on-screen-controller {
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            background: linear-gradient(180deg, rgba(15, 22, 38, 0.96), rgba(8, 12, 24, 1));
+            border-top: 2px solid #0f3460;
+            width: 100%;
+            box-sizing: border-box;
+            pointer-events: auto;
+            z-index: 50;
+            flex-shrink: 0;
         }
 
         .dpad-container {
@@ -688,6 +1467,7 @@
             width: 160px;
             height: 160px;
             pointer-events: auto;
+            flex-shrink: 0;
         }
 
         .dpad-button {
@@ -748,9 +1528,11 @@
 
         .action-buttons {
             display: flex;
-            flex-direction: column;
-            gap: 10px;
+            flex-direction: row;
+            gap: 12px;
             pointer-events: auto;
+            align-items: center;
+            flex-shrink: 0;
         }
 
         .action-button {
@@ -801,20 +1583,21 @@
             border-color: #ffff00;
         }
 
-        /* タッチデバイスではさらに不透明度を上げる */
-        @media (hover: none) and (pointer: coarse) {
-            .on-screen-controller {
-                opacity: 0.95;
-            }
+        .action-button.menu {
+            background: rgba(80, 160, 255, 0.95);
+            border-color: #ffffff;
+            color: #000;
+        }
+
+        .action-button.menu:active {
+            background: rgba(140, 200, 255, 1);
+            border-color: #ffff00;
         }
 
         /* スマートフォン向け: ボタンを大きく、操作しやすく */
         @media (max-width: 800px) {
-            /* タッチコントローラーを画面下部に配置（UIオーバーレイは非表示なので） */
             .on-screen-controller {
-                padding: 0 15px;
-                bottom: 15px;
-                opacity: 0.7; /* マップが見やすいように透明度を上げる */
+                padding: 12px 14px;
             }
 
             .dpad-container {
@@ -859,29 +1642,22 @@
                 font-size: 13px;
             }
 
-            /* 戦闘画面のUI調整 */
-            .battle-commands {
-                bottom: 120px; /* コントローラーの上に配置 */
-                left: 5px;
-                width: 180px;
-                padding: 8px;
-                font-size: 12px;
-            }
-
-            .battle-message {
-                height: 60px;
-                padding: 8px;
-                font-size: 12px;
-            }
-
-            .battle-status {
-                display: none; /* 小画面では非表示（battlePartyStatusで代替） */
-            }
-
+            /* 戦闘画面のUI調整（パネル化済みのため、パーティ表示の縮小のみ） */
             #battlePartyStatus {
-                bottom: 120px; /* コントローラーの上に配置 */
-                right: 5px;
+                top: 6px;
+                right: 6px;
                 font-size: 11px;
+                max-width: 200px;
+                gap: 4px;
+            }
+
+            .game-message-panel.battle-mode .game-msg-body {
+                font-size: 13px;
+            }
+
+            .game-message-panel.battle-mode .game-msg-body.battle-cmd-mode .command-item {
+                font-size: 13px;
+                padding: 4px 8px 4px 22px;
             }
 
             /* マップ情報を見やすく最適化 */
@@ -903,9 +1679,9 @@
 
             /* メニュー系のレスポンシブ対応 */
             .menu-container {
-                min-width: 300px;
-                max-width: 90vw;
-                padding: 20px;
+                width: min(420px, 92%);
+                max-width: 92%;
+                padding: 18px;
             }
 
             .menu-title {
@@ -913,10 +1689,9 @@
             }
 
             #kamuiSkillMenu {
-                min-width: auto !important;
-                width: 90vw !important;
-                max-width: 500px !important;
-                padding: 15px !important;
+                width: min(420px, 92%) !important;
+                max-width: 92% !important;
+                padding: 14px !important;
             }
 
             .kamui-skill-list {
@@ -944,11 +1719,8 @@
 
         /* さらに小さい画面用（iPhone SE など） */
         @media (max-width: 400px) {
-            /* タッチコントローラーの位置調整 */
             .on-screen-controller {
-                padding: 0 10px;
-                bottom: 12px;
-                opacity: 0.65; /* さらに透明に */
+                padding: 10px 8px;
             }
 
             .dpad-container {
@@ -993,29 +1765,25 @@
                 gap: 8px;
             }
 
-            /* 戦闘画面のUI調整（小画面） */
-            .battle-commands {
-                bottom: 105px; /* コントローラーの上に配置 */
-                left: 3px;
-                width: 160px;
-                padding: 6px;
-                font-size: 11px;
-            }
-
+            /* 戦闘画面のUI調整（小画面・パネル化済み） */
             .command-item {
-                padding: 6px;
-            }
-
-            .battle-message {
-                height: 50px;
-                padding: 6px;
-                font-size: 11px;
+                padding: 4px 6px 4px 20px;
             }
 
             #battlePartyStatus {
-                bottom: 105px; /* コントローラーの上に配置 */
-                right: 3px;
+                top: 4px;
+                right: 4px;
                 font-size: 10px;
+                max-width: 180px;
+                gap: 3px;
+            }
+
+            .game-message-panel.battle-mode .game-msg-body {
+                font-size: 12px;
+            }
+
+            .game-message-panel.battle-mode .game-msg-body.battle-cmd-mode .command-item {
+                font-size: 12px;
             }
 
             .enemy-sprite {
@@ -1045,9 +1813,9 @@
 
             /* メニュー系のレスポンシブ対応（小画面） */
             .menu-container {
-                min-width: 280px;
-                max-width: 95vw;
-                padding: 15px;
+                width: min(360px, 94%);
+                max-width: 94%;
+                padding: 14px;
             }
 
             .menu-title {
@@ -1059,8 +1827,8 @@
             }
 
             #kamuiSkillMenu {
-                width: 95vw !important;
-                max-width: 350px !important;
+                width: min(360px, 94%) !important;
+                max-width: 94% !important;
                 padding: 10px !important;
             }
 
@@ -1085,8 +1853,9 @@
 <body>
     <a href="../" class="back-button">← ポートフォリオに戻る</a>
     <div class="game-container">
-        <canvas id="gameCanvas" width="800" height="600"></canvas>
-        
+        <div class="game-viewport">
+        <canvas id="gameCanvas" width="800" height="450" draggable="false" oncontextmenu="return false;" ondragstart="return false;" onselectstart="return false;"></canvas>
+
         <div class="title-screen" id="titleScreen">
             <h1>デウス・コード</h1>
             <h2>八百万の神託</h2>
@@ -1094,18 +1863,8 @@
             <button class="start-button" onclick="startOpening()">ゲーム開始</button>
         </div>
 
-        <!-- Opening Story Screen -->
-        <div class="title-screen" id="openingScreen" style="display: none;">
-            <div style="max-width: 800px; width: 90%; background: rgba(0, 0, 0, 0.7); border-radius: 10px; border: 2px solid #00ffff; display: flex; flex-direction: column; height: 500px;">
-                <div style="flex: 1; padding: 40px; padding-bottom: 20px; overflow-y: auto; text-align: left; line-height: 1.8;">
-                    <div id="openingText" style="font-size: 16px; color: #ddd;"></div>
-                </div>
-                <div style="padding: 20px 40px; border-top: 1px solid rgba(0, 255, 255, 0.2); text-align: center; flex-shrink: 0;">
-                    <button class="start-button" onclick="nextOpeningMessage()" id="openingButton">次へ →</button>
-                    <div style="margin-top: 15px; font-size: 12px; color: #888;">[ Z / Space / Enter キーでも進めます ]</div>
-                </div>
-            </div>
-        </div>
+        <!-- Opening Story Screen (背景画像のみ。本文は #gameMessagePanel に表示) -->
+        <div class="title-screen" id="openingScreen" style="display: none;"></div>
 
         <div class="map-info" id="mapInfo" style="display: none;">
             <strong id="mapName">新宿 - 中央区画</strong>
@@ -1144,20 +1903,20 @@
                 <div class="menu-title">メニュー</div>
 
                 <!-- パーティメンバータブ -->
-                <div class="party-tabs" id="partyTabs" style="display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap;">
+                <div class="party-tabs" id="partyTabs" style="display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; flex-shrink: 0;">
                     <!-- JavaScriptで動的生成 -->
                 </div>
 
-                <div class="menu-content-wrapper" style="display: flex; gap: 20px;">
+                <div class="menu-content-wrapper" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 8px;">
                     <!-- キャラクター立ち絵 -->
                     <div class="character-portrait" style="flex-shrink: 0;">
                         <img id="menuCharacterPortrait" src="assets/characters/kaito_portrait.png"
                              alt="カイト"
-                             style="width: 120px; height: 240px; object-fit: contain; border: 2px solid #0f3460; border-radius: 8px; background: rgba(0,0,0,0.3);"
+                             style="width: 90px; height: 150px; max-width: 100%; object-fit: contain; border: 2px solid #0f3460; border-radius: 8px; background: rgba(0,0,0,0.3);"
                              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                        <div id="menuCharacterEmoji" style="display: none; width: 120px; height: 240px; background: rgba(0,0,0,0.3); border: 2px solid #0f3460; border-radius: 8px; align-items: center; justify-content: center; font-size: 64px;">🧑‍💼</div>
+                        <div id="menuCharacterEmoji" style="display: none; width: 90px; height: 150px; max-width: 100%; background: rgba(0,0,0,0.3); border: 2px solid #0f3460; border-radius: 8px; align-items: center; justify-content: center; font-size: 56px;">🧑‍💼</div>
                     </div>
-                    <div style="flex: 1;">
+                    <div style="flex: 1; min-width: 180px;">
                         <div class="menu-stats">
                             <div class="menu-stat-row">
                                 <span>名前:</span>
@@ -1221,14 +1980,14 @@
         
         <!-- Equipment Menu -->
         <div class="menu-overlay" id="equipmentMenuOverlay">
-            <div class="menu-container" style="max-width: 600px;">
+            <div class="menu-container" style="width: min(560px, 92%);">
                 <div class="menu-title">
                     <span id="equipmentCharacterName">カイト</span> の装備
                 </div>
 
                 <!-- 現在の装備 -->
-                <div style="margin-bottom: 20px;">
-                    <div style="font-size: 18px; color: #ffff00; margin-bottom: 10px;">▼ 装備中</div>
+                <div style="margin-bottom: 8px;">
+                    <div style="font-size: 14px; color: #ffff00; margin-bottom: 4px;">▼ 装備中</div>
                     <div class="menu-stats">
                         <div class="menu-stat-row">
                             <span>🗡️ 武器:</span>
@@ -1254,9 +2013,9 @@
                 </div>
                 
                 <!-- 所持装備リスト -->
-                <div>
-                    <div style="font-size: 18px; color: #ffff00; margin-bottom: 10px;">▼ 所持装備</div>
-                    <div class="item-list" id="equipmentList" style="max-height: 250px;">
+                <div style="min-height: 0;">
+                    <div style="font-size: 14px; color: #ffff00; margin-bottom: 4px;">▼ 所持装備</div>
+                    <div class="item-list" id="equipmentList" style="max-height: 180px;">
                         <div class="empty-inventory">装備を持っていません</div>
                     </div>
                 </div>
@@ -1267,11 +2026,11 @@
 
         <!-- Kamui Menu (Field) -->
         <div class="menu-overlay" id="kamuiMenuOverlay">
-            <div class="menu-container" style="max-width: 700px;">
+            <div class="menu-container" style="width: min(620px, 92%);">
                 <div class="menu-title">
                     <span id="kamuiCharacterName">カイト</span> の神威スキル
                 </div>
-                <div id="kamuiSkillGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin: 20px 0;">
+                <div id="kamuiSkillGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 8px 0; max-height: 280px; overflow-y: auto;">
                     <!-- JavaScriptで動的生成 -->
                 </div>
                 <div class="menu-close">↑↓←→で選択 / ENTERで使用 / ESCで戻る</div>
@@ -1279,6 +2038,8 @@
         </div>
 
         <!-- Battle Screen (サイバーパンク × ドラクエ風) -->
+        <!-- バトル中の操作UI（コマンド・メッセージ）は #gameMessagePanel に統合済み。
+             この領域では敵スプライトとパーティHP/MPのみを描画する。 -->
         <div class="battle-screen" id="battleScreen">
             <div class="battle-background">
                 <div class="battle-grid"></div>
@@ -1292,10 +2053,13 @@
                     </div>
                 </div>
             </div>
-            <div class="battle-ui">
-                <div class="battle-message" id="battleMessage">
-                    デウス・マキナが あらわれた！
-                </div>
+            <!-- パーティメンバーステータス（キャンバス右上にコンパクト表示） -->
+            <div id="battlePartyStatus">
+                <!-- JavaScriptで動的生成 -->
+            </div>
+            <!-- 旧UI要素：他コードからの参照互換のため残置（CSSで非表示） -->
+            <div class="battle-ui" aria-hidden="true">
+                <div class="battle-message" id="battleMessage"></div>
                 <div class="battle-commands" id="battleCommands">
                     <div class="command-item selected" data-command="attack">こうげき</div>
                     <div class="command-item" data-command="kamui">カムイ</div>
@@ -1303,15 +2067,11 @@
                     <div class="command-item" data-command="item">どうぐ</div>
                     <div class="command-item" data-command="escape">にげる</div>
                 </div>
-                <!-- パーティメンバーステータス -->
-                <div id="battlePartyStatus" style="position: absolute; bottom: 10px; right: 10px; display: flex; flex-direction: column; gap: 8px;">
-                    <!-- JavaScriptで動的生成 -->
-                </div>
             </div>
         </div>
 
         <!-- Kamui Skill Selection Menu -->
-        <div id="kamuiSkillMenu" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10000; background: rgba(0, 0, 0, 0.95); border: 3px solid #00ffff; border-radius: 10px; padding: 20px; min-width: 600px; box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);">
+        <div id="kamuiSkillMenu" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10000; background: rgba(0, 0, 0, 0.95); border: 3px solid #00ffff; border-radius: 10px; padding: 16px; width: min(560px, 92%); max-width: 92%; max-height: 92%; overflow-y: auto; box-sizing: border-box; box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);">
             <div style="text-align: center; font-size: 24px; color: #00ffff; margin-bottom: 20px; text-shadow: 0 0 10px #00ffff;">
                 ⚡ 神威スキル ⚡
             </div>
@@ -1326,52 +2086,67 @@
         <div class="controls">
             <div><strong>操作方法:</strong></div>
             <div>↑↓←→: 移動</div>
-            <div>SPACE: アクション</div>  
+            <div>SPACE: アクション</div>
             <div>Z: 神威発動</div>
             <div>X: メニュー</div>
             <div>S: セーブ（セーブポイント）</div>
         </div>
-    </div>
+        </div><!-- /.game-viewport -->
 
-    <!-- オンスクリーンコントローラー（モバイル用） -->
-    <div class="on-screen-controller" id="onScreenController">
-        <!-- 方向パッド -->
-        <div class="dpad-container">
-            <div class="dpad-button dpad-up" data-key="ArrowUp">↑</div>
-            <div class="dpad-button dpad-down" data-key="ArrowDown">↓</div>
-            <div class="dpad-button dpad-left" data-key="ArrowLeft">←</div>
-            <div class="dpad-button dpad-right" data-key="ArrowRight">→</div>
-            <div class="dpad-center"></div>
+        <!-- メッセージ表示パネル（ストーリー会話・バトルメッセージ・効果説明等） -->
+        <div class="game-message-panel" id="gameMessagePanel" aria-hidden="true">
+            <div class="game-msg-header">
+                <span class="game-msg-character" id="gameMessageCharacter"></span>
+            </div>
+            <div class="game-msg-body" id="gameMessageBody"></div>
+            <div class="game-msg-choices" id="gameMessageChoices"></div>
+            <div class="game-msg-controls">
+                <span class="game-msg-hint" id="gameMessageHint">クリック / Z / Space / Enter で進む</span>
+                <span class="game-msg-next-indicator hidden" id="gameMessageNextIndicator">▼</span>
+            </div>
         </div>
 
-        <!-- アクションボタン -->
-        <div class="action-buttons">
-            <div class="action-button primary" data-key=" ">
-                <div style="text-align: center; font-size: 12px;">
-                    <div>話す</div>
-                </div>
+        <!-- オンスクリーンコントローラー（ゲーム画面の下に常設） -->
+        <div class="on-screen-controller" id="onScreenController">
+            <!-- 方向パッド -->
+            <div class="dpad-container">
+                <div class="dpad-button dpad-up" data-key="ArrowUp">↑</div>
+                <div class="dpad-button dpad-down" data-key="ArrowDown">↓</div>
+                <div class="dpad-button dpad-left" data-key="ArrowLeft">←</div>
+                <div class="dpad-button dpad-right" data-key="ArrowRight">→</div>
+                <div class="dpad-center"></div>
             </div>
-            <div class="action-button primary" data-key="z">
-                <div style="text-align: center; font-size: 12px;">
-                    <div>決定</div>
-                    <div style="font-size: 10px;">Z</div>
+
+            <!-- アクションボタン -->
+            <div class="action-buttons">
+                <div class="action-button menu" data-key="m">
+                    <div style="text-align: center; font-size: 12px;">
+                        <div>メニュー</div>
+                        <div style="font-size: 10px;">M</div>
+                    </div>
                 </div>
-            </div>
-            <div class="action-button secondary" data-key="x">
-                <div style="text-align: center; font-size: 12px;">
-                    <div>戻る</div>
-                    <div style="font-size: 10px;">X</div>
+                <div class="action-button primary" data-key="z">
+                    <div style="text-align: center; font-size: 12px;">
+                        <div>決定</div>
+                        <div style="font-size: 10px;">Z/Space/Enter</div>
+                    </div>
+                </div>
+                <div class="action-button secondary" data-key="x">
+                    <div style="text-align: center; font-size: 12px;">
+                        <div>戻る</div>
+                        <div style="font-size: 10px;">X</div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    </div><!-- /.game-container -->
 
     <!-- 外部スクリプト読み込み -->
     <script src="item-system.js"></script>
     <script src="equipment-system.js"></script>
     <script src="magic-system.js"></script>
     <script src="battle-system.js"></script>
-    <script src="map-system.js"></script>
+    <script src="map-system.js?v=19"></script>
     <script src="map-system-grid.js"></script>
     <script src="player-grid-movement.js"></script>
     <script src="bgm-system.js"></script>
@@ -1381,6 +2156,138 @@
     <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+
+        // ========================================================
+        // ゲーム画面内のテキスト選択・ドラッグ・右クリック・画像保存を全面抑止
+        // （プレイ中の誤動作・誤コピー・画像保存ダイアログの防止）
+        // ========================================================
+        (() => {
+            const gameContainer = document.querySelector('.game-container');
+            if (!gameContainer) return;
+
+            const block = (e) => { e.preventDefault(); return false; };
+
+            // ゲーム枠全体: 選択開始 / ドラッグ / 右クリック を抑止
+            gameContainer.addEventListener('selectstart', block);
+            gameContainer.addEventListener('dragstart', block);
+            gameContainer.addEventListener('contextmenu', block);
+
+            // canvas は特に画像として扱われやすいので個別に強化
+            const canvasEl = canvas;
+            canvasEl.setAttribute('draggable', 'false');
+            ['dragstart', 'drag', 'dragend', 'selectstart', 'contextmenu'].forEach(evt => {
+                canvasEl.addEventListener(evt, block, { passive: false });
+            });
+
+            // モバイル: 長押しによる「画像を保存」「コピー」コンテキストを潰す
+            ['touchstart', 'touchend'].forEach(evt => {
+                canvasEl.addEventListener(evt, (e) => {
+                    if (window.getSelection) window.getSelection()?.removeAllRanges?.();
+                }, { passive: true });
+            });
+
+            // クリック時は既存の選択範囲もクリア
+            canvasEl.addEventListener('mousedown', () => {
+                if (window.getSelection) window.getSelection()?.removeAllRanges?.();
+            });
+
+            // すべての img タグ（NPCポートレート等）も draggable=false に
+            document.querySelectorAll('.game-container img').forEach(img => {
+                img.setAttribute('draggable', 'false');
+                img.addEventListener('dragstart', block);
+            });
+        })();
+
+        // ========================================================
+        // ゲーム共通メッセージパネル API
+        // メイン画面（canvas）と分離した枠で、セリフ・効果説明・バトル
+        // メッセージなどを表示するための統一インターフェース。
+        // - GameMessagePanel.showDescription(html, character)
+        //     : 受動的な説明表示（マウス操作不可・▼非表示）
+        // - GameMessagePanel.hide()
+        //     : パネルを非表示にする
+        // ストーリーイベント（StoryEventSystem）はこのパネルを直接
+        // 制御するので、説明系と排他になる点に注意。
+        // ========================================================
+        window.GameMessagePanel = (() => {
+            const panel = document.getElementById('gameMessagePanel');
+            const header = panel ? panel.querySelector('.game-msg-header') : null;
+            const character = document.getElementById('gameMessageCharacter');
+            const body = document.getElementById('gameMessageBody');
+            const choices = document.getElementById('gameMessageChoices');
+            const indicator = document.getElementById('gameMessageNextIndicator');
+            const hint = document.getElementById('gameMessageHint');
+            const controls = panel ? panel.querySelector('.game-msg-controls') : null;
+            let descriptionMode = false;
+
+            function showDescription(html, characterLabel) {
+                if (!panel) return;
+                // ストーリーイベント中は触らない（イベントが優先）
+                if (window.storyEventSystem && window.storyEventSystem.isEventPlaying) return;
+                descriptionMode = true;
+                if (characterLabel) {
+                    character.textContent = characterLabel;
+                    header.classList.add('active');
+                } else {
+                    character.textContent = '';
+                    header.classList.remove('active');
+                }
+                body.innerHTML = html || '';
+                if (choices) {
+                    choices.classList.remove('active');
+                    choices.innerHTML = '';
+                }
+                if (indicator) indicator.classList.remove('hidden');
+                if (hint) hint.textContent = 'クリック / Z / Space / Enter で閉じる';
+                if (controls) controls.style.display = 'flex';
+                panel.classList.add('active');
+                panel.setAttribute('aria-hidden', 'false');
+                panel.style.cursor = 'pointer';
+            }
+
+            function hide() {
+                if (!panel) return;
+                if (window.storyEventSystem && window.storyEventSystem.isEventPlaying) return;
+                descriptionMode = false;
+                panel.classList.remove('active');
+                panel.setAttribute('aria-hidden', 'true');
+                if (header) header.classList.remove('active');
+                if (body) body.innerHTML = '';
+                if (character) character.textContent = '';
+                if (hint) hint.textContent = 'クリック / Z / Space / Enter で進む';
+                panel.style.cursor = 'pointer';
+            }
+
+            function isDescriptionMode() {
+                return descriptionMode;
+            }
+
+            // 説明モード中のクリックで閉じる（ストーリーイベントとは排他）
+            // story-events.js も同じパネルに click ハンドラを付けるが、向こうは
+            // currentEvent が無いと no-op になるので二重処理にはならない。
+            if (panel) {
+                panel.addEventListener('click', (e) => {
+                    // 選択肢クリックは別処理
+                    if (e.target && e.target.classList && e.target.classList.contains('game-msg-choice')) return;
+                    // バトル中はパネルをクリックしても説明閉じ動作はしない
+                    // （コマンドアイテム自身の onclick はバブルアップしてここに来るが、no-op で OK）
+                    if (panel.classList.contains('battle-mode')) return;
+                    // オープニング中は nextOpeningMessage に流す（最優先）
+                    if (window.openingTypewriterActive && typeof window.nextOpeningMessage === 'function') {
+                        window.nextOpeningMessage();
+                        return;
+                    }
+                    // ストーリーイベント中は story-events.js 側に任せる
+                    if (window.storyEventSystem && window.storyEventSystem.isEventPlaying) return;
+                    // 説明モード中のクリックでメッセージを閉じる
+                    if (descriptionMode && typeof window.clearMessage === 'function') {
+                        window.clearMessage();
+                    }
+                });
+            }
+
+            return { showDescription, hide, isDescriptionMode };
+        })();
 
         // デバッグ用: URLパラメータで自動開始（一時的に無効化）
         /*
@@ -1433,15 +2340,19 @@
             magic: 10,
             speed: 8,
             facing: 'down',
-            stepCount: 0
+            stepCount: 0,
+            isMoving: false
         };
 
         // グローバルプレイヤー参照
         window.player = player;
 
-        // プレイヤースプライト画像の読み込み
+        // プレイヤー歩行スプライト画像の読み込み
+        const PLAYER_SPRITE_FRAME_WIDTH = 72;
+        const PLAYER_SPRITE_FRAME_HEIGHT = 92;
+        const PLAYER_SPRITE_ROWS = { down: 0, left: 1, right: 2, up: 3 };
         const playerSprite = new Image();
-        playerSprite.src = 'assets/characters/kaito_field.png';
+        playerSprite.src = 'assets/characters/sprites/kaito_walk.png';
         let playerSpriteLoaded = false;
         playerSprite.onload = () => {
             playerSpriteLoaded = true;
@@ -1505,10 +2416,15 @@
                 return;
             }
 
-            // セリフ（メッセージ）が表示されている場合、決定キーのみ受け付ける
+            // セリフ（メッセージ）が表示されている場合、決定 / キャンセルキーで閉じる
             // （メニューが開いていない場合のみ適用）
             if (isMessageShown) {
-                if (e.key === 'Enter' || e.key === ' ') {
+                // 決定（Z/Space/Enter）でも、キャンセル（X/Escape）でも閉じる。
+                // どちらかを受け付けないと「ボタンが効かない」状態に見える。
+                if (e.key === 'Enter' || e.key === ' ' ||
+                    e.key === 'z' || e.key === 'Z' ||
+                    e.key === 'x' || e.key === 'X' ||
+                    e.key === 'Escape') {
                     clearMessage();
                 }
                 e.preventDefault();
@@ -1541,6 +2457,47 @@
         document.addEventListener('keyup', (e) => {
             keys[e.key] = false;
         });
+
+        // ===== 入力スタック対策（防御的クリーンアップ） =====
+        // タブ切替・ウインドウ非表示・blur で「キーが押しっぱなし」状態が
+        // 残ると D-pad が反応しないように見えるので、その都度全部リセット。
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                Object.keys(keys).forEach(k => { keys[k] = false; });
+            }
+        });
+        window.addEventListener('blur', () => {
+            Object.keys(keys).forEach(k => { keys[k] = false; });
+        });
+
+        // 緊急脱出用：全オーバーレイを強制的に閉じてメッセージ・戦闘UIフラグを解除する。
+        // 自動で呼ばれることはなく、コンソール / デバッグ用の安全弁として公開しておく。
+        window.forceCloseAllMenus = function forceCloseAllMenus() {
+            try {
+                document.querySelectorAll('.menu-overlay').forEach(el => {
+                    el.classList.remove('active');
+                });
+                const kamuiSkillMenu = document.getElementById('kamuiSkillMenu');
+                if (kamuiSkillMenu) kamuiSkillMenu.style.display = 'none';
+                if (window.battleSystem) {
+                    window.battleSystem.kamuiSkillMenuActive = false;
+                    window.battleSystem.kamuiPlanning = false;
+                    window.battleSystem.kamuiPlanningMember = null;
+                    window.battleSystem.kamuiSkillExecuting = false;
+                    window.battleSystem.executingTurn = false;
+                }
+                if (window.gameShop && window.gameShop.isShopOpen && typeof window.gameShop.closeShop === 'function') {
+                    try { window.gameShop.closeShop(); } catch (_) {}
+                }
+                if (typeof window.clearMessage === 'function') {
+                    window.clearMessage();
+                }
+                Object.keys(keys).forEach(k => { keys[k] = false; });
+                console.log('[forceCloseAllMenus] all overlays closed, keys cleared');
+            } catch (err) {
+                console.error('[forceCloseAllMenus] error:', err);
+            }
+        };
 
         // オンスクリーンコントローラーのタッチ操作
         let touchControlsInitialized = false;
@@ -1702,11 +2659,73 @@
                 emoji: "🔥"
             }
         ];
+        const openingVisuals = [
+            'assets/opening/opening-01.png',
+            'assets/opening/opening-02.png',
+            'assets/opening/opening-03.png',
+            'assets/opening/opening-04.png',
+            'assets/opening/opening-05.png',
+            'assets/opening/opening-06.png',
+            'assets/opening/opening-07.png',
+            'assets/opening/opening-08.png',
+            'assets/opening/opening-09.png'
+        ];
         let currentOpeningIndex = 0;
 
         // オープニングメッセージ用のキーハンドラー
         let openingKeyHandler = null;
         let openingStarted = false;  // 重複実行防止フラグ
+
+        // タイプライター制御
+        let openingTypewriterTimer = null;
+        let openingTypewriterFullText = '';
+        let openingTypewriterIndex = 0;
+        let openingTypewriterDone = false;
+        const OPENING_TYPE_INTERVAL_MS = 45;
+
+        // ページ分割: メッセージ本文を「メッセージボックスに収まる量」ごとに分割する
+        // 1ページあたりの最大段落数。長すぎるメッセージは複数ページに自動分割される
+        const OPENING_MAX_PARAGRAPHS_PER_PAGE = 2;
+        // 1ページあたりの目安最大文字数（段落で区切れない長文の安全弁）
+        const OPENING_MAX_CHARS_PER_PAGE = 110;
+        let currentOpeningPages = [];
+        let currentOpeningPageIndex = 0;
+
+        function paginateOpeningBody(text) {
+            const trimmed = (text || '').trim();
+            if (!trimmed) return [''];
+
+            const paragraphs = trimmed.split(/\n\s*\n/).map(p => p.trim()).filter(p => p.length > 0);
+            if (paragraphs.length === 0) return [trimmed];
+
+            const pages = [];
+            let buffer = [];
+            let bufferChars = 0;
+
+            const flush = () => {
+                if (buffer.length > 0) {
+                    pages.push(buffer.join('\n\n'));
+                    buffer = [];
+                    bufferChars = 0;
+                }
+            };
+
+            paragraphs.forEach(paragraph => {
+                const paraLen = paragraph.length;
+                const wouldExceedParaCount = buffer.length >= OPENING_MAX_PARAGRAPHS_PER_PAGE;
+                const wouldExceedCharCount = bufferChars + paraLen > OPENING_MAX_CHARS_PER_PAGE && buffer.length > 0;
+
+                if (wouldExceedParaCount || wouldExceedCharCount) {
+                    flush();
+                }
+
+                buffer.push(paragraph);
+                bufferChars += paraLen;
+            });
+            flush();
+
+            return pages.length > 0 ? pages : [trimmed];
+        }
 
         function startOpening() {
             // 重複実行を防止
@@ -1717,7 +2736,15 @@
             openingStarted = true;
 
             document.getElementById('titleScreen').style.display = 'none';
+            document.querySelector('.game-container').classList.add('opening-mode');
             document.getElementById('openingScreen').style.display = 'flex';
+            // オープニングは GameMessagePanel に本文を流し込む（panel は viewport の外に常設）
+            window.openingTypewriterActive = true;
+            const panel = document.getElementById('gameMessagePanel');
+            if (panel) {
+                panel.classList.add('active');
+                panel.setAttribute('aria-hidden', 'false');
+            }
             currentOpeningIndex = 0;
             showOpeningMessage();
 
@@ -1744,46 +2771,124 @@
             console.log('[Opening] Keyboard controls enabled (Z/Space/Enter to continue)');
         }
 
+        function escapeOpeningText(text) {
+            return text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        }
+
+        function renderOpeningTypewriter(partialText, showCursor) {
+            const body = document.getElementById('gameMessageBody');
+            if (!body) return;
+            const html = escapeOpeningText(partialText).replace(/\n/g, '<br>');
+            const cursorHtml = showCursor
+                ? '<span class="game-msg-typewriter-cursor">▌</span>'
+                : '';
+            body.innerHTML = html + cursorHtml;
+            body.scrollTop = body.scrollHeight;
+        }
+
+        function setOpeningNextIndicator(show) {
+            const ind = document.getElementById('gameMessageNextIndicator');
+            if (!ind) return;
+            ind.classList.toggle('hidden', !show);
+        }
+
+        function finishOpeningTypewriter() {
+            if (openingTypewriterTimer) {
+                clearInterval(openingTypewriterTimer);
+                openingTypewriterTimer = null;
+            }
+            openingTypewriterIndex = openingTypewriterFullText.length;
+            renderOpeningTypewriter(openingTypewriterFullText, false);
+            openingTypewriterDone = true;
+            setOpeningNextIndicator(true);
+        }
+
+        function startOpeningTypewriter(text) {
+            if (openingTypewriterTimer) {
+                clearInterval(openingTypewriterTimer);
+                openingTypewriterTimer = null;
+            }
+            openingTypewriterFullText = text || '';
+            openingTypewriterIndex = 0;
+            openingTypewriterDone = false;
+
+            renderOpeningTypewriter('', true);
+            setOpeningNextIndicator(false);
+
+            openingTypewriterTimer = setInterval(() => {
+                openingTypewriterIndex++;
+                if (openingTypewriterIndex >= openingTypewriterFullText.length) {
+                    finishOpeningTypewriter();
+                    return;
+                }
+                renderOpeningTypewriter(
+                    openingTypewriterFullText.substring(0, openingTypewriterIndex),
+                    true
+                );
+            }, OPENING_TYPE_INTERVAL_MS);
+        }
+
         function showOpeningMessage() {
-            const textElement = document.getElementById('openingText');
-            const buttonElement = document.getElementById('openingButton');
+            const openingScreen = document.getElementById('openingScreen');
+            const headerEl = document.querySelector('#gameMessagePanel .game-msg-header');
+            const characterEl = document.getElementById('gameMessageCharacter');
+            const bodyEl = document.getElementById('gameMessageBody');
+            const hintEl = document.getElementById('gameMessageHint');
 
             if (currentOpeningIndex < openingMessages.length) {
                 const message = openingMessages[currentOpeningIndex];
+                const visual = openingVisuals[currentOpeningIndex];
 
-                // 新しいフォーマットでメッセージを構築
-                let htmlContent = '';
-
-                // 絵文字（大きく表示）
-                if (message.emoji) {
-                    htmlContent += `<div style="text-align: center; font-size: 80px; margin-bottom: 20px;">${message.emoji}</div>`;
+                if (openingScreen && visual) {
+                    openingScreen.style.backgroundImage = `linear-gradient(180deg, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.18)), url('${visual}')`;
                 }
 
-                // タイトル
-                if (message.title) {
-                    htmlContent += `<h2 style="color: #00ffff; text-align: center; font-size: 24px; margin-bottom: 10px; text-shadow: 0 0 10px rgba(0, 255, 255, 0.8);">${message.title}</h2>`;
+                // ヘッダにタイトル/サブタイトルを表示
+                const titleText = message.title ? escapeOpeningText(message.title) : '';
+                const subtitleText = message.subtitle ? escapeOpeningText(message.subtitle) : '';
+                const emojiHtml = message.emoji && !visual
+                    ? `<span style="margin-right: 8px; font-size: 22px; vertical-align: middle;">${message.emoji}</span>`
+                    : '';
+                if (characterEl) {
+                    let headerHtml = '';
+                    if (titleText) headerHtml += `${emojiHtml}${titleText}`;
+                    if (subtitleText) headerHtml += `<span style="font-size: 12px; color: #88aab8; margin-left: 12px; font-weight: normal; letter-spacing: 0;">${subtitleText}</span>`;
+                    characterEl.innerHTML = headerHtml;
                 }
+                if (headerEl) headerEl.classList.add('active');
+                if (bodyEl) bodyEl.innerHTML = '';
+                if (hintEl) hintEl.textContent = 'クリック / Z / Space / Enter で進む';
 
-                // サブタイトル
-                if (message.subtitle) {
-                    htmlContent += `<p style="color: #aaa; text-align: center; font-size: 14px; margin-bottom: 20px;">${message.subtitle}</p>`;
-                }
-
-                // 本文テキスト（改行を<br>に変換）
-                htmlContent += `<div style="text-align: center; line-height: 2; margin-top: 20px;">${message.text.replace(/\n/g, '<br>')}</div>`;
-
-                textElement.innerHTML = htmlContent;
-
-                // 最後のメッセージの場合、ボタンテキストを変更
-                if (currentOpeningIndex === openingMessages.length - 1) {
-                    buttonElement.textContent = '物語を始める →';
-                } else {
-                    buttonElement.textContent = '次へ →';
-                }
+                // 本文をページ分割し、最初のページから表示開始
+                currentOpeningPages = paginateOpeningBody(message.text || '');
+                currentOpeningPageIndex = 0;
+                showOpeningPage();
             }
         }
 
+        function showOpeningPage() {
+            const pageText = currentOpeningPages[currentOpeningPageIndex] || '';
+            startOpeningTypewriter(pageText);
+        }
+
         function nextOpeningMessage() {
+            // タイプライター実行中なら現ページの最後まで一気に表示
+            if (openingTypewriterTimer && !openingTypewriterDone) {
+                finishOpeningTypewriter();
+                return;
+            }
+
+            // 現メッセージにまだ未表示ページがあれば次ページへ
+            if (currentOpeningPageIndex + 1 < currentOpeningPages.length) {
+                currentOpeningPageIndex++;
+                showOpeningPage();
+                return;
+            }
+
+            // 全ページ表示済み → 次のメッセージへ
             currentOpeningIndex++;
 
             if (currentOpeningIndex < openingMessages.length) {
@@ -1793,6 +2898,8 @@
                 startGame();
             }
         }
+        // GameMessagePanel のクリックから呼べるように明示的にエクスポート
+        window.nextOpeningMessage = nextOpeningMessage;
 
         function startGame() {
             console.log('[DEBUG] startGame() called');
@@ -1810,10 +2917,31 @@
                 console.log('[Opening] Keyboard controls disabled');
             }
 
+            // タイプライタータイマーを停止
+            if (openingTypewriterTimer) {
+                clearInterval(openingTypewriterTimer);
+                openingTypewriterTimer = null;
+            }
+
             document.getElementById('titleScreen').style.display = 'none';
+            document.querySelector('.game-container').classList.remove('opening-mode');
             document.getElementById('openingScreen').style.display = 'none';
             document.getElementById('gameUI').style.display = 'block';
             document.getElementById('mapInfo').style.display = 'block';
+
+            // オープニング用にメッセージパネルを開いていた場合は閉じる
+            window.openingTypewriterActive = false;
+            const openingPanelEl = document.getElementById('gameMessagePanel');
+            if (openingPanelEl) {
+                openingPanelEl.classList.remove('active');
+                openingPanelEl.setAttribute('aria-hidden', 'true');
+                const headerEl = openingPanelEl.querySelector('.game-msg-header');
+                if (headerEl) headerEl.classList.remove('active');
+                const bodyEl = document.getElementById('gameMessageBody');
+                if (bodyEl) bodyEl.innerHTML = '';
+                const characterEl = document.getElementById('gameMessageCharacter');
+                if (characterEl) characterEl.textContent = '';
+            }
 
             console.log('[DEBUG] Initializing systems...');
 
@@ -1841,6 +2969,7 @@
 
             try {
                 battleSystem = new BattleSystem();
+                window.battleSystem = battleSystem;
                 console.log('[DEBUG] ✓ BattleSystem initialized');
             } catch (e) {
                 console.error('[ERROR] BattleSystem failed:', e);
@@ -1848,6 +2977,13 @@
 
             try {
                 mapSystem = new MapSystem();
+                const initialSpawn = mapSystem.getSpawnPoint({
+                    to: mapSystem.currentMap,
+                    spawnX: 400,
+                    spawnY: 380
+                }, canvas);
+                player.x = initialSpawn.x;
+                player.y = initialSpawn.y;
                 console.log('[DEBUG] ✓ MapSystem initialized (legacy)');
             } catch (e) {
                 console.error('[ERROR] MapSystem failed:', e);
@@ -1923,6 +3059,7 @@
             window.partySystem = partySystem;
             window.storyEventSystem = storyEventSystem;
             window.storyFlags = storyFlags;
+            setupMenuClickHandlers();
 
             // デバッグ用: 初期魔法を習得（プレイヤーオブジェクトを渡す）
             // 注: この行は削除（上でplayerに習得済み）
@@ -1971,100 +3108,120 @@
         }
 
         function drawPlayer() {
-            const playerSize = 32;
+            const playerScreen = mapSystem && mapSystem.worldToScreenPoint
+                ? mapSystem.worldToScreenPoint(player.x, player.y)
+                : { x: player.x, y: player.y };
+            const playerDrawX = playerScreen.x;
+            const playerDrawY = playerScreen.y;
+
+            // 影（より濃く・大きく）
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+            ctx.beginPath();
+            ctx.ellipse(playerDrawX, playerDrawY + 4, 18, 7, 0, 0, Math.PI * 2);
+            ctx.fill();
 
             if (playerSpriteLoaded) {
-                // 画像でプレイヤーを描画
-                ctx.drawImage(playerSprite, player.x - playerSize/2, player.y - playerSize/2, playerSize, playerSize);
+                const row = PLAYER_SPRITE_ROWS[player.facing] ?? PLAYER_SPRITE_ROWS.down;
+                const frame = player.isMoving ? Math.floor(performance.now() / 120) % 4 : 1;
+                const drawWidth = 58;
+                const drawHeight = 74;
+                ctx.drawImage(
+                    playerSprite,
+                    frame * PLAYER_SPRITE_FRAME_WIDTH,
+                    row * PLAYER_SPRITE_FRAME_HEIGHT,
+                    PLAYER_SPRITE_FRAME_WIDTH,
+                    PLAYER_SPRITE_FRAME_HEIGHT,
+                    playerDrawX - drawWidth / 2,
+                    playerDrawY - drawHeight + 6,
+                    drawWidth,
+                    drawHeight
+                );
             } else {
                 // フォールバック：絵文字で描画
+                const playerSize = 48;
                 ctx.font = `${playerSize}px Arial`;
                 ctx.textAlign = 'center';
-                ctx.fillText('🧑‍💼', player.x, player.y + playerSize/4);
+                ctx.fillText('🧑‍💼', playerDrawX, playerDrawY + playerSize/4);
             }
-
-            ctx.font = '12px Courier New';
-            ctx.fillStyle = '#00ffff';
-            ctx.textAlign = 'center';
-            ctx.fillText('カイト', player.x, player.y + playerSize/2 + 12);
-
-            // HP bar
-            const barWidth = 40;
-            const barHeight = 4;
-            const hpRatio = player.hp / player.maxHp;
-
-            ctx.fillStyle = '#333';
-            ctx.fillRect(player.x - barWidth/2, player.y - playerSize/2 - 8, barWidth, barHeight);
-            ctx.fillStyle = hpRatio > 0.5 ? '#44ff44' : hpRatio > 0.25 ? '#ffff44' : '#ff4444';
-            ctx.fillRect(player.x - barWidth/2, player.y - playerSize/2 - 8, barWidth * hpRatio, barHeight);
         }
 
         function updatePlayer() {
             // ショップが開いているかチェック
-            if (window.gameShop && window.gameShop.isShopOpen) return;
+            if (window.gameShop && window.gameShop.isShopOpen) {
+                player.isMoving = false;
+                return;
+            }
 
             // メニューが開いているかチェック
             const menuOverlay = document.getElementById('menuOverlay');
-            if (menuOverlay && menuOverlay.classList.contains('active')) return;
+            if (menuOverlay && menuOverlay.classList.contains('active')) {
+                player.isMoving = false;
+                return;
+            }
+
+            // ストーリーイベント（自動会話）が再生中はプレイヤー操作とエンカウントをロック
+            if (window.storyEventSystem && window.storyEventSystem.isEventPlaying) {
+                player.isMoving = false;
+                // 押しっぱなしのキー状態もリセット（イベント終了後に勝手に動かないように）
+                Object.keys(keys).forEach(k => { keys[k] = false; });
+                return;
+            }
+
+            // セリフ・メッセージ表示中はロック（NPC会話・宝箱メッセージ・遷移メッセージ等）
+            if (typeof isMessageShown !== 'undefined' && isMessageShown) {
+                player.isMoving = false;
+                return;
+            }
+
+            // オープニング中はロック
+            if (window.openingTypewriterActive) {
+                player.isMoving = false;
+                return;
+            }
 
             // マップ遷移中はプレイヤーの移動を無効化
-            if (mapSystem && mapSystem.transitioning) return;
+            if (mapSystem && mapSystem.transitioning) {
+                player.isMoving = false;
+                return;
+            }
 
-            if (!gameStarted || battleSystem.inBattle) return;
-            
-            // デバッグ情報表示
-            const debugInfo = document.getElementById('debugInfo') || (() => {
-                const div = document.createElement('div');
-                div.id = 'debugInfo';
-                div.style.cssText = 'position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.8); color: white; padding: 5px; font-size: 10px; z-index: 999;';
-                document.body.appendChild(div);
-                return div;
-            })();
-            // 出口に近いかチェック
-            let nearExit = '';
-            if (mapSystem && mapSystem.maps[mapSystem.currentMap]) {
-                const map = mapSystem.maps[mapSystem.currentMap];
-                for (const exit of map.exits) {
-                    const distance = Math.sqrt(
-                        Math.pow(player.x - (exit.x + exit.width/2), 2) + 
-                        Math.pow(player.y - (exit.y + exit.height/2), 2)
-                    );
-                    if (distance < 50) {
-                        nearExit = ` | Near: ${exit.label}`;
-                        break;
-                    }
-                }
+            if (!gameStarted || battleSystem.inBattle) {
+                player.isMoving = false;
+                return;
             }
             
-            debugInfo.textContent = `Map: ${mapSystem.currentMap} | Player: (${Math.floor(player.x)}, ${Math.floor(player.y)})${nearExit}`;
+            const debugInfo = document.getElementById('debugInfo');
+            if (debugInfo) debugInfo.remove();
             
             const speed = 3;
+            const mapBounds = mapSystem.getMapBounds();
             let moved = false;
             let oldX = player.x;
             let oldY = player.y;
             let newX = player.x;
             let newY = player.y;
+            player.isMoving = false;
             
             if (keys['ArrowUp'] || keys['w']) {
-                newY = Math.max(5, player.y - speed);
+                newY = Math.max(18, player.y - speed);
                 player.facing = 'up';
             }
             if (keys['ArrowDown'] || keys['s']) {
-                newY = Math.min(430, player.y + speed); // UI領域(450px以降)に入らないように制限
+                newY = Math.min(mapBounds.height - 18, player.y + speed);
                 player.facing = 'down';
             }
             if (keys['ArrowLeft'] || keys['a']) {
-                newX = Math.max(5, player.x - speed);
+                newX = Math.max(18, player.x - speed);
                 player.facing = 'left';
             }
             if (keys['ArrowRight'] || keys['d']) {
-                newX = Math.min(canvas.width - 5, player.x + speed);
+                newX = Math.min(mapBounds.width - 18, player.x + speed);
                 player.facing = 'right';
             }
             
-            // 衝突判定
+            // 衝突判定（旧座標を渡してNPCから離れる動きを許可）
             if (newX !== player.x || newY !== player.y) {
-                if (!mapSystem.checkCollision(newX, newY, 24)) {
+                if (!mapSystem.checkCollision(newX, newY, 24, oldX, oldY)) {
                     player.x = newX;
                     player.y = newY;
                     moved = true;
@@ -2076,11 +3233,12 @@
             
             // 移動した場合
             if (moved) {
+                player.isMoving = true;
                 player.stepCount++;
                 document.getElementById('stepCount').textContent = player.stepCount;
                 
                 // マップ遷移チェック
-                const transition = mapSystem.checkMapTransition(player.x, player.y);
+                const transition = mapSystem.checkMapTransition(player.x, player.y, player.facing);
                 if (transition) {
                     console.log('Transition detected:', transition);
                     if (transition.locked) {
@@ -2088,32 +3246,7 @@
                         player.x = oldX;
                         player.y = oldY;
                     } else if (transition.nextMap) {
-                        // マップ遷移を実行
-                        mapSystem.transitionToMap(transition.nextMap);
-
-                        // プレイヤー位置調整をマップ遷移完了後に実行（350ms後）
-                        setTimeout(() => {
-                            if (transition.exit.direction === 'north') {
-                                // 北から入った → 南側に配置
-                                player.y = 360;
-                                player.x = 400;
-                            } else if (transition.exit.direction === 'south') {
-                                // 南から入った → 北側に配置
-                                player.y = 60;
-                                player.x = 400;
-                            } else if (transition.exit.direction === 'west') {
-                                // 西から入った → 東側に配置
-                                player.x = canvas.width - 80;
-                                player.y = 280;
-                            } else if (transition.exit.direction === 'east') {
-                                // 東から入った → 西側に配置
-                                player.x = 80;
-                                player.y = 280;
-                            }
-
-                            updateMapInfo();
-                            console.log('Player repositioned after map transition:', { x: player.x, y: player.y, map: mapSystem.currentMap });
-                        }, 350);
+                        runMapTransition(transition);
                     }
                 }
                 
@@ -2131,36 +3264,50 @@
                 }
             }
             
-            // インタラクション
-            if (keys[' ']) {
-                keys[' '] = false;
+            // 決定/話す（Z / Space / Enter） → NPC・宝箱・出入口インタラクション
+            if (keys['z'] || keys['Z'] || keys[' '] || keys['Enter']) {
+                keys['z'] = keys['Z'] = keys[' '] = keys['Enter'] = false;
                 checkInteractions();
             }
-            
-            // メニュー表示（Xキー）
-            if (keys['x'] || keys['X']) {
-                keys['x'] = keys['X'] = false;
-                openMenu();
-            }
-            
-            // 神威発動（Zキー）- フィールドでのMP回復など
-            if (keys['z'] || keys['Z']) {
-                keys['z'] = keys['Z'] = false;
-                useKamuiField();
-            }
-            
-            // セーブポイント
+
+            // セーブポイント（Sキー）
             if ((keys['s'] || keys['S']) && checkSavePoint()) {
                 keys['s'] = keys['S'] = false;
                 saveGame();
             }
+
+            // ※メニュー開閉は keydown ハンドラ側で M / Escape を直接処理
+            // ※X（戻る）はフィールドでは動作なし（メニュー内のみキャンセル）
+        }
+
+        function runMapTransition(transition) {
+            if (!transition || !transition.nextMap) return;
+
+            mapSystem.transitionToMap(transition.nextMap);
+
+            setTimeout(() => {
+                const spawn = mapSystem.getSpawnPoint(transition.exit, canvas);
+                player.x = spawn.x;
+                player.y = spawn.y;
+                mapSystem.updateCamera(player.x, player.y, canvas);
+
+                updateMapInfo();
+                console.log('Player repositioned after map transition:', {
+                    x: player.x,
+                    y: player.y,
+                    map: mapSystem.currentMap
+                });
+            }, 350);
         }
 
         function checkInteractions() {
             const npc = mapSystem.checkNPCInteraction(player.x, player.y);
             const treasure = mapSystem.checkTreasureInteraction(player.x, player.y);
+            const entrance = mapSystem.checkMapEntranceInteraction(player.x, player.y);
 
-            if (npc) {
+            if (entrance) {
+                runMapTransition(entrance);
+            } else if (npc) {
                 if (npc.hostile) {
                     // 強制戦闘
                     const enemyData = battleSystem.enemyDatabase.deusMachina;
@@ -2230,7 +3377,7 @@
             if (saveData) {
                 const data = JSON.parse(saveData);
                 Object.assign(player, data.player);
-                mapSystem.currentMap = data.currentMap;
+                mapSystem.currentMap = mapSystem.normalizeMapId(data.currentMap);
                 return true;
             }
             return false;
@@ -2399,6 +3546,17 @@
                     closeMenu();
                     break;
             }
+        }
+
+        function setupMenuClickHandlers() {
+            const options = document.querySelectorAll('#menuOptions .menu-option');
+            options.forEach((option, index) => {
+                option.onclick = () => {
+                    menuSelectedIndex = index;
+                    updateMenuSelection();
+                    executeMenuOption(option.dataset.menu);
+                };
+            });
         }
 
         // パーティメンバータブの更新
@@ -2626,9 +3784,99 @@
             const effect = document.createElement('div');
             effect.className = 'kamui-effect';
             effect.textContent = '⚡ カムイ ⚡';
-            document.querySelector('.game-container').appendChild(effect);
+            // viewport の中に出す（ゲームワールドの外に飛ばないようにする）
+            const host = document.querySelector('.game-viewport') || document.querySelector('.game-container');
+            host.appendChild(effect);
             setTimeout(() => effect.remove(), 1000);
         }
+
+        // ===== 共通: viewport 内モーダル =====
+        // browser-native confirm/alert の置き換え。 .game-viewport の中に出す。
+        // options: [{label, value}], onSelect: (value) => void
+        function showGameModal({ title = '', body = '', options = [{ label: 'OK', value: 'ok' }], onSelect = null, defaultIndex = 0 } = {}) {
+            const viewport = document.querySelector('.game-viewport');
+            if (!viewport) return;
+
+            // 既存モーダルは閉じる
+            const existing = document.getElementById('gameModalOverlay');
+            if (existing) existing.remove();
+
+            const overlay = document.createElement('div');
+            overlay.id = 'gameModalOverlay';
+            overlay.className = 'game-modal-overlay';
+
+            const safeTitle = String(title || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+            const safeBody = String(body || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/\n/g, '<br>');
+
+            overlay.innerHTML = `
+                <div class="game-modal-container">
+                    ${safeTitle ? `<div class="game-modal-title">${safeTitle}</div>` : ''}
+                    <div class="game-modal-body">${safeBody}</div>
+                    <div class="game-modal-options" id="gameModalOptions"></div>
+                    <div class="game-modal-hint">←→ で選択 / Z で決定</div>
+                </div>
+            `;
+            viewport.appendChild(overlay);
+
+            const optsContainer = overlay.querySelector('#gameModalOptions');
+            let selected = Math.max(0, Math.min(options.length - 1, defaultIndex));
+
+            const renderOptions = () => {
+                optsContainer.innerHTML = '';
+                options.forEach((opt, idx) => {
+                    const btn = document.createElement('div');
+                    btn.className = 'game-modal-option' + (idx === selected ? ' selected' : '');
+                    btn.textContent = opt.label;
+                    btn.addEventListener('click', () => {
+                        cleanup();
+                        if (typeof onSelect === 'function') onSelect(opt.value);
+                    });
+                    optsContainer.appendChild(btn);
+                });
+            };
+
+            const handler = (e) => {
+                if (!document.getElementById('gameModalOverlay')) return;
+                if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    selected = (selected - 1 + options.length) % options.length;
+                    renderOptions();
+                } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    selected = (selected + 1) % options.length;
+                    renderOptions();
+                } else if (e.key === 'Enter' || e.key === ' ' || e.key === 'z' || e.key === 'Z') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const value = options[selected] ? options[selected].value : null;
+                    cleanup();
+                    if (typeof onSelect === 'function') onSelect(value);
+                } else if (e.key === 'Escape' || e.key === 'x' || e.key === 'X') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    cleanup();
+                    if (typeof onSelect === 'function') onSelect(null);
+                }
+            };
+
+            const cleanup = () => {
+                document.removeEventListener('keydown', handler, true);
+                if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+            };
+
+            document.addEventListener('keydown', handler, true);
+            renderOptions();
+        }
+        window.showGameModal = showGameModal;
 
         // グローバルに公開
         window.openMenu = openMenu;
@@ -2688,48 +3936,77 @@
             }
         }
 
+        // バトルコマンドリストはメッセージパネル内に描画されている。
+        // 旧 #battleCommands は表示されないが、互換のため残置。
+        function getBattleCommandItems() {
+            // パネル内のコマンドリスト（.battle-cmd-mode）を優先して取得
+            const panelItems = document.querySelectorAll('#gameMessageBody.battle-cmd-mode .command-item');
+            if (panelItems.length > 0) return panelItems;
+            // フォールバック（旧UI）
+            return document.querySelectorAll('#battleCommands .command-item');
+        }
+
         function handleBattleInput(key) {
             if (!battleSystem.waitingForCommand) return;
 
-            const commands = document.querySelectorAll('.command-item');
-            const numCommands = commands.length;
-            
+            const phase = battleSystem.commandPhase || 'command';
+            const items = getBattleCommandItems();
+            const numItems = items.length;
+            if (numItems === 0) return;
+
             if (key === 'ArrowUp' || key === 'w' || key === 'W') {
-                battleSystem.selectedCommand = (battleSystem.selectedCommand - 1 + numCommands) % numCommands;
+                battleSystem.selectedCommand = (battleSystem.selectedCommand - 1 + numItems) % numItems;
                 if (showingBattleItems) {
                     updateBattleItemSelection();
+                } else if (phase === 'skill' || phase === 'target') {
+                    battleSystem.refreshCurrentPhaseSelection();
                 } else {
                     setupBattleCommands();
                 }
             } else if (key === 'ArrowDown' || key === 's' || key === 'S') {
-                battleSystem.selectedCommand = (battleSystem.selectedCommand + 1) % numCommands;
+                battleSystem.selectedCommand = (battleSystem.selectedCommand + 1) % numItems;
                 if (showingBattleItems) {
                     updateBattleItemSelection();
+                } else if (phase === 'skill' || phase === 'target') {
+                    battleSystem.refreshCurrentPhaseSelection();
                 } else {
                     setupBattleCommands();
                 }
             } else if (key === 'Enter' || key === ' ' || key === 'z' || key === 'Z') {
-                // 決定キー（Enter, Space, Z）
-                const selectedCmd = commands[battleSystem.selectedCommand];
-                if (selectedCmd) {
-                    if (showingBattleItems) {
-                        selectedCmd.click();
-                    } else {
-                        console.log('[Battle] Command selected:', selectedCmd.dataset.command);
-                        executeBattleCommand(selectedCmd.dataset.command);
-                    }
+                // 決定: 選択中の item の onclick を呼ぶ（command/skill/target 全フェーズ共通）
+                const item = items[battleSystem.selectedCommand];
+                if (!item) return;
+
+                if (showingBattleItems) {
+                    item.click();
+                } else if (phase === 'command') {
+                    console.log('[Battle] Command selected:', item.dataset.command);
+                    executeBattleCommand(item.dataset.command);
+                } else {
+                    // skill / target フェーズは item の onclick が処理する
+                    item.click();
                 }
-            } else if ((key === 'Escape' || key === 'x' || key === 'X') && showingBattleItems) {
-                // アイテムメニューからキャンセル
-                const commands = document.getElementById('battleCommands');
-                commands.style.display = 'block';
-                setupBattleCommands();
-                showingBattleItems = false;
+            } else if (key === 'Escape' || key === 'x' || key === 'X') {
+                if (showingBattleItems) {
+                    // アイテムメニューからキャンセル
+                    showingBattleItems = false;
+                    battleSystem.showCommands();
+                    setupBattleCommands();
+                } else if (phase === 'target') {
+                    // 対象選択 → スキル選択へ戻る
+                    battleSystem.commandPhase = 'skill';
+                    battleSystem.selectedCommand = 0;
+                    battleSystem.renderSkillPhase();
+                } else if (phase === 'skill') {
+                    // スキル選択 → コマンド選択へ戻る
+                    battleSystem.cancelKamuiPlanning();
+                }
+                // phase === 'command' のときは何もしない（最初のメンバーで戻る先がない）
             }
         }
-        
+
         function updateBattleItemSelection() {
-            const commands = document.querySelectorAll('.command-item');
+            const commands = getBattleCommandItems();
             commands.forEach((cmd, index) => {
                 cmd.classList.remove('selected');
                 if (index === battleSystem.selectedCommand) {
@@ -2739,21 +4016,34 @@
         }
 
         function setupBattleCommands() {
-            const commands = document.querySelectorAll('.command-item');
+            const commands = getBattleCommandItems();
             commands.forEach((cmd, index) => {
                 cmd.classList.remove('selected');
                 if (index === battleSystem.selectedCommand) {
                     cmd.classList.add('selected');
                 }
 
-                // クリックイベントを設定
-                cmd.onclick = () => {
-                    console.log('Command clicked:', cmd.dataset.command, 'waiting:', battleSystem.waitingForCommand);
-                    battleSystem.selectedCommand = index;
-                    setupBattleCommands(); // 選択状態を更新
-                    executeBattleCommand(cmd.dataset.command);
-                };
+                // 標準コマンド（command フェーズ）にのみ onclick を再バインド。
+                // skill/target フェーズの item は battle-system.js 側で onclick 設定済み。
+                if (cmd.dataset && cmd.dataset.command) {
+                    cmd.onclick = () => {
+                        console.log('Command clicked:', cmd.dataset.command, 'waiting:', battleSystem.waitingForCommand);
+                        battleSystem.selectedCommand = index;
+                        setupBattleCommands(); // 選択状態を更新
+                        executeBattleCommand(cmd.dataset.command);
+                    };
+                }
             });
+        }
+
+        // パネルのコマンドモード（.battle-cmd-mode）を解除して
+        // ログ書き込みでコマンドが上書きされるようにする
+        function leavePanelCommandMode() {
+            const body = document.getElementById('gameMessageBody');
+            if (body) body.classList.remove('battle-cmd-mode');
+            // 旧コマンド領域も互換のため非表示
+            const commands = document.getElementById('battleCommands');
+            if (commands) commands.style.display = 'none';
         }
 
         function executeBattleCommand(command) {
@@ -2773,13 +4063,18 @@
 
             if (command === 'escape') {
                 battleSystem.waitingForCommand = false;
-                const commands = document.getElementById('battleCommands');
-                commands.style.display = 'none';
+                leavePanelCommandMode();
                 battleSystem.tryEscape();
                 return;
             }
 
-            // 通常のコマンドはpartyCommandsに保存
+            // 特技：このメンバーのスキル選択メニューを即座に開く（計画フェーズ）
+            if (command === 'kamui') {
+                battleSystem.beginKamuiPlanning();
+                return;
+            }
+
+            // attack / defend：通常通り保存して次のメンバーへ
             const partyMembers = battleSystem.getPartyMembers();
             const currentMember = partyMembers[battleSystem.currentMemberIndex];
 
@@ -2791,27 +4086,59 @@
             console.log(`Command saved for ${currentMember.name}: ${command}`);
 
             battleSystem.waitingForCommand = false;
-            const commandsEl = document.getElementById('battleCommands');
-            commandsEl.style.display = 'none';
+            leavePanelCommandMode();
 
             // 次のメンバーのコマンド選択へ
             battleSystem.currentMemberIndex++;
             setTimeout(() => {
                 battleSystem.showNextMemberCommand();
-            }, 300);
+            }, 250);
         }
 
         function showMessage(text) {
+            // 旧 messageBox（ui-overlay により非表示）にも同期しておく（互換性）
             const messageBox = document.getElementById('messageBox');
-            messageBox.textContent = text;
+            if (messageBox) messageBox.textContent = text;
+
+            // 視覚的にはシアン枠の GameMessagePanel に説明として表示する。
+            // これがないと isMessageShown=true のままユーザーが何も見えず、
+            // キー入力が全部ブロックされる「謎のフリーズ」になる。
+            if (window.GameMessagePanel && typeof window.GameMessagePanel.showDescription === 'function') {
+                const safe = String(text == null ? '' : text)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/\n/g, '<br>');
+                // 「名前: 「セリフ」」のようなパターンならキャラクターラベルを抽出
+                const m = String(text || '').match(/^([^:：\n]{1,20})[:：]\s*(.+)$/s);
+                if (m) {
+                    const charLabel = m[1].trim();
+                    const restHtml = String(m[2])
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/\n/g, '<br>');
+                    window.GameMessagePanel.showDescription(restHtml, charLabel);
+                } else {
+                    window.GameMessagePanel.showDescription(safe);
+                }
+            }
             isMessageShown = true;
+            window.isMessageShown = true;
         }
 
         function clearMessage() {
             const messageBox = document.getElementById('messageBox');
-            messageBox.textContent = '';
+            if (messageBox) messageBox.textContent = '';
+            if (window.GameMessagePanel && typeof window.GameMessagePanel.hide === 'function') {
+                window.GameMessagePanel.hide();
+            }
             isMessageShown = false;
+            window.isMessageShown = false;
         }
+        // GameMessagePanel のクリックハンドラから呼ぶためグローバル参照を露出
+        window.clearMessage = clearMessage;
+        window.showMessage = showMessage;
 
         function updateUI() {
             document.getElementById('playerHP').textContent = Math.max(0, player.hp);
@@ -2861,51 +4188,68 @@
         // 戦闘中のアイテム使用
         let battleItemSelectedIndex = 0;
         let showingBattleItems = false;
+
+        // 戦闘終了後にフィールド側の入力状態を復帰させるためのリセット関数。
+        // battle-system.js の endBattle / gameOver から呼ばれる。
+        window.resetBattleUIState = function() {
+            // 戦闘内アイテム選択中フラグを解除
+            showingBattleItems = false;
+            // メッセージ表示フラグを解除（戦闘中の表示が残っているとフィールドで入力が無視される）
+            isMessageShown = false;
+            // 押しっぱなしになっているキー状態を全クリア（D-pad押下中に戦闘が終わるケース対策）
+            Object.keys(keys).forEach(k => { keys[k] = false; });
+            // フィールドメッセージボックスをクリア
+            const messageBox = document.getElementById('messageBox');
+            if (messageBox && messageBox.textContent && messageBox.textContent !== 'せんとうが おわった') {
+                messageBox.textContent = '';
+            }
+            console.log('[Battle] resetBattleUIState: input state restored for field');
+        };
         
         function showBattleItemMenu() {
             const inventory = itemSystem.getInventory();
-            
+
             // 使用可能なアイテム（回復系とバフ系）をフィルター
-            const usableItems = inventory.filter(item => 
+            const usableItems = inventory.filter(item =>
                 item.category === 'recovery' || item.category === 'buff'
             );
-            
+
             if (usableItems.length === 0) {
                 battleSystem.addBattleLog('どうぐを もっていない！');
                 setTimeout(() => {
                     battleSystem.waitingForCommand = true;
-                    document.getElementById('battleCommands').style.display = 'block';
+                    battleSystem.showCommands();
                     setupBattleCommands();
                 }, 1500);
                 return;
             }
-            
-            // 戦闘コマンドを隠してアイテムリストを表示
-            const commands = document.getElementById('battleCommands');
-            commands.innerHTML = '<div style="font-weight: bold; margin-bottom: 10px; color: #ffff00;">アイテム を えらぶ</div>';
-            
-            usableItems.forEach((item, index) => {
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'command-item';
-                if (index === 0) itemDiv.classList.add('selected');
-                itemDiv.innerHTML = `${item.emoji} ${item.name} x${item.quantity}`;
-                itemDiv.onclick = () => useBattleItem(item.id);
-                commands.appendChild(itemDiv);
+
+            // メッセージパネルにアイテムリストを描画
+            const items = usableItems.map((item, index) => ({
+                html: `${item.emoji} ${item.name} x${item.quantity}`,
+                onClick: () => useBattleItem(item.id)
+            }));
+
+            // キャンセル項目
+            items.push({
+                html: '↩ もどる',
+                color: '#ff8888',
+                onClick: () => {
+                    showingBattleItems = false;
+                    battleSystem.showCommands();
+                    setupBattleCommands();
+                    battleSystem.waitingForCommand = true;
+                }
             });
-            
-            // キャンセルオプション
-            const cancelDiv = document.createElement('div');
-            cancelDiv.className = 'command-item';
-            cancelDiv.textContent = 'もどる';
-            cancelDiv.onclick = () => {
-                commands.style.display = 'block';
-                setupBattleCommands();
-                battleSystem.waitingForCommand = true;
-                showingBattleItems = false;
-            };
-            commands.appendChild(cancelDiv);
-            
+
+            window.BattlePanel.renderCommands(items, {
+                headerLabel: 'どうぐ を えらぶ',
+                title: 'アイテム',
+                selectedIndex: 0
+            });
+
             battleItemSelectedIndex = 0;
+            battleSystem.selectedCommand = 0;
             showingBattleItems = true;
             battleSystem.waitingForCommand = true;
         }
@@ -2913,15 +4257,17 @@
         function useBattleItem(itemId) {
             showingBattleItems = false;
             battleSystem.waitingForCommand = false;
-            
+            // アイテム使用：パネルをログモードに切り替え
+            leavePanelCommandMode();
+
             const result = itemSystem.useItem(itemId, player, true);
-            
+
             if (result.success) {
                 battleSystem.addBattleLog(`${result.item.name}を つかった！`);
                 battleSystem.addBattleLog(result.message);
                 updateUI();
                 battleSystem.updateBattleUI();
-                
+
                 // アイテムを使ったらターン消費して敵のターンへ
                 setTimeout(() => {
                     battleSystem.enemyTurn(player);
@@ -2930,7 +4276,7 @@
                 battleSystem.addBattleLog(result.message);
                 setTimeout(() => {
                     battleSystem.waitingForCommand = true;
-                    document.getElementById('battleCommands').style.display = 'block';
+                    battleSystem.showCommands();
                     setupBattleCommands();
                 }, 1500);
             }
@@ -3311,14 +4657,21 @@
                 // クリア
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+                // プレイヤー更新（ワールド座標ベース）
+                updatePlayer();
+
+                if (mapSystem && mapSystem.updateCamera) {
+                    mapSystem.updateCamera(player.x, player.y, canvas);
+                }
+
                 // 2Dピクセル座標ベースのマップシステムで描画
                 if (mapSystem && mapSystem.drawCurrentMap) {
+                    mapSystem.updateNPCs();
                     mapSystem.drawCurrentMap(ctx, canvas);
                     mapSystem.drawNPCs(ctx, storyFlags);
                 }
 
-                // プレイヤー更新と描画（ピクセル座標ベース）
-                updatePlayer();
+                // プレイヤー描画
                 drawPlayer();
             }
 
