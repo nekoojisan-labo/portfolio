@@ -2590,6 +2590,16 @@ class MapSystem {
         return { sx: col * ws.frameWidth, sy: row * ws.frameHeight, sw: ws.frameWidth, sh: ws.frameHeight };
     }
 
+    computeWalkJuice(isMoving, animTimeMs) {
+        const cyc = (animTimeMs / 1000) * Math.PI * 2 * 2.2;
+        const s = isMoving ? Math.sin(cyc) : 0;
+        const dy = isMoving ? -Math.abs(s) * 2.2 : 0;
+        const sx = isMoving ? (1 + Math.abs(s) * 0.05) : 1;
+        const sy = isMoving ? (1 - Math.abs(s) * 0.05) : 1;
+        const sway = isMoving ? s * 0.6 : 0;
+        return { dy, sx, sy, sway };
+    }
+
     updateFacingFromDelta(npc, dx, dy) {
         if (Math.abs(dx) < 0.15 && Math.abs(dy) < 0.15) return;
 
@@ -2905,24 +2915,18 @@ class MapSystem {
 
             if (sprite && sprite.complete && sprite.naturalWidth > 0) {
                 if (this.isWalkSpriteSheet(spritePath, sprite)) {
-                    // 骨格カットアウト: 元のwalkスプライトを切り分けて手足を振る（元アート保持）
-                    let drewNpc = false;
-                    if (typeof window !== 'undefined' && typeof window.drawSkeletalChar === 'function') {
-                        const sc = npc.hostile ? 0.78 : 0.67;
-                        const previousSmoothing = ctx.imageSmoothingEnabled;
-                        ctx.imageSmoothingEnabled = false;
-                        drewNpc = window.drawSkeletalChar(ctx, sprite, position.x, position.y + 6, npc.facing || 'down', npc.isMoving, npc.animTime || 0, sc);
-                        ctx.imageSmoothingEnabled = previousSmoothing;
-                    }
-                    if (!drewNpc) {
-                        const f = this.computeWalkFrame(npc.facing, npc.isMoving, npc.animTime || 0);
-                        const drawWidth = npc.hostile ? 56 : 48;
-                        const drawHeight = npc.hostile ? 72 : 62;
-                        const previousSmoothing = ctx.imageSmoothingEnabled;
-                        ctx.imageSmoothingEnabled = false;
-                        ctx.drawImage(sprite, f.sx, f.sy, f.sw, f.sh, position.x - drawWidth / 2, position.y - drawHeight + 6, drawWidth, drawHeight);
-                        ctx.imageSmoothingEnabled = previousSmoothing;
-                    }
+                    const f = this.computeWalkFrame(npc.facing, npc.isMoving, npc.animTime || 0);
+                    const j = this.computeWalkJuice(npc.isMoving, npc.animTime || 0);
+                    const baseW = npc.hostile ? 56 : 48;
+                    const baseH = npc.hostile ? 72 : 62;
+                    const dw = baseW * j.sx;
+                    const dh = baseH * j.sy;
+                    const dx = position.x - dw / 2 + j.sway;
+                    const dy = position.y - dh + 6 + j.dy;
+                    const previousSmoothing = ctx.imageSmoothingEnabled;
+                    ctx.imageSmoothingEnabled = false;
+                    ctx.drawImage(sprite, f.sx, f.sy, f.sw, f.sh, dx, dy, dw, dh);
+                    ctx.imageSmoothingEnabled = previousSmoothing;
                 } else {
                     const size = npc.hostile ? 50 : 44;
                     ctx.drawImage(sprite, position.x - size / 2, position.y - size, size, size * 1.25);

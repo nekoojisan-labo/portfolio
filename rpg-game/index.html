@@ -2531,7 +2531,7 @@
     <script src="magic-system.js?v=27"></script>
     <script src="battle-system.js?v=35"></script>
     <script src="skeletal-character.js?v=37"></script>
-    <script src="map-system.js?v=37"></script>
+    <script src="map-system.js?v=38"></script>
     <script src="map-system-grid.js"></script>
     <script src="player-grid-movement.js"></script>
     <script src="bgm-system.js?v=35"></script>
@@ -3694,18 +3694,20 @@ function drawWalkChar(ctx, cx, footY, facing, isMoving, t, pal, scale){
             ctx.ellipse(playerDrawX, playerDrawY + 4, 18, 7, 0, 0, Math.PI * 2);
             ctx.fill();
 
-            const footY = playerDrawY + 6;
-            const previousSmoothing = ctx.imageSmoothingEnabled;
-            ctx.imageSmoothingEnabled = false;
-            // 骨格カットアウト: 元のwalkスプライト(playerSprite)を切り分けて手足を振る（元アート保持）
-            let drewP = false;
-            if (playerSpriteLoaded && window.drawSkeletalChar) {
-                drewP = window.drawSkeletalChar(ctx, playerSprite, playerDrawX, footY, player.facing, player.isMoving, player.animTime || 0, 0.72);
+            if (playerSpriteLoaded && mapSystem && mapSystem.computeWalkFrame && mapSystem.computeWalkJuice) {
+                const f = mapSystem.computeWalkFrame(player.facing, player.isMoving, player.animTime || 0);
+                const j = mapSystem.computeWalkJuice(player.isMoving, player.animTime || 0);
+                const baseW = 52;
+                const baseH = 66;
+                const dw = baseW * j.sx;
+                const dh = baseH * j.sy;
+                const dx = playerDrawX - dw / 2 + j.sway;
+                const dy = (playerDrawY + 6) - dh + j.dy;
+                const previousSmoothing = ctx.imageSmoothingEnabled;
+                ctx.imageSmoothingEnabled = false;
+                ctx.drawImage(playerSprite, f.sx, f.sy, f.sw, f.sh, dx, dy, dw, dh);
+                ctx.imageSmoothingEnabled = previousSmoothing;
             }
-            if (!drewP && window.drawWalkChar) {
-                window.drawWalkChar(ctx, playerDrawX, footY, player.facing, player.isMoving, player.animTime || 0, CHAR_PALETTES.kaito_walk, 1.3);
-            }
-            ctx.imageSmoothingEnabled = previousSmoothing;
         }
 
         function updatePlayer() {
