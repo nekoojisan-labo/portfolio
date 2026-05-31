@@ -2568,7 +2568,7 @@
     <script src="equipment-system.js"></script>
     <script src="magic-system.js?v=27"></script>
     <script src="battle-system.js?v=35"></script>
-    <script src="map-system.js?v=45"></script>
+    <script src="map-system.js?v=46"></script>
     <script src="map-system-grid.js"></script>
     <script src="player-grid-movement.js"></script>
     <script src="bgm-system.js?v=35"></script>
@@ -2959,12 +2959,12 @@ function drawWalkChar(ctx, cx, footY, facing, isMoving, t, pal, scale){
         playerSprite.onerror = () => {
             if (!playerSpriteFallbackTried) {
                 playerSpriteFallbackTried = true;
-                playerSprite.src = 'assets/characters/sprites/kaito_walk.png?v=45';
+                playerSprite.src = 'assets/characters/sprites/kaito_walk.png?v=46';
                 return;
             }
             console.log('⚠️ プレイヤースプライト読み込み失敗 - 絵文字で表示');
         };
-        playerSprite.src = 'assets/characters/sprites/kaito_walk.webp?v=45';
+        playerSprite.src = 'assets/characters/sprites/kaito_walk.webp?v=46';
 
         // Input handling
         const keys = {};
