@@ -1,0 +1,368 @@
+:root {
+  color-scheme: dark;
+  --ink: #f8efe0;
+  --muted: rgba(248, 239, 224, 0.76);
+  --lacquer: #841d15;
+  --lacquer-deep: #3e0906;
+  --gold: #d9b75f;
+  --paper: #f4ead5;
+  --shadow: 0 28px 80px rgba(0, 0, 0, 0.42);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100svh;
+  margin: 0;
+  color: var(--ink);
+  font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
+  background: #120908 url("./assets/generated/shrine-bg.png") center / cover fixed no-repeat;
+  overflow-x: hidden;
+}
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+body::before {
+  background:
+    linear-gradient(180deg, rgba(5, 3, 2, 0.4), rgba(5, 3, 2, 0.16) 42%, rgba(5, 3, 2, 0.62)),
+    radial-gradient(circle at 50% 18%, rgba(255, 218, 127, 0.24), transparent 34rem);
+}
+
+body::after {
+  opacity: 0.16;
+  background-image:
+    linear-gradient(rgba(255, 234, 183, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 234, 183, 0.1) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: linear-gradient(180deg, transparent, #000 25%, transparent 90%);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.app {
+  position: relative;
+  z-index: 1;
+  width: min(920px, 100%);
+  min-height: 100svh;
+  margin: 0 auto;
+  padding: clamp(18px, 4vw, 36px);
+  display: grid;
+  align-items: center;
+}
+
+.screen {
+  display: none;
+  min-height: calc(100svh - clamp(36px, 8vw, 72px));
+  align-content: center;
+  justify-items: center;
+  gap: clamp(18px, 4vw, 30px);
+}
+
+.screen.active {
+  display: grid;
+  animation: screen-in 420ms ease both;
+}
+
+.back-button {
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 10;
+  min-height: 42px;
+  padding: 10px 14px;
+  border: 1px solid rgba(217, 183, 95, 0.46);
+  border-radius: 999px;
+  color: var(--ink);
+  background: rgba(24, 11, 8, 0.56);
+  text-decoration: none;
+  font-size: 0.86rem;
+  font-weight: 800;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.28);
+}
+
+.intro {
+  text-align: center;
+  text-shadow: 0 3px 24px rgba(0, 0, 0, 0.58);
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--gold);
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+  font-size: clamp(0.92rem, 2.5vw, 1.08rem);
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+h1 {
+  margin: 0;
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+  font-size: clamp(3rem, 12vw, 6.9rem);
+  line-height: 0.98;
+  letter-spacing: 0;
+}
+
+.subtitle {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: clamp(1rem, 3vw, 1.18rem);
+}
+
+.draw-stage {
+  width: min(420px, 92vw);
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+}
+
+.paper-preview {
+  position: relative;
+  width: min(230px, 54vw);
+  aspect-ratio: 1086 / 1536;
+  transform: rotate(-2deg);
+  filter: drop-shadow(0 22px 42px rgba(0, 0, 0, 0.34));
+}
+
+.paper-preview img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.paper-preview span {
+  position: absolute;
+  inset: 21% 0 auto;
+  color: #8b1a12;
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+  font-size: clamp(1.6rem, 9vw, 2.8rem);
+  font-weight: 900;
+  text-align: center;
+  writing-mode: vertical-rl;
+  justify-self: center;
+  margin: 0 auto;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.42);
+}
+
+.draw-button,
+.retry-button {
+  border: 1px solid rgba(255, 231, 166, 0.52);
+  color: #fff8e8;
+  background:
+    radial-gradient(circle at 30% 18%, rgba(255, 255, 255, 0.22), transparent 24%),
+    linear-gradient(145deg, #c93a28, var(--lacquer) 48%, var(--lacquer-deep));
+  box-shadow:
+    0 18px 38px rgba(68, 9, 4, 0.42),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12),
+    inset 0 -10px 18px rgba(40, 5, 3, 0.26);
+  cursor: pointer;
+  transition: transform 180ms ease, filter 180ms ease, box-shadow 180ms ease;
+}
+
+.draw-button {
+  min-height: 62px;
+  width: min(320px, 82vw);
+  border-radius: 999px;
+  font-size: clamp(1.1rem, 4vw, 1.35rem);
+  font-weight: 900;
+}
+
+.retry-button {
+  width: min(420px, 88vw);
+  min-height: 54px;
+  border-radius: 999px;
+  font-weight: 900;
+}
+
+.draw-button:hover,
+.retry-button:hover {
+  filter: saturate(1.12) brightness(1.03);
+  transform: translateY(-2px);
+}
+
+.draw-button:active,
+.retry-button:active {
+  transform: translateY(1px) scale(0.99);
+}
+
+.draw-button:focus-visible,
+.retry-button:focus-visible,
+.back-button:focus-visible {
+  outline: 3px solid rgba(217, 183, 95, 0.64);
+  outline-offset: 4px;
+}
+
+.loading-screen {
+  text-align: center;
+}
+
+.loading-screen p {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 800;
+  text-shadow: 0 3px 20px rgba(0, 0, 0, 0.6);
+}
+
+.ritual-loader {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  border: 1px solid rgba(217, 183, 95, 0.36);
+  border-radius: 50%;
+  background: rgba(20, 9, 7, 0.42);
+  box-shadow: var(--shadow), inset 0 0 32px rgba(217, 183, 95, 0.16);
+  backdrop-filter: blur(10px);
+  animation: loader-turn 1.6s linear infinite;
+}
+
+.ritual-loader span {
+  position: absolute;
+  inset: 22px;
+  border: 2px solid transparent;
+  border-top-color: var(--gold);
+  border-radius: 50%;
+}
+
+.ritual-loader span:nth-child(2) {
+  inset: 42px;
+  border-top-color: rgba(255, 246, 219, 0.84);
+  animation-direction: reverse;
+}
+
+.ritual-loader span:nth-child(3) {
+  inset: 64px;
+  background: var(--gold);
+  border: 0;
+  box-shadow: 0 0 28px rgba(217, 183, 95, 0.74);
+}
+
+.result-screen {
+  padding-top: 32px;
+}
+
+.result-toolbar {
+  width: min(620px, 94vw);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 16px;
+  border: 1px solid rgba(217, 183, 95, 0.36);
+  border-radius: 999px;
+  background: rgba(18, 8, 6, 0.58);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
+}
+
+.fortune-name,
+.pattern-label {
+  margin: 0;
+}
+
+.fortune-name {
+  color: #fff8e5;
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+  font-size: clamp(1.5rem, 6vw, 2.3rem);
+  font-weight: 900;
+}
+
+.pattern-label {
+  color: var(--gold);
+  font-size: 0.92rem;
+  font-weight: 800;
+}
+
+.fortune-sheet {
+  width: min(620px, 94vw);
+  margin: 0;
+  border-radius: 4px;
+  filter: drop-shadow(0 30px 52px rgba(0, 0, 0, 0.46));
+}
+
+.fortune-sheet img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+  background: var(--paper);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@keyframes screen-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes loader-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 560px) {
+  body {
+    background-position: center top;
+  }
+
+  .app {
+    padding: 72px 14px 18px;
+  }
+
+  .screen {
+    min-height: calc(100svh - 90px);
+  }
+
+  .result-toolbar {
+    align-items: center;
+  }
+
+  .pattern-label {
+    font-size: 0.82rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
