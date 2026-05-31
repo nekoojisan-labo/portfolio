@@ -2530,7 +2530,8 @@
     <script src="equipment-system.js"></script>
     <script src="magic-system.js?v=27"></script>
     <script src="battle-system.js?v=35"></script>
-    <script src="map-system.js?v=36"></script>
+    <script src="skeletal-character.js?v=37"></script>
+    <script src="map-system.js?v=37"></script>
     <script src="map-system-grid.js"></script>
     <script src="player-grid-movement.js"></script>
     <script src="bgm-system.js?v=35"></script>
@@ -3696,7 +3697,14 @@ function drawWalkChar(ctx, cx, footY, facing, isMoving, t, pal, scale){
             const footY = playerDrawY + 6;
             const previousSmoothing = ctx.imageSmoothingEnabled;
             ctx.imageSmoothingEnabled = false;
-            drawWalkChar(ctx, playerDrawX, footY, player.facing, player.isMoving, player.animTime || 0, CHAR_PALETTES.kaito_walk, 1.3);
+            // 骨格カットアウト: 元のwalkスプライト(playerSprite)を切り分けて手足を振る（元アート保持）
+            let drewP = false;
+            if (playerSpriteLoaded && window.drawSkeletalChar) {
+                drewP = window.drawSkeletalChar(ctx, playerSprite, playerDrawX, footY, player.facing, player.isMoving, player.animTime || 0, 0.72);
+            }
+            if (!drewP && window.drawWalkChar) {
+                window.drawWalkChar(ctx, playerDrawX, footY, player.facing, player.isMoving, player.animTime || 0, CHAR_PALETTES.kaito_walk, 1.3);
+            }
             ctx.imageSmoothingEnabled = previousSmoothing;
         }
 

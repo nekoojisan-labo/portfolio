@@ -2905,33 +2905,22 @@ class MapSystem {
 
             if (sprite && sprite.complete && sprite.naturalWidth > 0) {
                 if (this.isWalkSpriteSheet(spritePath, sprite)) {
-                    if (typeof window !== 'undefined' && typeof window.drawWalkChar === 'function') {
-                        const fileName = spritePath.split('/').pop().split('?')[0];
-                        const stem = fileName.replace(/\.[^.]+$/, '');
-                        const palettes = window.CHAR_PALETTES || {};
-                        const palette = palettes[stem] || window.DEFAULT_PALETTE;
-                        const scale = npc.hostile ? 1.35 : 1.15;
+                    // 骨格カットアウト: 元のwalkスプライトを切り分けて手足を振る（元アート保持）
+                    let drewNpc = false;
+                    if (typeof window !== 'undefined' && typeof window.drawSkeletalChar === 'function') {
+                        const sc = npc.hostile ? 0.78 : 0.67;
                         const previousSmoothing = ctx.imageSmoothingEnabled;
                         ctx.imageSmoothingEnabled = false;
-                        window.drawWalkChar(ctx, position.x, position.y + 6, npc.facing || 'down', npc.isMoving, npc.animTime || 0, palette, scale);
+                        drewNpc = window.drawSkeletalChar(ctx, sprite, position.x, position.y + 6, npc.facing || 'down', npc.isMoving, npc.animTime || 0, sc);
                         ctx.imageSmoothingEnabled = previousSmoothing;
-                    } else {
+                    }
+                    if (!drewNpc) {
                         const f = this.computeWalkFrame(npc.facing, npc.isMoving, npc.animTime || 0);
                         const drawWidth = npc.hostile ? 56 : 48;
                         const drawHeight = npc.hostile ? 72 : 62;
                         const previousSmoothing = ctx.imageSmoothingEnabled;
                         ctx.imageSmoothingEnabled = false;
-                        ctx.drawImage(
-                            sprite,
-                            f.sx,
-                            f.sy,
-                            f.sw,
-                            f.sh,
-                            position.x - drawWidth / 2,
-                            position.y - drawHeight + 6,
-                            drawWidth,
-                            drawHeight
-                        );
+                        ctx.drawImage(sprite, f.sx, f.sy, f.sw, f.sh, position.x - drawWidth / 2, position.y - drawHeight + 6, drawWidth, drawHeight);
                         ctx.imageSmoothingEnabled = previousSmoothing;
                     }
                 } else {
