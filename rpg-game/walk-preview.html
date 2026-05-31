@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>歩行アニメ テスト画面 — デウス・コード</title>
+<style>
+  :root { --bg:#0e1420; --panel:#16213a; --line:#22406a; --text:#dce8f6; --muted:#7e93a8; --accent:#22d9ff; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:'Noto Sans JP',system-ui,sans-serif; }
+  header { padding:14px 18px; border-bottom:1px solid var(--line); display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
+  h1 { font-size:16px; margin:0; font-weight:600; }
+  .controls { display:flex; gap:14px; align-items:center; flex-wrap:wrap; font-size:13px; }
+  label { color:var(--muted); display:flex; gap:6px; align-items:center; }
+  select, input[type=range] { accent-color:var(--accent); }
+  select { background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:6px 10px; }
+  button { background:var(--panel); color:var(--text); border:1px solid var(--line); border-radius:8px; padding:6px 12px; cursor:pointer; }
+  button.on { border-color:var(--accent); color:var(--accent); }
+  main { padding:18px; }
+  .stage { display:flex; gap:24px; flex-wrap:wrap; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px 16px; }
+  .card h2 { font-size:12px; margin:0 0 10px; color:var(--muted); font-weight:500; letter-spacing:.04em; }
+  .dirs { display:flex; gap:18px; }
+  .dir { text-align:center; }
+  .dir .name { font-size:11px; color:var(--muted); margin-top:6px; }
+  canvas { image-rendering:pixelated; background:#243042; border-radius:8px; border:1px solid var(--line); }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:14px; }
+  .gcell { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:10px; text-align:center; }
+  .gcell .name { font-size:11px; color:var(--muted); margin-top:6px; word-break:break-all; }
+  .hint { color:var(--muted); font-size:12px; margin-top:14px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🚶 歩行アニメ テスト画面</h1>
+  <div class="controls">
+    <label>キャラ
+      <select id="charSel"></select>
+    </label>
+    <label>速さ(fps) <input id="fps" type="range" min="2" max="16" value="7"><span id="fpsv">7</span></label>
+    <label>拡大 <input id="zoom" type="range" min="1" max="8" value="4"><span id="zoomv">4</span>x</label>
+    <button id="moveBtn" class="on">歩行中 / 停止</button>
+    <button id="allBtn">全キャラ表示</button>
+  </div>
+</header>
+<main>
+  <div id="single" class="stage">
+    <div class="card">
+      <h2>選択キャラ（4方向・ゲーム実寸 ＋ 拡大）</h2>
+      <div class="dirs" id="dirs"></div>
+    </div>
+  </div>
+  <div id="all" class="grid" style="display:none"></div>
+  <div class="hint">※ゲームと同じコマ送り(rows: down/left/right/up, 4コマ)で実時間再生。脚の動きを確認できます。<br>
+  バージョン: <span id="ver"></span> — 表示が古い場合はハードリロード(⌘+Shift+R)。</div>
+</main>
+
+<script>
+const V = 45; // assetVersion (キャッシュ無効化)
+document.getElementById('ver').textContent = 'v' + V;
+const FW = 72, FH = 92, COLS = 4;
+const ROWS = { down:0, left:1, right:2, up:3 };
+const DIRS = ['down','left','right','up'];
+const CHARS = [
+  'kaito','akari','riku','yami','citizen',
+  'npc_citizen_male','npc_citizen_female','npc_resident','npc_elder','npc_priest','npc_worker',
+  'merchant_weapon','merchant_armor','merchant_item','merchant_magic',
+  'innkeeper','banker','guildmaster','dark_merchant'
+];
+const DEST_W = 52, DEST_H = 66; // in-game player size
+
+const imgCache = {};
+function loadChar(name) {
+  if (imgCache[name]) return imgCache[name];
+  const img = new Image();
+  img.src = `assets/characters/sprites/${name}_walk.png?v=${V}`;
+  imgCache[name] = img;
+  return img;
+}
+
+let fps = 7, zoom = 4, moving = true, selected = 'kaito', showAll = false;
+
+// UI
+const charSel = document.getElementById('charSel');
+CHARS.forEach(c => { const o = document.createElement('option'); o.value=c; o.textContent=c; charSel.appendChild(o); });
+charSel.value = 'kaito';
+charSel.onchange = () => { selected = charSel.value; buildSingle(); };
+const fpsEl = document.getElementById('fps'), fpsv = document.getElementById('fpsv');
+fpsEl.oninput = () => { fps = +fpsEl.value; fpsv.textContent = fps; };
+const zoomEl = document.getElementById('zoom'), zoomv = document.getElementById('zoomv');
+zoomEl.oninput = () => { zoom = +zoomEl.value; zoomv.textContent = zoom; buildSingle(); };
+const moveBtn = document.getElementById('moveBtn');
+moveBtn.onclick = () => { moving = !moving; moveBtn.classList.toggle('on', moving); };
+const allBtn = document.getElementById('allBtn');
+allBtn.onclick = () => {
+  showAll = !showAll;
+  allBtn.classList.toggle('on', showAll);
+  document.getElementById('single').style.display = showAll ? 'none' : '';
+  document.getElementById('all').style.display = showAll ? 'grid' : 'none';
+  if (showAll) buildAll();
+};
+
+// canvases registry: {canvas, ctx, char, dir, w, h}
+let canvases = [];
+
+function makeCanvas(w, h) {
+  const c = document.createElement('canvas');
+  c.width = w; c.height = h;
+  const ctx = c.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  return { c, ctx };
+}
+
+function buildSingle() {
+  canvases = [];
+  const dirsWrap = document.getElementById('dirs');
+  dirsWrap.innerHTML = '';
+  const w = Math.round(DEST_W * zoom), h = Math.round(DEST_H * zoom);
+  DIRS.forEach(dir => {
+    const wrap = document.createElement('div'); wrap.className = 'dir';
+    const { c, ctx } = makeCanvas(w, h);
+    wrap.appendChild(c);
+    const nm = document.createElement('div'); nm.className = 'name'; nm.textContent = dir; wrap.appendChild(nm);
+    dirsWrap.appendChild(wrap);
+    canvases.push({ ctx, char: selected, dir, w, h });
+  });
+}
+
+function buildAll() {
+  canvases = [];
+  const grid = document.getElementById('all');
+  grid.innerHTML = '';
+  const z = 2, w = Math.round(DEST_W * z), h = Math.round(DEST_H * z);
+  CHARS.forEach(ch => {
+    const cell = document.createElement('div'); cell.className = 'gcell';
+    const row = document.createElement('div'); row.style.display='flex'; row.style.gap='6px'; row.style.justifyContent='center';
+    DIRS.forEach(dir => {
+      const { c, ctx } = makeCanvas(w, h);
+      row.appendChild(c);
+      canvases.push({ ctx, char: ch, dir, w, h });
+    });
+    cell.appendChild(row);
+    const nm = document.createElement('div'); nm.className='name'; nm.textContent = ch; cell.appendChild(nm);
+    grid.appendChild(cell);
+  });
+}
+
+function frameCol(animMs) {
+  if (!moving) return 0;
+  return Math.floor((animMs / 1000) * fps) % COLS;
+}
+
+let start = performance.now();
+function tick(now) {
+  const animMs = now - start;
+  const col = frameCol(animMs);
+  for (const e of canvases) {
+    const img = loadChar(e.char);
+    e.ctx.clearRect(0, 0, e.w, e.h);
+    // ground shadow
+    e.ctx.fillStyle = 'rgba(0,0,0,0.25)';
+    e.ctx.beginPath();
+    e.ctx.ellipse(e.w/2, e.h-6*(e.h/DEST_H/ (e.h/DEST_H)), e.w*0.28, e.h*0.05, 0, 0, Math.PI*2);
+    e.ctx.fill();
+    if (img.complete && img.naturalWidth > 0) {
+      const sx = col * FW, sy = (ROWS[e.dir]||0) * FH;
+      e.ctx.imageSmoothingEnabled = false;
+      // draw whole frame scaled to canvas (game look), feet near bottom
+      e.ctx.drawImage(img, sx, sy, FW, FH, 0, 0, e.w, e.h);
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
+buildSingle();
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
