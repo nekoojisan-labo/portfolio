@@ -218,16 +218,58 @@ def trim_and_fit(frame):
 
 
 def build_base_sheet():
+    """全16フレームを『共通スケール＋一貫した接地/中央寄せ』で配置する。
+    旧 trim_and_fit は各フレームを個別に最大化していたため、方向/フレーム間で
+    キャラの身長・接地位置がバラついて再生時に揺れ・崩壊していた（これを解消）。"""
     src = Image.open(SOURCE).convert("RGBA")
-    sheet = Image.new("RGBA", (FRAME_W * COLS, FRAME_H * ROWS), (0, 0, 0, 0))
+
+    # --- pass 1: 各フレームを緑抜き＋bboxクロップ ---
+    cropped_frames = []  # index = row*COLS + col
     for row in range(ROWS):
         for col in range(COLS):
             x0 = round(src.width * col / COLS)
             x1 = round(src.width * (col + 1) / COLS)
             y0 = round(src.height * row / ROWS)
             y1 = round(src.height * (row + 1) / ROWS)
-            frame = trim_and_fit(src.crop((x0, y0, x1, y1)))
-            sheet.alpha_composite(frame, (col * FRAME_W, row * FRAME_H))
+            f = remove_green(src.crop((x0, y0, x1, y1)))
+            # 弱い縁/緑抜け残りを除去してから bbox を取り、接地(下端)を安定させる
+            solid = f.getchannel("A").point(lambda a: 255 if a >= 80 else 0)
+            f.putalpha(solid)
+            bbox = alpha_bbox(f)
+            cropped_frames.append(f.crop(bbox) if bbox else None)
+
+    # --- per-direction(行)スケール: 全方向のキャラ身長を TARGET_H に揃える ---
+    # ソース画像は方向ごとにキャラの大きさが違う(例: 右向きが大きい)。
+    # 行内の最大コンテンツを TARGET_H に合わせる1スケールを行の全フレームへ適用すれば、
+    # ①全方向が同じ身長 ②行内フレームは同一スケール=接地/身長が安定、になる。
+    TARGET_H, MAX_W = 74, 54
+
+    # --- pass 2: 行スケールで縮小し、下端8px・水平中央へ配置 ---
+    sheet = Image.new("RGBA", (FRAME_W * COLS, FRAME_H * ROWS), (0, 0, 0, 0))
+    for row in range(ROWS):
+        row_frames = [cropped_frames[row * COLS + c] for c in range(COLS)]
+        valid_row = [c for c in row_frames if c is not None]
+        if valid_row:
+            row_h = max(c.height for c in valid_row)
+            row_w = max(c.width for c in valid_row)
+            row_scale = min(TARGET_H / row_h, MAX_W / row_w)
+        else:
+            row_scale = 1.0
+        for col in range(COLS):
+            cropped = row_frames[col]
+            out = Image.new("RGBA", (FRAME_W, FRAME_H), (0, 0, 0, 0))
+            if cropped is not None:
+                size = (
+                    max(1, round(cropped.width * row_scale)),
+                    max(1, round(cropped.height * row_scale)),
+                )
+                resized = cropped.resize(size, Image.Resampling.LANCZOS)
+                x = (FRAME_W - resized.width) // 2
+                y = FRAME_H - resized.height - 8
+                out.alpha_composite(resized, (x, y))
+                alpha = out.getchannel("A").point(lambda a: 0 if a < 24 else 255)
+                out.putalpha(alpha)
+            sheet.alpha_composite(out, (col * FRAME_W, row * FRAME_H))
     return sheet
 
 

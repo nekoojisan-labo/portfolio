@@ -8,7 +8,7 @@ class MapSystem {
         this.maps = {};
         this.mapImages = {};
         this.spriteImages = {};
-        this.assetVersion = '34';
+        this.assetVersion = '39';
         this.baseWidth = 800;
         this.baseHeight = 450;
         this.camera = { x: 0, y: 0 };
@@ -2429,9 +2429,10 @@ class MapSystem {
     }
 
     worldToScreenPoint(x, y) {
+        // 整数スナップ: 描画先を非整数にしないことで移動中スプライトの滲み/チラつきを防ぐ
         return {
-            x: x - this.camera.x,
-            y: y - this.camera.y
+            x: Math.round(x - this.camera.x),
+            y: Math.round(y - this.camera.y)
         };
     }
 
@@ -2591,12 +2592,16 @@ class MapSystem {
     }
 
     computeWalkJuice(isMoving, animTimeMs) {
+        // 歩行の躍動を上乗せ(元アートに脚スイングが無いため演出で補う)。
+        // bob: 体が上下に弾む / 接地時に横へ潰れ縦に縮むスクワッシュ / 左右スウェイ。
         const cyc = (animTimeMs / 1000) * Math.PI * 2 * 2.2;
         const s = isMoving ? Math.sin(cyc) : 0;
-        const dy = isMoving ? -Math.abs(s) * 2.2 : 0;
-        const sx = isMoving ? (1 + Math.abs(s) * 0.05) : 1;
-        const sy = isMoving ? (1 - Math.abs(s) * 0.05) : 1;
-        const sway = isMoving ? s * 0.6 : 0;
+        const up = Math.abs(s);        // 0(接地)〜1(最高到達)
+        const ground = 1 - up;         // 1(接地)〜0
+        const dy = isMoving ? -up * 5.0 : 0;
+        const sx = isMoving ? (1 + ground * 0.12) : 1;
+        const sy = isMoving ? (1 - ground * 0.10 + up * 0.04) : 1;
+        const sway = isMoving ? s * 1.8 : 0;
         return { dy, sx, sy, sway };
     }
 
@@ -2921,8 +2926,8 @@ class MapSystem {
                     const baseH = npc.hostile ? 72 : 62;
                     const dw = baseW * j.sx;
                     const dh = baseH * j.sy;
-                    const dx = position.x - dw / 2 + j.sway;
-                    const dy = position.y - dh + 6 + j.dy;
+                    const dx = Math.round(position.x - dw / 2 + j.sway);
+                    const dy = Math.round(position.y - dh + 6 + j.dy);
                     const previousSmoothing = ctx.imageSmoothingEnabled;
                     ctx.imageSmoothingEnabled = false;
                     ctx.drawImage(sprite, f.sx, f.sy, f.sw, f.sh, dx, dy, dw, dh);
