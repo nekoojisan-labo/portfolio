@@ -1445,18 +1445,21 @@
         }
 
         .back-button {
-            position: static;
+            /* コントローラーのクラスターを邪魔しないよう左隅へ固定配置 */
+            position: absolute;
+            left: 16px;
+            top: 12px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            min-width: 204px;
+            min-width: 0;
             box-sizing: border-box;
             background: rgba(0, 0, 0, 0.8);
-            color: #0f3460;
+            color: #4aa3ff;
             text-decoration: none;
-            padding: 9px 18px;
+            padding: 6px 12px;
             border-radius: 25px;
-            font-size: 14px;
+            font-size: 12px;
             font-weight: bold;
             line-height: 1.2;
             white-space: nowrap;
@@ -1617,8 +1620,11 @@
         .on-screen-controller {
             position: relative;
             display: flex;
-            justify-content: space-between;
+            /* PC(デスクトップ): 十字キーと操作ボタンをコントローラーのように中央へまとめる
+               （旧 space-between は広い画面で左右に飛びすぎて分かりづらかった） */
+            justify-content: center;
             align-items: center;
+            gap: 56px;
             padding: 16px 24px;
             background: linear-gradient(180deg, rgba(15, 22, 38, 0.96), rgba(8, 12, 24, 1));
             border-top: 2px solid #0f3460;
@@ -1813,6 +1819,9 @@
             }
 
             .on-screen-controller {
+                /* モバイルは両手親指で届くよう左右に分ける */
+                justify-content: space-between;
+                gap: 0;
                 padding: 12px 14px;
                 /* iPhone ホームバー対応 */
                 padding-bottom: max(12px, env(safe-area-inset-bottom));
@@ -2519,12 +2528,12 @@
     <!-- 外部スクリプト読み込み -->
     <script src="item-system.js"></script>
     <script src="equipment-system.js"></script>
-    <script src="magic-system.js?v=26"></script>
-    <script src="battle-system.js?v=34"></script>
-    <script src="map-system.js?v=34"></script>
+    <script src="magic-system.js?v=27"></script>
+    <script src="battle-system.js?v=35"></script>
+    <script src="map-system.js?v=35"></script>
     <script src="map-system-grid.js"></script>
     <script src="player-grid-movement.js"></script>
-    <script src="bgm-system.js"></script>
+    <script src="bgm-system.js?v=35"></script>
     <script src="party-system.js"></script>
     <script src="story-events.js"></script>
 
@@ -2691,6 +2700,93 @@
             exploredBiodome: false,
             chapter: 1  // 現在のチャプター
         };
+
+        // キャラ配色パレット(generate_walk_sprites.py のVARIANTS由来)。キーはスプライト名のstem。
+        const CHAR_PALETTES = {
+            kaito_walk:        { hair:'#10131a', outfit:'#111a27', inner:'#d9e8f6', accent:'#22d9ff', skin:'#e6b998' },
+            akari_walk:        { hair:'#e59ab8', outfit:'#44223a', inner:'#ffd6ea', accent:'#ff5ca8', skin:'#efb79f' },
+            riku_walk:         { hair:'#c5ced8', outfit:'#243241', inner:'#c4d0dc', accent:'#42d6b3', skin:'#d3b39a' },
+            yami_walk:         { hair:'#2e1745', outfit:'#160b24', inner:'#6f3fb0', accent:'#b26cff', skin:'#c8a8ce' },
+            citizen_walk:      { hair:'#313946', outfit:'#283848', inner:'#c9d7e3', accent:'#4ac7ff', skin:'#d4b199' },
+            npc_citizen_male_walk:   { hair:'#24272d', outfit:'#253141', inner:'#d7dce3', accent:'#66d5ff', skin:'#c9ad95' },
+            npc_citizen_female_walk: { hair:'#75374a', outfit:'#683048', inner:'#f1d3e1', accent:'#57edcf', skin:'#dfb79e' },
+            npc_resident_walk: { hair:'#4a3a2a', outfit:'#2f4c3a', inner:'#decda8', accent:'#ffd166', skin:'#d4b69e' },
+            npc_elder_walk:    { hair:'#d6d6d6', outfit:'#625140', inner:'#e7d8c5', accent:'#f8d46a', skin:'#d8bca6' },
+            npc_priest_walk:   { hair:'#222831', outfit:'#233443', inner:'#eef5ff', accent:'#61edff', skin:'#d7b69a' },
+            npc_worker_walk:   { hair:'#4b3a2d', outfit:'#374151', inner:'#f5a60b', accent:'#fbbf24', skin:'#d2ad8f' },
+            merchant_weapon_walk: { hair:'#28272c', outfit:'#2b1d1d', inner:'#c9d0d9', accent:'#28d7ff', skin:'#d3ad91' },
+            merchant_armor_walk:  { hair:'#4b392e', outfit:'#343025', inner:'#b98b43', accent:'#f7c948', skin:'#d3ad91' },
+            merchant_item_walk:   { hair:'#284232', outfit:'#173b32', inner:'#d4f5df', accent:'#39f6a7', skin:'#dfb79a' },
+            merchant_magic_walk:  { hair:'#4a1d69', outfit:'#241132', inner:'#8b5cf6', accent:'#e879f9', skin:'#d9afd0' },
+            innkeeper_walk:    { hair:'#8a5a38', outfit:'#5a3421', inner:'#f7d6a8', accent:'#f59e0b', skin:'#ddb996' },
+            banker_walk:       { hair:'#202938', outfit:'#17213b', inner:'#dbeafe', accent:'#38bdf8', skin:'#d5b093' },
+            guildmaster_walk:  { hair:'#52525b', outfit:'#3a2020', inner:'#c5a35a', accent:'#ef4444', skin:'#d2a987' },
+            dark_merchant_walk:{ hair:'#15111f', outfit:'#120819', inner:'#51305f', accent:'#8b5cf6', skin:'#aa91b8' }
+        };
+        const DEFAULT_PALETTE = { hair:'#2a2f3a', outfit:'#33405a', inner:'#cfd8e6', accent:'#4ac7ff', skin:'#d9b79a' };
+
+        function _hexShade(hex, f){ // f<1で暗く, f>1で明るく
+            const h = hex.replace('#',''); let r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16);
+            r=Math.max(0,Math.min(255,Math.round(r*f))); g=Math.max(0,Math.min(255,Math.round(g*f))); b=Math.max(0,Math.min(255,Math.round(b*f)));
+            return 'rgb('+r+','+g+','+b+')';
+        }
+        function _rrect(ctx,x,y,w,h,r,fill){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); ctx.fillStyle=fill; ctx.fill(); }
+        function _circle(ctx,x,y,r,fill){ ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fillStyle=fill; ctx.fill(); }
+        function _limb(ctx,x1,y1,x2,y2,w,color){ ctx.strokeStyle=color; ctx.lineWidth=w; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke(); }
+
+        // パーツ分割キャラを (cx, footY) を足元基準に描く。facing:'up'|'down'|'left'|'right'
+        // isMoving中は脚/腕が振れ、胴が上下にバウンドする。idleは直立。
+        function drawWalkChar(ctx, cx, footY, facing, isMoving, t, pal, scale){
+            pal = pal || DEFAULT_PALETTE; scale = scale || 1; const S = scale;
+            const cyc = (t/1000) * Math.PI * 2 * 2.2;            // ~2.2歩/秒
+            const phase = isMoving ? Math.sin(cyc) : 0;          // -1..1
+            const bob   = isMoving ? Math.abs(Math.sin(cyc))*1.6*S : 0;
+            const bodyW=12*S, bodyH=14*S, headR=7*S, legW=4.2*S, legLen=9*S, armW=3.2*S, armLen=10*S;
+            const baseY = footY - bob;
+            const hipY = baseY - legLen, shoulderY = hipY - bodyH, headCY = shoulderY - headR + 2*S;
+            const swing = phase * 5.5 * S;
+            const outfitDk = _hexShade(pal.outfit, 0.7), outfitLt = _hexShade(pal.outfit, 1.12);
+            const hairDk = _hexShade(pal.hair, 0.8);
+            ctx.save();
+            if (facing==='left' || facing==='right'){
+                const d = facing==='right' ? 1 : -1;
+                _limb(ctx, cx, hipY, cx - d*swing, baseY, legW, outfitDk);            // 奥脚
+                _limb(ctx, cx, shoulderY+3*S, cx - d*swing*0.8, shoulderY+armLen, armW, outfitDk); // 奥腕
+                _rrect(ctx, cx-bodyW/2, shoulderY, bodyW, bodyH, 3*S, pal.outfit);    // 胴
+                ctx.fillStyle=pal.accent; ctx.fillRect(cx-1*S+ d*2*S, shoulderY+3*S, 2*S, bodyH-6*S); // アクセント
+                _limb(ctx, cx, hipY, cx + d*swing, baseY, legW, pal.outfit);          // 手前脚
+                _circle(ctx, cx + d*1.5*S, headCY, headR, pal.skin);                  // 頭(横顔)
+                _rrect(ctx, cx - headR + (d<0?0:0), headCY-headR-1*S, headR*2, headR*1.3, headR*0.6, pal.hair); // 髪(後頭)
+                _circle(ctx, cx + d*1.5*S, headCY-1*S, headR, 'rgba(0,0,0,0)');
+                ctx.fillStyle=pal.hair; ctx.fillRect(cx - d*headR*0.2 - headR*0.4, headCY-headR, headR*0.9, headR*0.9);
+                ctx.fillStyle='#1b1b1b'; ctx.fillRect(cx + d*headR*0.45, headCY-0.5*S, 1.6*S, 1.6*S); // 目
+                _limb(ctx, cx, shoulderY+3*S, cx + d*swing, shoulderY+armLen, armW, pal.inner); // 手前腕
+            } else {
+                const up = facing==='up';
+                const lx = cx-3.2*S, rx = cx+3.2*S;
+                const lFoot = baseY - Math.max(0, phase)*3.2*S;    // 脚を交互に上下
+                const rFoot = baseY - Math.max(0,-phase)*3.2*S;
+                _limb(ctx, lx, hipY, lx, lFoot, legW, up?outfitDk:pal.outfit);
+                _limb(ctx, rx, hipY, rx, rFoot, legW, up?outfitDk:pal.outfit);
+                // 腕(脚と逆位相)
+                _limb(ctx, cx-bodyW/2, shoulderY+3*S, cx-bodyW/2 - 1.5*S, shoulderY+armLen + Math.max(0,-phase)*2*S, armW, up?outfitDk:pal.outfit);
+                _limb(ctx, cx+bodyW/2, shoulderY+3*S, cx+bodyW/2 + 1.5*S, shoulderY+armLen + Math.max(0, phase)*2*S, armW, up?outfitDk:pal.outfit);
+                _rrect(ctx, cx-bodyW/2, shoulderY, bodyW, bodyH, 3*S, pal.outfit);
+                if(!up){ ctx.fillStyle=pal.inner; ctx.fillRect(cx-2.2*S, shoulderY+2*S, 4.4*S, bodyH-4*S);
+                         ctx.fillStyle=pal.accent; ctx.fillRect(cx-0.8*S, shoulderY+2*S, 1.6*S, bodyH-4*S); }
+                _circle(ctx, cx, headCY, headR, up? pal.hair : pal.skin);             // 頭
+                // 髪(上半分)
+                ctx.fillStyle=pal.hair; ctx.beginPath(); ctx.arc(cx, headCY, headR, Math.PI, Math.PI*2); ctx.fill();
+                ctx.fillRect(cx-headR, headCY-headR*0.2, headR*2, headR*0.5);
+                if(!up){ ctx.fillStyle='#1b1b1b'; ctx.fillRect(cx-3.2*S, headCY-0.3*S,1.7*S,1.9*S); ctx.fillRect(cx+1.6*S, headCY-0.3*S,1.7*S,1.9*S); } // 目
+            }
+            ctx.restore();
+        }
+
+        window.drawWalkChar = drawWalkChar;
+        window.CHAR_PALETTES = CHAR_PALETTES;
+        window.DEFAULT_PALETTE = DEFAULT_PALETTE;
+
         let player = {
             characterId: 'kaito',
             name: 'カイト',
@@ -3510,33 +3606,11 @@
             ctx.ellipse(playerDrawX, playerDrawY + 4, 18, 7, 0, 0, Math.PI * 2);
             ctx.fill();
 
-            if (playerSpriteLoaded) {
-                const f = (mapSystem && mapSystem.computeWalkFrame)
-                    ? mapSystem.computeWalkFrame(player.facing, player.isMoving, player.animTime || 0)
-                    : { sx: (player.isMoving ? 0 : 0) * PLAYER_SPRITE_FRAME_WIDTH, sy: (PLAYER_SPRITE_ROWS[player.facing] ?? 0) * PLAYER_SPRITE_FRAME_HEIGHT, sw: PLAYER_SPRITE_FRAME_WIDTH, sh: PLAYER_SPRITE_FRAME_HEIGHT };
-                const drawWidth = 52;
-                const drawHeight = 66;
-                const previousSmoothing = ctx.imageSmoothingEnabled;
-                ctx.imageSmoothingEnabled = false;
-                ctx.drawImage(
-                    playerSprite,
-                    f.sx,
-                    f.sy,
-                    f.sw,
-                    f.sh,
-                    playerDrawX - drawWidth / 2,
-                    playerDrawY - drawHeight + 6,
-                    drawWidth,
-                    drawHeight
-                );
-                ctx.imageSmoothingEnabled = previousSmoothing;
-            } else {
-                // フォールバック：絵文字で描画
-                const playerSize = 48;
-                ctx.font = `${playerSize}px Arial`;
-                ctx.textAlign = 'center';
-                ctx.fillText('🧑‍💼', playerDrawX, playerDrawY + playerSize/4);
-            }
+            const footY = playerDrawY + 6;
+            const previousSmoothing = ctx.imageSmoothingEnabled;
+            ctx.imageSmoothingEnabled = false;
+            drawWalkChar(ctx, playerDrawX, footY, player.facing, player.isMoving, player.animTime || 0, CHAR_PALETTES.kaito_walk, 1.15);
+            ctx.imageSmoothingEnabled = previousSmoothing;
         }
 
         function updatePlayer() {
@@ -3659,6 +3733,19 @@
                 }
             }
             
+            // 前方自動入店: 方向キーを押している間、向いた先に自動入口があれば
+            // （コリジョンで入口手前が塞がれていても）Z不要で入店する
+            if ((moveX !== 0 || moveY !== 0) && mapSystem && !mapSystem.transitioning) {
+                const ahead = mapSystem.checkAutoEnterAhead(player.x, player.y, player.facing);
+                if (ahead) {
+                    if (ahead.locked) {
+                        showMessage(ahead.message);
+                    } else if (ahead.nextMap) {
+                        runMapTransition(ahead);
+                    }
+                }
+            }
+
             // 決定/話す（Z / Space / Enter） → NPC・宝箱・出入口インタラクション
             if (keys['z'] || keys['Z'] || keys[' '] || keys['Enter']) {
                 keys['z'] = keys['Z'] = keys[' '] = keys['Enter'] = false;
@@ -4703,10 +4790,9 @@
                     equipmentEntry.classList.add('selected');
                 }
                 
-                // レベル要件チェック
-                const canEquip = equipment.requiredLevel <= player.level;
-                const levelText = !canEquip ? ` (Lv.${equipment.requiredLevel}必要)` : '';
-                const textColor = !canEquip ? 'color: #888;' : '';
+                // 装備可能レベル要件は撤廃（レベル不問で装備可能）
+                const levelText = '';
+                const textColor = '';
                 
                 // ステータス表示
                 let statsText = '';

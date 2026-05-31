@@ -2905,23 +2905,35 @@ class MapSystem {
 
             if (sprite && sprite.complete && sprite.naturalWidth > 0) {
                 if (this.isWalkSpriteSheet(spritePath, sprite)) {
-                    const f = this.computeWalkFrame(npc.facing, npc.isMoving, npc.animTime || 0);
-                    const drawWidth = npc.hostile ? 56 : 48;
-                    const drawHeight = npc.hostile ? 72 : 62;
-                    const previousSmoothing = ctx.imageSmoothingEnabled;
-                    ctx.imageSmoothingEnabled = false;
-                    ctx.drawImage(
-                        sprite,
-                        f.sx,
-                        f.sy,
-                        f.sw,
-                        f.sh,
-                        position.x - drawWidth / 2,
-                        position.y - drawHeight + 6,
-                        drawWidth,
-                        drawHeight
-                    );
-                    ctx.imageSmoothingEnabled = previousSmoothing;
+                    if (typeof window !== 'undefined' && typeof window.drawWalkChar === 'function') {
+                        const fileName = spritePath.split('/').pop().split('?')[0];
+                        const stem = fileName.replace(/\.[^.]+$/, '');
+                        const palettes = window.CHAR_PALETTES || {};
+                        const palette = palettes[stem] || window.DEFAULT_PALETTE;
+                        const scale = npc.hostile ? 1.2 : 1.0;
+                        const previousSmoothing = ctx.imageSmoothingEnabled;
+                        ctx.imageSmoothingEnabled = false;
+                        window.drawWalkChar(ctx, position.x, position.y + 6, npc.facing || 'down', npc.isMoving, npc.animTime || 0, palette, scale);
+                        ctx.imageSmoothingEnabled = previousSmoothing;
+                    } else {
+                        const f = this.computeWalkFrame(npc.facing, npc.isMoving, npc.animTime || 0);
+                        const drawWidth = npc.hostile ? 56 : 48;
+                        const drawHeight = npc.hostile ? 72 : 62;
+                        const previousSmoothing = ctx.imageSmoothingEnabled;
+                        ctx.imageSmoothingEnabled = false;
+                        ctx.drawImage(
+                            sprite,
+                            f.sx,
+                            f.sy,
+                            f.sw,
+                            f.sh,
+                            position.x - drawWidth / 2,
+                            position.y - drawHeight + 6,
+                            drawWidth,
+                            drawHeight
+                        );
+                        ctx.imageSmoothingEnabled = previousSmoothing;
+                    }
                 } else {
                     const size = npc.hostile ? 50 : 44;
                     ctx.drawImage(sprite, position.x - size / 2, position.y - size, size, size * 1.25);
@@ -3302,6 +3314,35 @@ class MapSystem {
         return null;
     }
     
+    // 前方の自動入口チェック（向いている方向の少し先に autoEnter 出口があれば返す）
+    // 建物コリジョンで入口ボックス手前が塞がれていても、ドアに向かって歩けば入れるようにする。
+    // 方向ベースなので、入口の脇を素通りしても誤発火しない。
+    checkAutoEnterAhead(playerX, playerY, facing, reach = 22) {
+        const map = this.maps[this.currentMap];
+        if (!map || !map.exits || this.transitioning || this.isTransitionCoolingDown()) return null;
+
+        const dirs = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
+        const d = dirs[facing];
+        if (!d) return null;
+
+        const px = playerX + d[0] * reach;
+        const py = playerY + d[1] * reach;
+
+        for (const exit of map.exits) {
+            if (!exit.autoEnter) continue;          // 自動入口のみ対象（街の端の出口は対象外）
+            if (exit.requireFacing && exit.requireFacing !== facing) continue;
+            if (px >= exit.x && px <= exit.x + exit.width &&
+                py >= exit.y && py <= exit.y + exit.height) {
+                if (exit.locked) {
+                    return { locked: true, requirement: exit.requirement, message: `${exit.requirement}が必要です` };
+                }
+                return { nextMap: this.normalizeMapId(exit.to), exit };
+            }
+        }
+
+        return null;
+    }
+
     // マップ遷移実行
     transitionToMap(mapId) {
         mapId = this.normalizeMapId(mapId);
