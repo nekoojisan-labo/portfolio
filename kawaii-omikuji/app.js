@@ -107,7 +107,7 @@ class OmikujiApp {
     this.fortuneName.textContent = config.name;
     this.patternLabel.textContent = `第${patternIndex + 1}番`;
     this.fortuneImage.src = imagePath;
-    this.fortuneImage.alt = `${config.name} 第${patternIndex + 1}番のおみくじ`;
+    this.fortuneImage.alt = `${config.name} 第${patternIndex + 1}番の御神籤`;
     this.resultText.textContent = this.composeAccessibleText(fortuneKey, patternIndex);
   }
 
