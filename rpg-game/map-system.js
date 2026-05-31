@@ -8,7 +8,7 @@ class MapSystem {
         this.maps = {};
         this.mapImages = {};
         this.spriteImages = {};
-        this.assetVersion = '39';
+        this.assetVersion = '42';
         this.baseWidth = 800;
         this.baseHeight = 450;
         this.camera = { x: 0, y: 0 };
