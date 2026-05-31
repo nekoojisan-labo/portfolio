@@ -8,7 +8,7 @@ class MapSystem {
         this.maps = {};
         this.mapImages = {};
         this.spriteImages = {};
-        this.assetVersion = '19';
+        this.assetVersion = '34';
         this.baseWidth = 800;
         this.baseHeight = 450;
         this.camera = { x: 0, y: 0 };
@@ -44,12 +44,7 @@ class MapSystem {
             'ギルドマスター': 'assets/characters/sprites/guildmaster_walk.png',
             '闇商人': 'assets/characters/sprites/dark_merchant_walk.png'
         };
-        this.walkSprite = {
-            frameWidth: 72,
-            frameHeight: 92,
-            frames: 4,
-            rows: { down: 0, left: 1, right: 2, up: 3 }
-        };
+        this.walkSprite = { frameWidth:72, frameHeight:92, frames:4, fps:7, frameSequence:[0,1,2,3], idleFrame:0, rows:{down:0,left:1,right:2,up:3} };
         this.tileSize = 32;
         this.mapWidth = 25;
         this.mapHeight = 19;
@@ -61,6 +56,7 @@ class MapSystem {
         this.removeLegacyMapDuplicates();
         this.preloadMapImages();
         this.preloadSpriteImages();
+        setTimeout(() => this.preloadAdjacentMapImages(this.currentMap), 250);
         
         // デバッグ: 利用可能なマップをログ出力
         console.log('Available maps:', Object.keys(this.maps));
@@ -71,6 +67,8 @@ class MapSystem {
         
         // マップ遷移エフェクト
         this.transitioning = false;
+        this.transitionCooldownMs = 700;
+        this.transitionCooldownUntil = 0;
         this.lastNpcUpdate = performance.now();
     }
     
@@ -593,7 +591,7 @@ class MapSystem {
                 { x: 350, y: 410, width: 100, height: 40, to: 'shopping_street_south', direction: 'south', spawnX: 616, spawnY: 209 }
             ],
             npcs: [
-                { x: 400, y: 185, emoji: '⚔️', name: 'ギルドマスター', dialogue: 'クエストの受注・報告はこちらで。', shop: true, shopType: 'guild', static: true },
+                { x: 400, y: 185, emoji: '⚔️', name: 'ギルドマスター', dialogue: 'クエストの受注・報告はこちらで。', static: true },
                 { x: 210, y: 350, emoji: '🧝', name: '冒険者A', dialogue: '最近、地下ダンジョンが活発だって噂だぜ。' },
                 { x: 590, y: 350, emoji: '🧙', name: '冒険者B', dialogue: '神威の力...伝説だと思っていたが...' }
             ]
@@ -626,7 +624,7 @@ class MapSystem {
                 { x: 350, y: 410, width: 100, height: 40, to: 'shopping_street_south', direction: 'south', spawnX: 205, spawnY: 404 }
             ],
             npcs: [
-                { x: 400, y: 185, emoji: '💰', name: '銀行員', dialogue: 'お金の預入・引出しをどうぞ。', shop: true, shopType: 'bank', static: true }
+                { x: 400, y: 185, emoji: '💰', name: '銀行員', dialogue: 'お金の預入・引出しをどうぞ。', static: true }
             ]
         };
 
@@ -657,7 +655,7 @@ class MapSystem {
                 { x: 350, y: 410, width: 100, height: 40, to: 'black_market_entrance', direction: 'south', spawnX: 460, spawnY: 260 }
             ],
             npcs: [
-                { x: 400, y: 190, emoji: '👨‍🔧', name: '闇商人', dialogue: '珍しい神器があるよ...高いけどね。', shop: true, shopType: 'magic', static: true }
+                { x: 400, y: 190, emoji: '👨‍🔧', name: '闇商人', dialogue: '珍しい神器があるよ...高いけどね。', shop: true, shopType: 'black_market', static: true }
             ]
         };
 
@@ -1171,96 +1169,50 @@ class MapSystem {
                 encounterRate: 'none',
                 area: 'town',
                 bgm: 'shopping',
-                // map-editor.html (タイルペイント版) で生成
+                // walkability-editor で生成（shopping_district レイアウトを反映）
                 walkableRects: [
-                    { x: 0,   y: 376, width: 800, height: 16 },
-                    { x: 0,   y: 184, width: 280, height: 32 },
-                    { x: 512, y: 184, width: 272, height: 32 },
-                    { x: 360, y: 48,  width: 64,  height: 112 },
-                    { x: 320, y: 152, width: 40,  height: 176 },
-                    { x: 0,   y: 392, width: 728, height: 8 },
-                    { x: 424, y: 144, width: 24,  height: 224 },
-                    { x: 56,  y: 400, width: 632, height: 8 },
-                    { x: 360, y: 256, width: 64,  height: 48 },
-                    { x: 256, y: 96,  width: 104, height: 24 },
-                    { x: 424, y: 96,  width: 96,  height: 24 },
-                    { x: 256, y: 128, width: 48,  height: 48 },
-                    { x: 512, y: 232, width: 48,  height: 48 },
-                    { x: 520, y: 368, width: 280, height: 8 },
-                    { x: 256, y: 216, width: 24,  height: 88 },
-                    { x: 512, y: 120, width: 32,  height: 64 },
-                    { x: 448, y: 152, width: 16,  height: 128 },
-                    { x: 360, y: 344, width: 64,  height: 32 },
-                    { x: 56,  y: 176, width: 232, height: 8 },
-                    { x: 656, y: 152, width: 40,  height: 32 },
-                    { x: 424, y: 408, width: 152, height: 8 },
-                    { x: 592, y: 360, width: 136, height: 8 },
-                    { x: 104, y: 144, width: 32,  height: 32 },
-                    { x: 96,  y: 368, width: 128, height: 8 },
-                    { x: 264, y: 304, width: 56,  height: 16 },
-                    { x: 312, y: 152, width: 8,   height: 104 },
-                    { x: 504, y: 216, width: 96,  height: 8 },
-                    { x: 336, y: 328, width: 24,  height: 32 },
-                    { x: 376, y: 32,  width: 40,  height: 16 },
-                    { x: 256, y: 120, width: 80,  height: 8 },
-                    { x: 496, y: 120, width: 16,  height: 40 },
-                    { x: 504, y: 224, width: 80,  height: 8 },
-                    { x: 448, y: 280, width: 8,   height: 80 },
-                    { x: 104, y: 344, width: 24,  height: 24 },
-                    { x: 344, y: 120, width: 16,  height: 32 },
-                    { x: 464, y: 160, width: 8,   height: 64 },
-                    { x: 248, y: 216, width: 8,   height: 64 },
-                    { x: 424, y: 120, width: 16,  height: 24 },
-                    { x: 376, y: 160, width: 48,  height: 8 },
-                    { x: 296, y: 320, width: 24,  height: 16 },
-                    { x: 432, y: 88,  width: 40,  height: 8 },
-                    { x: 632, y: 408, width: 40,  height: 8 },
-                    { x: 520, y: 104, width: 16,  height: 16 },
-                    { x: 304, y: 152, width: 8,   height: 32 },
-                    { x: 736, y: 176, width: 32,  height: 8 },
-                    { x: 232, y: 216, width: 16,  height: 16 },
-                    { x: 504, y: 232, width: 8,   height: 32 },
-                    { x: 280, y: 272, width: 8,   height: 32 },
-                    { x: 456, y: 288, width: 8,   height: 32 },
-                    { x: 392, y: 304, width: 32,  height: 8 },
-                    { x: 768, y: 392, width: 32,  height: 8 },
-                    { x: 320, y: 88,  width: 24,  height: 8 },
-                    { x: 664, y: 144, width: 24,  height: 8 },
-                    { x: 96,  y: 152, width: 8,   height: 24 },
-                    { x: 648, y: 216, width: 24,  height: 8 },
-                    { x: 560, y: 248, width: 8,   height: 24 },
-                    { x: 8,   y: 400, width: 24,  height: 8 },
-                    { x: 440, y: 80,  width: 16,  height: 8 },
-                    { x: 488, y: 120, width: 8,   height: 16 },
-                    { x: 328, y: 144, width: 16,  height: 8 },
-                    { x: 648, y: 160, width: 8,   height: 16 },
-                    { x: 504, y: 200, width: 8,   height: 16 },
-                    { x: 528, y: 280, width: 16,  height: 8 },
-                    { x: 288, y: 288, width: 8,   height: 16 },
-                    { x: 328, y: 328, width: 8,   height: 16 },
-                    { x: 128, y: 352, width: 8,   height: 16 },
-                    { x: 344, y: 360, width: 16,  height: 8 },
-                    { x: 424, y: 368, width: 16,  height: 8 },
-                    { x: 368, y: 40,  width: 8,   height: 8 },
-                    { x: 416, y: 40,  width: 8,   height: 8 },
-                    { x: 536, y: 112, width: 8,   height: 8 },
-                    { x: 360, y: 160, width: 8,   height: 8 },
-                    { x: 296, y: 176, width: 8,   height: 8 },
-                    { x: 216, y: 216, width: 8,   height: 8 },
-                    { x: 288, y: 320, width: 8,   height: 8 },
-                    { x: 360, y: 336, width: 8,   height: 8 },
-                    { x: 776, y: 360, width: 8,   height: 8 },
-                    { x: 792, y: 360, width: 8,   height: 8 },
-                    { x: 448, y: 368, width: 8,   height: 8 },
-                    { x: 496, y: 368, width: 8,   height: 8 },
-                    { x: 40,  y: 400, width: 8,   height: 8 }
+                    { x: 329, y: 54,  width: 124, height: 139 },
+                    { x: 360, y: 24,  width: 60,  height: 30  },
+                    { x: 230, y: 86,  width: 97,  height: 81  },
+                    { x: 3,   y: 156, width: 272, height: 63  },
+                    { x: 213, y: 222, width: 62,  height: 66  },
+                    { x: 231, y: 286, width: 130, height: 37  },
+                    { x: 312, y: 165, width: 50,  height: 118 },
+                    { x: 455, y: 92,  width: 110, height: 88  },
+                    { x: 507, y: 184, width: 293, height: 35  },
+                    { x: 565, y: 162, width: 231, height: 21  },
+                    { x: 662, y: 139, width: 27,  height: 19  },
+                    { x: 425, y: 184, width: 42,  height: 143 },
+                    { x: 364, y: 267, width: 59,  height: 33  },
+                    { x: 331, y: 327, width: 28,  height: 79  },
+                    { x: 423, y: 330, width: 30,  height: 74  },
+                    { x: 28,  y: 366, width: 738, height: 39  },
+                    { x: 361, y: 343, width: 63,  height: 22  },
+                    { x: 506, y: 226, width: 62,  height: 101 }
                 ],
                 buildings: [
-                    // 外周の壁のみ
-                    { x: 0,   y: 0,   width: 800, height: 24,  type: 'collision', collisionOnly: true },
-                    { x: 0,   y: 426, width: 800, height: 24,  type: 'collision', collisionOnly: true },
-                    { x: 0,   y: 0,   width: 24,  height: 450, type: 'collision', collisionOnly: true },
-                    { x: 776, y: 0,   width: 24,  height: 450, type: 'collision', collisionOnly: true }
+                    { x: 278, y: 172, width: 36,  height: 110, type: 'collision', collisionOnly: true },
+                    { x: 359, y: 197, width: 65,  height: 65,  type: 'collision', collisionOnly: true },
+                    { x: 468, y: 184, width: 36,  height: 94,  type: 'collision', collisionOnly: true },
+                    { x: 456, y: 36,  width: 123, height: 51,  type: 'collision', collisionOnly: true },
+                    { x: 568, y: 90,  width: 90,  height: 70,  type: 'collision', collisionOnly: true },
+                    { x: 693, y: 93,  width: 107, height: 68,  type: 'collision', collisionOnly: true },
+                    { x: 586, y: 222, width: 181, height: 68,  type: 'collision', collisionOnly: true },
+                    { x: 697, y: 292, width: 70,  height: 73,  type: 'collision', collisionOnly: true },
+                    { x: 572, y: 296, width: 78,  height: 69,  type: 'collision', collisionOnly: true },
+                    { x: 456, y: 328, width: 113, height: 47,  type: 'collision', collisionOnly: true },
+                    { x: 363, y: 304, width: 59,  height: 36,  type: 'collision', collisionOnly: true },
+                    { x: 34,  y: 223, width: 176, height: 66,  type: 'collision', collisionOnly: true },
+                    { x: 140, y: 291, width: 89,  height: 75,  type: 'collision', collisionOnly: true },
+                    { x: 232, y: 328, width: 96,  height: 43,  type: 'collision', collisionOnly: true },
+                    { x: 0,   y: 292, width: 97,  height: 75,  type: 'collision', collisionOnly: true },
+                    { x: 417, y: 411, width: 380, height: 26,  type: 'collision', collisionOnly: true },
+                    { x: 1,   y: 410, width: 361, height: 30,  type: 'collision', collisionOnly: true },
+                    { x: 135, y: 86,  width: 92,  height: 76,  type: 'collision', collisionOnly: true },
+                    { x: 227, y: 22,  width: 101, height: 58,  type: 'collision', collisionOnly: true },
+                    { x: 333, y: 27,  width: 26,  height: 22,  type: 'collision', collisionOnly: true },
+                    { x: 422, y: 27,  width: 29,  height: 19,  type: 'collision', collisionOnly: true },
+                    { x: 1,   y: 82,  width: 98,  height: 69,  type: 'collision', collisionOnly: true }
                 ],
                 exits: [
                     // 本道（北↔中央広場、南↔南通り）
@@ -1268,14 +1220,14 @@ class MapSystem {
                     { x: 364, y: 402, width: 46, height: 35, to: 'shopping_street_south', direction: 'south', spawnX: 400, spawnY: 85  },
                     // 4店舗入口（位置で割当: 上=武器/魔法 下=防具/道具）
                     // ※ 必要なら shop_weapon/shop_armor/shop_item/shop_magic のマッピングを変更
-                    { x: 99,  y: 147, width: 40, height: 37, to: 'shop_weapon', direction: 'north', spawnX: 400, spawnY: 380, visible: false },
-                    { x: 660, y: 149, width: 35, height: 41, to: 'shop_magic',  direction: 'north', spawnX: 400, spawnY: 380, visible: false },
-                    { x: 104, y: 342, width: 31, height: 28, to: 'shop_armor',  direction: 'north', spawnX: 400, spawnY: 380, visible: false },
-                    { x: 656, y: 352, width: 34, height: 27, to: 'shop_item',   direction: 'north', spawnX: 400, spawnY: 380, visible: false }
+                    { x: 99,  y: 147, width: 40, height: 37, to: 'shop_weapon', direction: 'north', spawnX: 400, spawnY: 380, visible: false, autoEnter: true },
+                    { x: 660, y: 149, width: 35, height: 41, to: 'shop_magic',  direction: 'north', spawnX: 400, spawnY: 380, visible: false, autoEnter: true },
+                    { x: 104, y: 342, width: 31, height: 28, to: 'shop_armor',  direction: 'north', spawnX: 400, spawnY: 380, visible: false, autoEnter: true },
+                    { x: 656, y: 352, width: 34, height: 27, to: 'shop_item',   direction: 'north', spawnX: 400, spawnY: 380, visible: false, autoEnter: true }
                 ],
                 npcs: [
                     { x: 110, y: 270, image: 'assets/characters/sprites/merchant_weapon_walk.png', emoji: '🗡️', name: '武器店の呼び込み', dialogue: '武器店は左上の入口から入って、店内スタッフに話しかけてくれ。', static: true },
-                    { x: 245, y: 270, image: 'assets/characters/sprites/merchant_armor_walk.png', emoji: '🛡️', name: '防具店の呼び込み', dialogue: '防具店は左下の建物だ。入口で決定キーを押せば入れる。', static: true },
+                    { x: 245, y: 270, image: 'assets/characters/sprites/merchant_armor_walk.png', emoji: '🛡️', name: '防具店の呼び込み', dialogue: '防具店は左下の建物だ。入口に立てば入れる。', static: true },
                     { x: 555, y: 270, image: 'assets/characters/sprites/merchant_item_walk.png', emoji: '🧪', name: '道具店の呼び込み', dialogue: '道具店は右下。買い物は店内カウンターでどうぞ。', static: true },
                     { x: 695, y: 270, image: 'assets/characters/sprites/merchant_magic_walk.png', emoji: '🔮', name: '魔法店の呼び込み', dialogue: '魔法店は右上の入口だ。中のミコトに聞いてくれ。', static: true }
                 ]
@@ -1392,12 +1344,12 @@ class MapSystem {
                     // 本道
                     { x: 375, y: 15,  width: 52, height: 52, to: 'shopping_street_north', direction: 'north', spawnX: 400, spawnY: 365 },
                     { x: 732, y: 266, width: 35, height: 50, to: 'residential_street',    direction: 'east',  spawnX: 85,  spawnY: 235 },
+                    { x: 24,  y: 296, width: 48, height: 96, to: 'black_market_entrance', direction: 'west',  spawnX: 700, spawnY: 200, visible: false, autoEnter: true },
                     // 店舗入口（位置で割当: 上左=宿屋, 上右=ギルド, 下左=銀行）
-                    { x: 163, y: 134, width: 38, height: 54, to: 'shop_inn',   direction: 'north', spawnX: 400, spawnY: 380, visible: false },
-                    { x: 594, y: 145, width: 43, height: 48, to: 'shop_guild', direction: 'north', spawnX: 400, spawnY: 380, visible: false },
-                    { x: 189, y: 366, width: 27, height: 48, to: 'shop_bank',  direction: 'north', spawnX: 400, spawnY: 380, visible: false }
+                    { x: 163, y: 134, width: 38, height: 54, to: 'shop_inn',   direction: 'north', spawnX: 400, spawnY: 380, visible: false, autoEnter: true },
+                    { x: 594, y: 145, width: 43, height: 48, to: 'shop_guild', direction: 'north', spawnX: 400, spawnY: 380, visible: false, autoEnter: true },
+                    { x: 189, y: 366, width: 27, height: 48, to: 'shop_bank',  direction: 'north', spawnX: 400, spawnY: 380, visible: false, autoEnter: true }
                     // ※ (546, 379) の出口は隣接マップ未定義のため一旦保留
-                    // ※ 西側 (黒市への入口) は walkable に到達ルートが描かれていないため未配置
                 ],
                 npcs: [
                     { x: 160, y: 240, image: 'assets/characters/sprites/innkeeper_walk.png', emoji: '🏠', name: '宿屋の案内人', dialogue: '宿泊は建物の中の受付でお願いします。', static: true },
@@ -1527,7 +1479,7 @@ class MapSystem {
                 exits: [
                     // 東 → 渋谷商業街(南)。spawnは shopping_street_south の左端 walkable 内
                     { x: 752, y: 182, width: 32, height: 32, to: 'shopping_street_south', direction: 'east', spawnX: 50, spawnY: 200 },
-                    { x: 432, y: 234, width: 56, height: 54, to: 'shop_black_market', direction: 'north', spawnX: 400, spawnY: 380, visible: false }
+                    { x: 432, y: 234, width: 56, height: 54, to: 'shop_black_market', direction: 'north', spawnX: 400, spawnY: 380, visible: false, autoEnter: true }
                     // ※ 西 (37, 182) と 南 (361, 389) の出口は隣接マップ未定義のため保留
                 ],
                 npcs: [
@@ -1889,73 +1841,45 @@ class MapSystem {
                 encounterRate: 'none',
                 area: 'garden',
                 bgm: 'biodome',
-                // map-editor.html (タイルペイント版) で生成
+                // walkability-editor で生成（biodome_garden レイアウトを反映）
                 walkableRects: [
-                    { x: 112, y: 208, width: 688, height: 40 },
-                    { x: 376, y: 160, width: 120, height: 48 },
-                    { x: 416, y: 312, width: 40,  height: 136 },
-                    { x: 360, y: 264, width: 128, height: 32 },
-                    { x: 0,   y: 184, width: 48,  height: 80 },
-                    { x: 144, y: 248, width: 440, height: 8 },
-                    { x: 176, y: 176, width: 104, height: 32 },
-                    { x: 416, y: 72,  width: 32,  height: 88 },
-                    { x: 192, y: 256, width: 336, height: 8 },
-                    { x: 48,  y: 208, width: 64,  height: 32 },
-                    { x: 608, y: 296, width: 32,  height: 64 },
-                    { x: 592, y: 200, width: 208, height: 8 },
-                    { x: 280, y: 192, width: 96,  height: 16 },
-                    { x: 608, y: 248, width: 192, height: 8 },
-                    { x: 176, y: 136, width: 32,  height: 40 },
-                    { x: 208, y: 264, width: 152, height: 8 },
-                    { x: 456, y: 384, width: 16,  height: 64 },
-                    { x: 416, y: 48,  width: 40,  height: 24 },
-                    { x: 608, y: 272, width: 40,  height: 24 },
-                    { x: 608, y: 256, width: 112, height: 8 },
-                    { x: 368, y: 296, width: 112, height: 8 },
-                    { x: 616, y: 184, width: 48,  height: 16 },
-                    { x: 376, y: 304, width: 96,  height: 8 },
-                    { x: 400, y: 400, width: 16,  height: 48 },
-                    { x: 608, y: 264, width: 88,  height: 8 },
-                    { x: 8,   y: 168, width: 32,  height: 16 },
-                    { x: 0,   y: 272, width: 32,  height: 16 },
-                    { x: 208, y: 272, width: 48,  height: 8 },
-                    { x: 48,  y: 200, width: 40,  height: 8 },
-                    { x: 0,   y: 264, width: 40,  height: 8 },
-                    { x: 472, y: 392, width: 8,   height: 40 },
-                    { x: 448, y: 144, width: 16,  height: 16 },
-                    { x: 216, y: 280, width: 32,  height: 8 },
-                    { x: 640, y: 312, width: 8,   height: 32 },
-                    { x: 392, y: 416, width: 8,   height: 32 },
-                    { x: 408, y: 136, width: 8,   height: 24 },
-                    { x: 248, y: 168, width: 24,  height: 8 },
-                    { x: 368, y: 168, width: 8,   height: 24 },
-                    { x: 664, y: 192, width: 24,  height: 8 },
-                    { x: 408, y: 376, width: 8,   height: 24 },
-                    { x: 432, y: 40,  width: 16,  height: 8 },
-                    { x: 376, y: 152, width: 16,  height: 8 },
-                    { x: 464, y: 152, width: 16,  height: 8 },
-                    { x: 496, y: 168, width: 8,   height: 16 },
-                    { x: 496, y: 192, width: 8,   height: 16 },
-                    { x: 48,  y: 240, width: 16,  height: 8 },
-                    { x: 320, y: 272, width: 16,  height: 8 },
-                    { x: 344, y: 272, width: 16,  height: 8 },
-                    { x: 8,   y: 288, width: 16,  height: 8 },
-                    { x: 192, y: 128, width: 8,   height: 8 },
-                    { x: 208, y: 144, width: 8,   height: 8 },
-                    { x: 208, y: 168, width: 8,   height: 8 },
-                    { x: 48,  y: 192, width: 8,   height: 8 },
-                    { x: 608, y: 192, width: 8,   height: 8 },
-                    { x: 576, y: 200, width: 8,   height: 8 },
-                    { x: 48,  y: 248, width: 8,   height: 8 },
-                    { x: 536, y: 256, width: 8,   height: 8 },
-                    { x: 288, y: 272, width: 8,   height: 8 }
+                    { x: 417, y: 71,  width: 32,  height: 87  },
+                    { x: 371, y: 159, width: 123, height: 42  },
+                    { x: 37,  y: 199, width: 761, height: 59  },
+                    { x: 177, y: 156, width: 27,  height: 41  },
+                    { x: 252, y: 156, width: 23,  height: 40  },
+                    { x: 205, y: 178, width: 43,  height: 17  },
+                    { x: 201, y: 260, width: 67,  height: 41  },
+                    { x: 269, y: 261, width: 229, height: 9   },
+                    { x: 366, y: 273, width: 132, height: 43  },
+                    { x: 413, y: 321, width: 45,  height: 76  },
+                    { x: 406, y: 399, width: 17,  height: 18  },
+                    { x: 444, y: 401, width: 14,  height: 16  },
+                    { x: 615, y: 260, width: 77,  height: 14  },
+                    { x: 614, y: 276, width: 32,  height: 119 },
+                    { x: 408, y: 421, width: 51,  height: 24  }
                 ],
                 buildings: [
-                    // 外周の壁のみ
-                    { x: 0,   y: 0,   width: 800, height: 24,  type: 'collision', collisionOnly: true },
-                    { x: 0,   y: 426, width: 800, height: 24,  type: 'collision', collisionOnly: true },
-                    { x: 0,   y: 0,   width: 24,  height: 450, type: 'collision', collisionOnly: true },
-                    { x: 776, y: 0,   width: 24,  height: 450, type: 'collision', collisionOnly: true }
+                    { x: 452, y: 71,  width: 348, height: 87,  type: 'collision', collisionOnly: true },
+                    { x: 499, y: 161, width: 106, height: 40,  type: 'collision', collisionOnly: true },
+                    { x: 657, y: 166, width: 143, height: 29,  type: 'collision', collisionOnly: true },
+                    { x: 461, y: 318, width: 50,  height: 123, type: 'collision', collisionOnly: true },
+                    { x: 500, y: 263, width: 111, height: 55,  type: 'collision', collisionOnly: true },
+                    { x: 513, y: 319, width: 96,  height: 45,  type: 'collision', collisionOnly: true },
+                    { x: 514, y: 367, width: 64,  height: 82,  type: 'collision', collisionOnly: true },
+                    { x: 582, y: 400, width: 217, height: 48,  type: 'collision', collisionOnly: true },
+                    { x: 649, y: 279, width: 147, height: 115, type: 'collision', collisionOnly: true },
+                    { x: 696, y: 257, width: 102, height: 18,  type: 'collision', collisionOnly: true },
+                    { x: 1,   y: 77,  width: 414, height: 76,  type: 'collision', collisionOnly: true },
+                    { x: 278, y: 155, width: 94,  height: 36,  type: 'collision', collisionOnly: true },
+                    { x: 46,  y: 157, width: 127, height: 34,  type: 'collision', collisionOnly: true },
+                    { x: 207, y: 156, width: 42,  height: 17,  type: 'collision', collisionOnly: true },
+                    { x: 31,  y: 265, width: 168, height: 125, type: 'collision', collisionOnly: true },
+                    { x: 202, y: 304, width: 67,  height: 84,  type: 'collision', collisionOnly: true },
+                    { x: 269, y: 272, width: 95,  height: 112, type: 'collision', collisionOnly: true },
+                    { x: 366, y: 316, width: 45,  height: 68,  type: 'collision', collisionOnly: true },
+                    { x: 32,  y: 390, width: 369, height: 59,  type: 'collision', collisionOnly: true },
+                    { x: 425, y: 399, width: 16,  height: 19,  type: 'collision', collisionOnly: true }
                 ],
                 exits: [
                     // 西 → 明治神宮 南参道。spawnは shrine の東側 walkable 内
@@ -1975,16 +1899,17 @@ class MapSystem {
     }
 
     applyWalkabilityOverrides() {
-        const previewEnabled = (() => {
+        const overridesDisabled = (() => {
             try {
                 const params = new URLSearchParams(window.location.search || '');
-                return params.get('walkabilityPreview') === '1';
+                const value = params.get('walkabilityPreview');
+                return value === '0' || value === 'false' || value === 'off';
             } catch {
                 return false;
             }
         })();
 
-        if (!previewEnabled) return;
+        if (overridesDisabled || typeof localStorage === 'undefined') return;
 
         const storageKeys = [
             'rpg-map-editor-v1',
@@ -2007,7 +1932,8 @@ class MapSystem {
         });
 
         Object.entries(overrides).forEach(([mapId, data]) => {
-            const map = this.maps[mapId];
+            const targetMapId = this.normalizeMapId(mapId);
+            const map = this.maps[targetMapId] || this.maps[mapId];
             if (!map || !data) return;
 
             const scale = map.worldScale || 1;
@@ -2033,6 +1959,7 @@ class MapSystem {
                 const spawnX = Number(exit.spawnX);
                 const spawnY = Number(exit.spawnY);
                 return {
+                    ...exit,
                     ...rect,
                     to: exit.to || '',
                     direction: exit.direction || '',
@@ -2063,6 +1990,7 @@ class MapSystem {
             }
 
             this.constrainMapNPCsToWalkable(map);
+            console.log(`[Map] Applied walkability override: ${mapId} -> ${targetMapId}`);
         });
     }
 
@@ -2095,7 +2023,9 @@ class MapSystem {
                 originY: Math.round(npc.y * scale),
                 wanderRadius: npc.static ? 0 : Math.round((npc.hostile ? 18 : 12) * scale),
                 wanderPhase: Math.random() * Math.PI * 2,
-                wanderSpeed: npc.hostile ? 0.0007 : 0.00045
+                wanderSpeed: npc.hostile ? 0.0007 : 0.00045,
+                facing: npc.facing || 'down',
+                animTime: 0
             }));
             this.constrainMapNPCsToWalkable(map);
         }
@@ -2129,6 +2059,121 @@ class MapSystem {
             tokyo_gov_floor3: 'assets/maps/tokyo_gov_approach.png'
         };
 
+        // legacy マップ用の詳細 walkable データ（walkability-editor で生成）
+        const legacyWalkabilityDetails = {
+            deep_tunnel_boss: {
+                walkableRects: [
+                    { x: 226, y: 94,  width: 71,  height: 82  },
+                    { x: 299, y: 116, width: 151, height: 58  },
+                    { x: 452, y: 103, width: 116, height: 47  },
+                    { x: 484, y: 151, width: 46,  height: 80  },
+                    { x: 532, y: 148, width: 130, height: 24  },
+                    { x: 282, y: 180, width: 37,  height: 46  },
+                    { x: 344, y: 175, width: 107, height: 232 },
+                    { x: 186, y: 270, width: 432, height: 39  },
+                    { x: 178, y: 227, width: 51,  height: 46  },
+                    { x: 158, y: 251, width: 122, height: 33  },
+                    { x: 574, y: 174, width: 45,  height: 28  },
+                    { x: 683, y: 151, width: 67,  height: 30  },
+                    { x: 682, y: 182, width: 48,  height: 111 },
+                    { x: 646, y: 267, width: 54,  height: 113 },
+                    { x: 453, y: 357, width: 193, height: 24  },
+                    { x: 574, y: 332, width: 46,  height: 23  },
+                    { x: 732, y: 208, width: 50,  height: 32  },
+                    { x: 32,  y: 154, width: 87,  height: 31  },
+                    { x: 72,  y: 191, width: 49,  height: 85  },
+                    { x: 3,   y: 204, width: 65,  height: 36  },
+                    { x: 92,  y: 283, width: 63,  height: 98  },
+                    { x: 127, y: 266, width: 29,  height: 14  },
+                    { x: 157, y: 356, width: 187, height: 25  },
+                    { x: 188, y: 335, width: 41,  height: 17  }
+                ],
+                collisionRects: [
+                    { x: 453, y: 154, width: 30,  height: 113 },
+                    { x: 488, y: 233, width: 43,  height: 26  },
+                    { x: 529, y: 175, width: 44,  height: 75  },
+                    { x: 576, y: 207, width: 48,  height: 17  },
+                    { x: 620, y: 182, width: 26,  height: 74  },
+                    { x: 648, y: 199, width: 33,  height: 68  },
+                    { x: 666, y: 148, width: 14,  height: 52  },
+                    { x: 677, y: 136, width: 90,  height: 13  },
+                    { x: 732, y: 186, width: 68,  height: 17  },
+                    { x: 751, y: 152, width: 49,  height: 26  },
+                    { x: 570, y: 59,  width: 102, height: 88  },
+                    { x: 4,   y: 75,  width: 221, height: 78  },
+                    { x: 95,  y: 3,   width: 246, height: 63  },
+                    { x: 247, y: 71,  width: 104, height: 20  },
+                    { x: 298, y: 93,  width: 54,  height: 21  },
+                    { x: 230, y: 179, width: 50,  height: 68  },
+                    { x: 122, y: 157, width: 11,  height: 104 },
+                    { x: 156, y: 178, width: 21,  height: 74  },
+                    { x: 180, y: 206, width: 46,  height: 17  },
+                    { x: 137, y: 211, width: 20,  height: 51  },
+                    { x: 1,   y: 157, width: 28,  height: 40  },
+                    { x: 30,  y: 188, width: 40,  height: 13  },
+                    { x: 4,   y: 244, width: 54,  height: 37  },
+                    { x: 4,   y: 281, width: 85,  height: 155 },
+                    { x: 90,  y: 387, width: 91,  height: 52  },
+                    { x: 182, y: 384, width: 163, height: 59  },
+                    { x: 157, y: 287, width: 28,  height: 64  },
+                    { x: 186, y: 316, width: 56,  height: 15  },
+                    { x: 233, y: 310, width: 86,  height: 44  },
+                    { x: 320, y: 179, width: 23,  height: 73  },
+                    { x: 284, y: 231, width: 33,  height: 27  },
+                    { x: 323, y: 312, width: 20,  height: 34  },
+                    { x: 462, y: 310, width: 109, height: 45  },
+                    { x: 574, y: 317, width: 43,  height: 13  },
+                    { x: 623, y: 285, width: 21,  height: 61  },
+                    { x: 736, y: 244, width: 64,  height: 190 },
+                    { x: 705, y: 296, width: 28,  height: 83  },
+                    { x: 452, y: 383, width: 284, height: 54  }
+                ]
+            },
+            tokyo_gov_floor3: {
+                walkableRects: [
+                    { x: 49,  y: 160, width: 73,  height: 26  },
+                    { x: 3,   y: 203, width: 115, height: 51  },
+                    { x: 67,  y: 161, width: 48,  height: 129 },
+                    { x: 89,  y: 260, width: 263, height: 28  },
+                    { x: 352, y: 259, width: 378, height: 30  },
+                    { x: 684, y: 168, width: 73,  height: 15  },
+                    { x: 685, y: 186, width: 47,  height: 98  },
+                    { x: 734, y: 206, width: 51,  height: 32  },
+                    { x: 352, y: 88,  width: 99,  height: 321 },
+                    { x: 270, y: 119, width: 84,  height: 50  },
+                    { x: 453, y: 115, width: 80,  height: 49  },
+                    { x: 105, y: 287, width: 45,  height: 87  },
+                    { x: 155, y: 349, width: 548, height: 26  },
+                    { x: 644, y: 292, width: 57,  height: 57  }
+                ],
+                collisionRects: [
+                    { x: 451, y: 168, width: 40,  height: 87  },
+                    { x: 497, y: 219, width: 184, height: 36  },
+                    { x: 636, y: 132, width: 46,  height: 80  },
+                    { x: 688, y: 90,  width: 111, height: 72  },
+                    { x: 761, y: 164, width: 32,  height: 19  },
+                    { x: 738, y: 187, width: 47,  height: 14  },
+                    { x: 737, y: 243, width: 57,  height: 197 },
+                    { x: 626, y: 378, width: 105, height: 53  },
+                    { x: 705, y: 293, width: 28,  height: 82  },
+                    { x: 455, y: 292, width: 186, height: 54  },
+                    { x: 154, y: 294, width: 196, height: 54  },
+                    { x: 106, y: 379, width: 242, height: 60  },
+                    { x: 455, y: 379, width: 168, height: 56  },
+                    { x: 123, y: 149, width: 144, height: 108 },
+                    { x: 269, y: 173, width: 82,  height: 83  },
+                    { x: 275, y: 63,  width: 73,  height: 53  },
+                    { x: 454, y: 74,  width: 82,  height: 37  },
+                    { x: 538, y: 120, width: 95,  height: 49  },
+                    { x: 497, y: 169, width: 37,  height: 25  },
+                    { x: 0,   y: 98,  width: 127, height: 59  },
+                    { x: 0,   y: 161, width: 42,  height: 38  },
+                    { x: 5,   y: 262, width: 59,  height: 31  },
+                    { x: 30,  y: 294, width: 70,  height: 88  }
+                ]
+            }
+        };
+
         Object.entries(fallbackMapImages).forEach(([mapId, image]) => {
             const map = this.maps[mapId];
             if (!map) return;
@@ -2136,10 +2181,22 @@ class MapSystem {
             map.image = map.image || image;
             map.gridColor = 'transparent';
             map.drawProceduralObjects = false;
-            map.buildings = [];
-            map.walkableRects = [
-                { x: 18, y: 18, width: this.baseWidth - 36, height: this.baseHeight - 36 }
-            ];
+
+            const detail = legacyWalkabilityDetails[mapId];
+            if (detail && Array.isArray(detail.walkableRects) && detail.walkableRects.length > 0) {
+                map.walkableRects = detail.walkableRects.map(rect => ({ ...rect }));
+                map.buildings = (detail.collisionRects || []).map(rect => ({
+                    ...rect,
+                    type: 'collision',
+                    collisionOnly: true
+                }));
+            } else {
+                map.buildings = [];
+                map.walkableRects = [
+                    { x: 18, y: 18, width: this.baseWidth - 36, height: this.baseHeight - 36 }
+                ];
+            }
+
             this.prepareScrollableMap(map);
         });
 
@@ -2189,31 +2246,146 @@ class MapSystem {
             'shop_black_market'
         ];
 
+        const shopNpcLayouts = {
+            shop_weapon: {
+                '武器商人リョウ': { x: 400, y: 292 }
+            },
+            shop_armor: {
+                '防具商人サクラ': { x: 400, y: 292 }
+            },
+            shop_item: {
+                'アイテム商人ユウキ': { x: 400, y: 292 }
+            },
+            shop_magic: {
+                '魔法商人ミコト': { x: 400, y: 292 }
+            },
+            shop_inn: {
+                '宿屋の主人': { x: 400, y: 292 }
+            },
+            shop_guild: {
+                'ギルドマスター': { x: 400, y: 292 },
+                '冒険者A': { x: 300, y: 355 },
+                '冒険者B': { x: 500, y: 355 }
+            },
+            shop_bank: {
+                '銀行員': { x: 400, y: 335 }
+            },
+            shop_black_market: {
+                '闇商人': { x: 400, y: 292 }
+            }
+        };
+
+        // walkability-editor で個別調整したショップの詳細データ
+        const shopWalkabilityDetails = {
+            shop_bank: {
+                walkableRects: [
+                    { x: 350, y: 405, width: 100, height: 45  },
+                    { x: 125, y: 141, width: 103, height: 59  },
+                    { x: 554, y: 151, width: 147, height: 53  },
+                    { x: 234, y: 174, width: 316, height: 37  },
+                    { x: 158, y: 205, width: 86,  height: 179 },
+                    { x: 544, y: 203, width: 104, height: 184 },
+                    { x: 139, y: 330, width: 16,  height: 64  },
+                    { x: 247, y: 308, width: 296, height: 43  },
+                    { x: 489, y: 355, width: 57,  height: 35  },
+                    { x: 248, y: 357, width: 44,  height: 39  },
+                    { x: 345, y: 353, width: 99,  height: 48  }
+                ],
+                collisionRects: [
+                    { x: 0,   y: 0,   width: 800, height: 58  },
+                    { x: 0,   y: 0,   width: 24,  height: 450 },
+                    { x: 776, y: 0,   width: 24,  height: 450 },
+                    { x: 72,  y: 205, width: 82,  height: 121 },
+                    { x: 650, y: 205, width: 82,  height: 121 },
+                    { x: 246, y: 218, width: 296, height: 85  },
+                    { x: 230, y: 75,  width: 321, height: 95  },
+                    { x: 555, y: 64,  width: 201, height: 83  },
+                    { x: 707, y: 153, width: 67,  height: 45  },
+                    { x: 26,  y: 67,  width: 202, height: 71  },
+                    { x: 24,  y: 147, width: 101, height: 54  },
+                    { x: 80,  y: 331, width: 57,  height: 60  },
+                    { x: 83,  y: 399, width: 211, height: 36  },
+                    { x: 294, y: 355, width: 47,  height: 88  },
+                    { x: 445, y: 358, width: 39,  height: 43  },
+                    { x: 489, y: 393, width: 283, height: 52  },
+                    { x: 649, y: 328, width: 110, height: 55  }
+                ]
+            },
+            shop_black_market: {
+                walkableRects: [
+                    { x: 350, y: 405, width: 100, height: 45  },
+                    { x: 338, y: 200, width: 126, height: 164 },
+                    { x: 352, y: 366, width: 98,  height: 42  }
+                ],
+                collisionRects: [
+                    { x: 0,   y: 0,   width: 800, height: 58  },
+                    { x: 0,   y: 0,   width: 24,  height: 450 },
+                    { x: 776, y: 0,   width: 24,  height: 450 },
+                    { x: 466, y: 189, width: 288, height: 218 },
+                    { x: 297, y: 122, width: 199, height: 77  },
+                    { x: 78,  y: 122, width: 250, height: 304 },
+                    { x: 452, y: 363, width: 24,  height: 68  },
+                    { x: 322, y: 368, width: 27,  height: 73  }
+                ]
+            }
+        };
+
         shopMapIds.forEach(mapId => {
             const map = this.maps[mapId];
             if (!map) return;
 
             map.gridColor = 'transparent';
             map.drawProceduralObjects = false;
-            map.walkableRects = [
-                { x: 24, y: 72, width: 752, height: 354 }
-            ];
-            map.buildings = [
-                { x: 0, y: 0, width: 800, height: 24, type: 'collision', collisionOnly: true },
-                { x: 0, y: 0, width: 18, height: 450, type: 'collision', collisionOnly: true },
-                { x: 782, y: 0, width: 18, height: 450, type: 'collision', collisionOnly: true },
-                { x: 0, y: 426, width: 800, height: 24, type: 'collision', collisionOnly: true },
-                { x: 48, y: 112, width: 170, height: 230, type: 'collision', collisionOnly: true },
-                { x: 582, y: 112, width: 170, height: 230, type: 'collision', collisionOnly: true },
-                { x: 235, y: 126, width: 330, height: 96, type: 'collision', collisionOnly: true }
-            ];
+
+            const detail = shopWalkabilityDetails[mapId];
+            if (detail && Array.isArray(detail.walkableRects) && detail.walkableRects.length > 0) {
+                map.walkableRects = detail.walkableRects.map(rect => ({ ...rect }));
+                map.buildings = (detail.collisionRects || []).map(rect => ({
+                    ...rect,
+                    type: 'collision',
+                    collisionOnly: true
+                }));
+            } else {
+                map.walkableRects = [
+                    { x: 24, y: 72, width: 752, height: 354 }
+                ];
+                map.buildings = [
+                    { x: 0, y: 0, width: 800, height: 24, type: 'collision', collisionOnly: true },
+                    { x: 0, y: 0, width: 18, height: 450, type: 'collision', collisionOnly: true },
+                    { x: 782, y: 0, width: 18, height: 450, type: 'collision', collisionOnly: true },
+                    { x: 0, y: 426, width: 800, height: 24, type: 'collision', collisionOnly: true },
+                    { x: 48, y: 112, width: 170, height: 230, type: 'collision', collisionOnly: true },
+                    { x: 582, y: 112, width: 170, height: 230, type: 'collision', collisionOnly: true },
+                    { x: 235, y: 126, width: 330, height: 96, type: 'collision', collisionOnly: true }
+                ];
+            }
+
+            const npcLayout = shopNpcLayouts[mapId] || {};
+            (map.npcs || []).forEach(npc => {
+                const layout = npcLayout[npc.name];
+                if (!layout) return;
+
+                npc.x = layout.x;
+                npc.y = layout.y;
+                npc.originX = layout.x;
+                npc.originY = layout.y;
+                npc.facing = 'down';
+                npc.static = true;
+            });
+
             this.constrainMapNPCsToWalkable(map);
         });
     }
 
     removeLegacyMapDuplicates() {
         const legacyAliases = {
+            shinjuku_city: 'shinjuku_center_plaza',
+            subway_entrance: 'shinjuku_station_gate',
+            biodome_garden: 'biodome_gate',
+            shrine_path: 'shrine_south_gate',
+            tokyo_gov: 'tokyo_gov_approach',
             shopping_district: 'shopping_street_north',
+            residential_area: 'residential_street',
             black_market: 'black_market_entrance'
         };
 
@@ -2265,60 +2437,129 @@ class MapSystem {
 
     getSpawnPoint(exit, canvas) {
         const targetMap = this.normalizeMapId(exit.to);
+        const map = this.maps[targetMap];
         const scale = this.getMapScale(targetMap);
+        let spawn;
 
         if (Number.isFinite(exit.spawnX) && Number.isFinite(exit.spawnY)) {
-            return {
+            // 【店からの退出時のみ】手書きの spawnX/spawnY は worldScale(=1.55)と
+            // 噛み合わず、スケール後の入口判定の外側／壁の向こうに落ちて再入店不能になる。
+            // → 戻り先マップにある「元の店へ通じる入口」のスケール済みボックスの
+            //   直下（歩行可能床）へアンカーし直す。通常の街↔街遷移には影響させない。
+            const fromMapObj = this.previousMap
+                ? this.maps[this.normalizeMapId(this.previousMap)]
+                : null;
+            if (fromMapObj && fromMapObj.area === 'shop' && map && map.exits) {
+                const back = map.exits.find(e =>
+                    this.normalizeMapId(e.to) === this.normalizeMapId(this.previousMap));
+                if (back) {
+                    const doorScale = map.worldScale && map.worldScale > 0 ? map.worldScale : 1;
+                    const cx = back.x + back.width / 2;
+                    const cy = back.y + back.height + Math.round(28 * doorScale);
+                    return this.findSafeSpawnPoint(map, cx, cy, 24);
+                }
+            }
+
+            spawn = {
                 x: Math.round(exit.spawnX * scale),
                 y: Math.round(exit.spawnY * scale)
             };
+            return this.findSafeSpawnPoint(map, spawn.x, spawn.y, 24);
         }
 
         const width = (canvas ? canvas.width : this.baseWidth) * scale;
         const height = (canvas ? canvas.height : this.baseHeight) * scale;
 
-        if (exit.direction === 'north') return { x: Math.round(width / 2), y: Math.round(height - 90 * scale) };
-        if (exit.direction === 'south') return { x: Math.round(width / 2), y: Math.round(70 * scale) };
-        if (exit.direction === 'west') return { x: Math.round(width - 90 * scale), y: Math.round(height / 2) };
-        if (exit.direction === 'east') return { x: Math.round(90 * scale), y: Math.round(height / 2) };
+        if (exit.direction === 'north') spawn = { x: Math.round(width / 2), y: Math.round(height - 90 * scale) };
+        else if (exit.direction === 'south') spawn = { x: Math.round(width / 2), y: Math.round(70 * scale) };
+        else if (exit.direction === 'west') spawn = { x: Math.round(width - 90 * scale), y: Math.round(height / 2) };
+        else if (exit.direction === 'east') spawn = { x: Math.round(90 * scale), y: Math.round(height / 2) };
+        else spawn = { x: Math.round(width / 2), y: Math.round(height / 2) };
 
-        return { x: Math.round(width / 2), y: Math.round(height / 2) };
+        return this.findSafeSpawnPoint(map, spawn.x, spawn.y, 24);
     }
 
-    preloadMapImages() {
-        Object.values(this.maps).forEach(map => {
-            if (!map.image || this.mapImages[map.image]) return;
-
-            const image = new Image();
-            image.src = `${map.image}?v=${this.assetVersion}`;
-            image.onload = () => {
-                console.log(`[Map] Loaded image: ${map.image}`);
-            };
-            image.onerror = () => {
-                console.warn(`[Map] Failed to load image: ${map.image}`);
-            };
-            this.mapImages[map.image] = image;
-        });
+    getOptimizedImagePath(path) {
+        if (typeof path !== 'string') return path;
+        const webpEligible = (
+            path.startsWith('assets/maps/') ||
+            path.startsWith('assets/characters/') ||
+            path.startsWith('assets/enemies/')
+        );
+        if (webpEligible && path.endsWith('.png')) {
+            return path.replace(/\.png$/, '.webp');
+        }
+        return path;
     }
 
-    preloadSpriteImages() {
-        const paths = new Set(Object.values(this.npcSpriteMap));
-        Object.values(this.maps).forEach(map => {
-            (map.npcs || []).forEach(npc => {
-                const path = npc.image || this.npcSpriteMap[npc.name];
-                if (path) paths.add(path);
-            });
+    getOptimizedMapImagePath(path) {
+        return this.getOptimizedImagePath(path);
+    }
+
+    loadImageWithFallback(cache, cacheKey, originalPath, label = 'Image') {
+        if (!originalPath) return null;
+        if (cache[cacheKey]) return cache[cacheKey];
+
+        const image = new Image();
+        const optimizedPath = this.getOptimizedImagePath(originalPath);
+        let usingFallback = optimizedPath === originalPath;
+
+        image.decoding = 'async';
+        image.onload = () => {
+            console.log(`[${label}] Loaded image: ${usingFallback ? originalPath : optimizedPath}`);
+        };
+        image.onerror = () => {
+            if (!usingFallback) {
+                console.warn(`[${label}] Failed to load optimized image: ${optimizedPath}. Falling back to ${originalPath}`);
+                usingFallback = true;
+                image.src = `${originalPath}?v=${this.assetVersion}`;
+                return;
+            }
+            console.warn(`[${label}] Failed to load image: ${originalPath}`);
+        };
+
+        cache[cacheKey] = image;
+        image.src = `${optimizedPath}?v=${this.assetVersion}`;
+        return image;
+    }
+
+    loadMapImage(mapOrId) {
+        const map = typeof mapOrId === 'string'
+            ? this.maps[this.normalizeMapId(mapOrId)]
+            : mapOrId;
+        if (!map || !map.image) return null;
+        return this.loadImageWithFallback(this.mapImages, map.image, map.image, 'Map');
+    }
+
+    loadSpriteImage(path) {
+        if (!path) return null;
+        return this.loadImageWithFallback(this.spriteImages, path, path, 'Sprite');
+    }
+
+    preloadMapImages(mapId = this.currentMap) {
+        this.loadMapImage(mapId);
+    }
+
+    preloadAdjacentMapImages(mapId = this.currentMap) {
+        const map = this.maps[this.normalizeMapId(mapId)];
+        if (!map || !Array.isArray(map.exits)) return;
+
+        const adjacentMapIds = new Set();
+        map.exits.forEach(exit => {
+            const targetMapId = exit && exit.to ? this.normalizeMapId(exit.to) : null;
+            if (targetMapId && this.maps[targetMapId]) adjacentMapIds.add(targetMapId);
         });
 
-        paths.forEach(path => {
-            if (this.spriteImages[path]) return;
+        adjacentMapIds.forEach(targetMapId => this.loadMapImage(targetMapId));
+    }
 
-            const image = new Image();
-            image.src = path;
-            image.onerror = () => {
-                console.warn(`[Sprite] Failed to load image: ${path}`);
-            };
-            this.spriteImages[path] = image;
+    preloadSpriteImages(mapId = this.currentMap) {
+        const map = this.maps[this.normalizeMapId(mapId)];
+        if (!map || !Array.isArray(map.npcs)) return;
+
+        map.npcs.forEach(npc => {
+            const path = this.getNPCSpritePath(npc);
+            this.loadSpriteImage(path);
         });
     }
 
@@ -2338,6 +2579,15 @@ class MapSystem {
 
     getDirectionRow(direction = 'down') {
         return this.walkSprite.rows[direction] ?? this.walkSprite.rows.down;
+    }
+
+    computeWalkFrame(facing, isMoving, animTimeMs) {
+        const ws = this.walkSprite;
+        const row = ws.rows[facing] ?? ws.rows.down;
+        let col;
+        if (!isMoving) { col = ws.idleFrame; }
+        else { const seq = ws.frameSequence; const idx = Math.floor((animTimeMs / 1000) * ws.fps) % seq.length; col = seq[idx]; }
+        return { sx: col * ws.frameWidth, sy: row * ws.frameHeight, sw: ws.frameWidth, sh: ws.frameHeight };
     }
 
     updateFacingFromDelta(npc, dx, dy) {
@@ -2408,9 +2658,10 @@ class MapSystem {
         ctx.fillStyle = map.bgColor;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        if (map.image && this.mapImages[map.image] && this.mapImages[map.image].complete) {
+        const mapImage = map.image ? this.loadMapImage(map) : null;
+        if (mapImage && mapImage.complete && mapImage.naturalWidth > 0) {
             const bounds = this.getMapBounds();
-            ctx.drawImage(this.mapImages[map.image], -this.camera.x, -this.camera.y, bounds.width, bounds.height);
+            ctx.drawImage(mapImage, -this.camera.x, -this.camera.y, bounds.width, bounds.height);
         }
         
         // グリッド
@@ -2641,7 +2892,7 @@ class MapSystem {
 
         map.npcs.forEach(npc => {
             const spritePath = this.getNPCSpritePath(npc);
-            const sprite = spritePath ? this.spriteImages[spritePath] : null;
+            const sprite = spritePath ? this.loadSpriteImage(spritePath) : null;
             const position = this.worldToScreenPoint(npc.x, npc.y);
 
             // 影（NPCも濃く・大きく）
@@ -2654,24 +2905,23 @@ class MapSystem {
 
             if (sprite && sprite.complete && sprite.naturalWidth > 0) {
                 if (this.isWalkSpriteSheet(spritePath, sprite)) {
-                    const row = this.getDirectionRow(npc.facing);
-                    const phaseOffset = Math.floor((npc.wanderPhase || 0) * 10);
-                    const frame = npc.isMoving
-                        ? Math.floor(performance.now() / 130 + phaseOffset) % this.walkSprite.frames
-                        : Math.floor(performance.now() / 520 + phaseOffset) % this.walkSprite.frames;
-                    const drawWidth = npc.hostile ? 60 : 54;
-                    const drawHeight = npc.hostile ? 76 : 69;
+                    const f = this.computeWalkFrame(npc.facing, npc.isMoving, npc.animTime || 0);
+                    const drawWidth = npc.hostile ? 56 : 48;
+                    const drawHeight = npc.hostile ? 72 : 62;
+                    const previousSmoothing = ctx.imageSmoothingEnabled;
+                    ctx.imageSmoothingEnabled = false;
                     ctx.drawImage(
                         sprite,
-                        frame * this.walkSprite.frameWidth,
-                        row * this.walkSprite.frameHeight,
-                        this.walkSprite.frameWidth,
-                        this.walkSprite.frameHeight,
+                        f.sx,
+                        f.sy,
+                        f.sw,
+                        f.sh,
                         position.x - drawWidth / 2,
                         position.y - drawHeight + 6,
                         drawWidth,
                         drawHeight
                     );
+                    ctx.imageSmoothingEnabled = previousSmoothing;
                 } else {
                     const size = npc.hostile ? 50 : 44;
                     ctx.drawImage(sprite, position.x - size / 2, position.y - size, size, size * 1.25);
@@ -2707,7 +2957,10 @@ class MapSystem {
         });
     }
 
-    updateNPCs(now = performance.now()) {
+    updateNPCs() {
+        const now = performance.now();
+        const dt = this._lastNpcUpdate ? (now - this._lastNpcUpdate) : 16;
+        this._lastNpcUpdate = now;
         const map = this.maps[this.currentMap];
         if (!map || !map.npcs) return;
 
@@ -2764,6 +3017,7 @@ class MapSystem {
             const dy = npc.y - oldY;
             npc.isMoving = Math.hypot(dx, dy) > 0.2;
             this.updateFacingFromDelta(npc, dx, dy);
+            if (npc.isMoving) { npc.animTime = (npc.animTime || 0) + dt; }
         });
     }
 
@@ -2791,6 +3045,37 @@ class MapSystem {
         return this.isMapPositionWalkable(map, x, y, size);
     }
 
+    isPointInsideRect(x, y, rect) {
+        return (
+            x >= rect.x &&
+            x <= rect.x + rect.width &&
+            y >= rect.y &&
+            y <= rect.y + rect.height
+        );
+    }
+
+    isBoxCoveredByWalkableRects(box, walkableRects) {
+        if (!walkableRects || walkableRects.length === 0) return true;
+
+        const centerX = (box.left + box.right) / 2;
+        const centerY = (box.top + box.bottom) / 2;
+        const points = [
+            { x: centerX, y: centerY },
+            { x: box.left, y: box.top },
+            { x: box.right, y: box.top },
+            { x: box.left, y: box.bottom },
+            { x: box.right, y: box.bottom },
+            { x: centerX, y: box.top },
+            { x: centerX, y: box.bottom },
+            { x: box.left, y: centerY },
+            { x: box.right, y: centerY }
+        ];
+
+        return points.every(point => (
+            walkableRects.some(rect => this.isPointInsideRect(point.x, point.y, rect))
+        ));
+    }
+
     isMapPositionWalkable(map, x, y, size = 24) {
         if (!map) return false;
 
@@ -2803,14 +3088,7 @@ class MapSystem {
         };
 
         if (map.walkableRects && map.walkableRects.length > 0) {
-            const inside = (rect) => (
-                box.left >= rect.x &&
-                box.right <= rect.x + rect.width &&
-                box.top >= rect.y &&
-                box.bottom <= rect.y + rect.height
-            );
-            const inWalkable = map.walkableRects.some(inside);
-            if (!inWalkable) return false;
+            if (!this.isBoxCoveredByWalkableRects(box, map.walkableRects)) return false;
         }
 
         if (map.buildings) {
@@ -2867,14 +3145,114 @@ class MapSystem {
             y: Math.round(best.y)
         };
     }
+
+    isPointInsideExit(map, x, y, includeHidden = true) {
+        if (!map || !map.exits) return false;
+        return map.exits.some(exit => {
+            if (!includeHidden && exit.visible === false) return false;
+            return (
+                x >= exit.x &&
+                x <= exit.x + exit.width &&
+                y >= exit.y &&
+                y <= exit.y + exit.height
+            );
+        });
+    }
+
+    isSafeSpawnPoint(map, x, y, size = 24) {
+        return this.isMapPositionWalkable(map, x, y, size) && !this.isPointInsideExit(map, x, y, true);
+    }
+
+    findSafeSpawnPoint(map, x, y, size = 24) {
+        if (!map) return { x, y };
+        if (this.isSafeSpawnPoint(map, x, y, size)) {
+            return { x: Math.round(x), y: Math.round(y) };
+        }
+
+        const radius = size / 2;
+        const candidates = [
+            { x, y },
+            this.findNearestWalkablePoint(map, x, y, size)
+        ];
+
+        (map.exits || []).forEach(exit => {
+            const centerX = exit.x + exit.width / 2;
+            const centerY = exit.y + exit.height / 2;
+            const margin = Math.max(36, size + 12);
+            candidates.push(
+                { x: centerX, y: exit.y - margin },
+                { x: centerX, y: exit.y + exit.height + margin },
+                { x: exit.x - margin, y: centerY },
+                { x: exit.x + exit.width + margin, y: centerY }
+            );
+        });
+
+        [36, 64, 96, 140, 180].forEach(offset => {
+            candidates.push(
+                { x: x + offset, y },
+                { x: x - offset, y },
+                { x, y: y + offset },
+                { x, y: y - offset },
+                { x: x + offset, y: y + offset },
+                { x: x - offset, y: y + offset },
+                { x: x + offset, y: y - offset },
+                { x: x - offset, y: y - offset }
+            );
+        });
+
+        (map.walkableRects || []).forEach(rect => {
+            const minX = rect.x + radius;
+            const maxX = rect.x + rect.width - radius;
+            const minY = rect.y + radius;
+            const maxY = rect.y + rect.height - radius;
+            if (minX > maxX || minY > maxY) return;
+            candidates.push(
+                { x: Math.max(minX, Math.min(maxX, x)), y: Math.max(minY, Math.min(maxY, y)) },
+                { x: (minX + maxX) / 2, y: (minY + maxY) / 2 }
+            );
+        });
+
+        let best = null;
+        let bestDistance = Infinity;
+        candidates.forEach(candidate => {
+            if (!candidate) return;
+            if (!this.isSafeSpawnPoint(map, candidate.x, candidate.y, size)) return;
+            const distance = Math.hypot(candidate.x - x, candidate.y - y);
+            if (distance < bestDistance) {
+                best = candidate;
+                bestDistance = distance;
+            }
+        });
+
+        if (best) {
+            return { x: Math.round(best.x), y: Math.round(best.y) };
+        }
+
+        const nearest = this.findNearestWalkablePoint(map, x, y, size);
+        return { x: Math.round(nearest.x), y: Math.round(nearest.y) };
+    }
+
+    getNow() {
+        return (typeof performance !== 'undefined' && typeof performance.now === 'function')
+            ? performance.now()
+            : Date.now();
+    }
+
+    startTransitionCooldown(ms = this.transitionCooldownMs) {
+        this.transitionCooldownUntil = Math.max(this.transitionCooldownUntil || 0, this.getNow() + ms);
+    }
+
+    isTransitionCoolingDown() {
+        return this.getNow() < (this.transitionCooldownUntil || 0);
+    }
     
     // マップ遷移チェック
     checkMapTransition(playerX, playerY, playerFacing = null) {
         const map = this.maps[this.currentMap];
-        if (!map || this.transitioning) return null;
+        if (!map || this.transitioning || this.isTransitionCoolingDown()) return null;
 
-        for (const exit of map.exits) {
-            if (exit.visible === false) continue;
+        for (const exit of (map.exits || [])) {
+            if (exit.visible === false && !exit.autoEnter) continue;
 
             // 方向制限付きの出口（建物入口など）はプレイヤーの向きが一致する時だけ反応
             if (exit.requireFacing && playerFacing && exit.requireFacing !== playerFacing) continue;
@@ -2896,9 +3274,12 @@ class MapSystem {
 
     checkMapEntranceInteraction(playerX, playerY) {
         const map = this.maps[this.currentMap];
-        if (!map || !map.exits) return null;
+        if (!map || !map.exits || this.transitioning || this.isTransitionCoolingDown()) return null;
 
-        const interactionRange = 34;
+        // worldScale(1.55等)のマップでは入口ボックスも拡大される為、Z判定半径も同率で拡大する。
+        // （拡大しないと退出スポーンが入口中心から ~47px 離れ、固定34pxでは再入店できない）
+        const rangeScale = (map.worldScale && map.worldScale > 0) ? map.worldScale : 1;
+        const interactionRange = 34 * rangeScale;
 
         for (const exit of map.exits) {
             if (exit.visible !== false) continue;
@@ -2925,8 +3306,17 @@ class MapSystem {
     transitionToMap(mapId) {
         mapId = this.normalizeMapId(mapId);
         if (!this.maps[mapId]) return false;
+
+        // 遷移元マップを記録（getSpawnPoint で「戻り先の入口」を特定する為。
+        // currentMap は下の setTimeout 内で書き換わり、getSpawnPoint 実行時には
+        // 既に遷移先になっている為、ここで控える）
+        this.previousMap = this.currentMap;
+
+        this.loadMapImage(mapId);
+        this.preloadSpriteImages(mapId);
         
         this.transitioning = true;
+        this.startTransitionCooldown();
         
         // フェードアウト効果
         const canvas = document.getElementById('gameCanvas');
@@ -2937,6 +3327,7 @@ class MapSystem {
                 this.currentMap = mapId;
                 canvas.style.opacity = '1';
                 this.transitioning = false;
+                this.startTransitionCooldown();
 
                 // マップ名表示
                 this.showMapName();
@@ -2952,7 +3343,13 @@ class MapSystem {
 
                 // デバッグ: 遷移完了
                 console.log(`Map transition completed! New map: ${this.currentMap}`);
+                setTimeout(() => this.preloadAdjacentMapImages(mapId), 250);
             }, 300);
+        } else {
+            this.currentMap = mapId;
+            this.transitioning = false;
+            this.startTransitionCooldown();
+            setTimeout(() => this.preloadAdjacentMapImages(mapId), 250);
         }
         
         return true;
@@ -3013,7 +3410,7 @@ class MapSystem {
     // 衝突判定（建物）
     checkBuildingCollision(x, y, playerSize = 24) {
         const map = this.maps[this.currentMap];
-        if (!map || !map.buildings) return false;
+        if (!map) return false;
 
         const playerRadius = playerSize / 2;
         const playerBox = {
@@ -3023,28 +3420,19 @@ class MapSystem {
             bottom: y + playerRadius
         };
 
-        // walkable / exit の判定はプレイヤー中心点ベース（隣接矩形の隙間で詰まらないよう緩和）
-        if (map.walkableRects) {
-            const containsPoint = (rect) => (
-                x >= rect.x &&
-                x <= rect.x + rect.width &&
-                y >= rect.y &&
-                y <= rect.y + rect.height
-            );
+        const inExit = (map.exits || []).some(exit => this.isPointInsideRect(x, y, exit));
+        if (inExit) {
+            return false; // 出口は通行可能
+        }
 
-            const inExit = (map.exits || []).some(containsPoint);
-            if (inExit) {
-                return false; // 出口は通行可能（建物判定もスキップ）
-            }
-
-            const inWalkable = map.walkableRects.some(containsPoint);
-            if (!inWalkable) {
+        if (map.walkableRects && map.walkableRects.length > 0) {
+            if (!this.isBoxCoveredByWalkableRects(playerBox, map.walkableRects)) {
                 return true; // 歩行可能領域外
             }
         }
 
         // 建物 / 障害物の衝突は引き続きボックス判定
-        for (const building of map.buildings) {
+        for (const building of (map.buildings || [])) {
             const bLeft = building.x;
             const bRight = building.x + building.width;
             const bTop = building.y;
@@ -3183,11 +3571,22 @@ class ShopSystem {
                 { id: 'kamui_storm', magicId: 'kamui_storm' },
                 { id: 'explosion', magicId: 'explosion' },
                 { id: 'kamui_blessing', magicId: 'kamui_blessing' }
+            ],
+            black_market: [
+                { id: 'cyber_gun', equipmentId: 'cyber_gun' },
+                { id: 'cyber_suit', equipmentId: 'cyber_suit' },
+                { id: 'kamui_katana', equipmentId: 'kamui_katana' },
+                { id: 'kamui_talisman', equipmentId: 'kamui_talisman' },
+                { id: 'elixir', itemId: 'elixir' },
+                { id: 'kamui_storm', magicId: 'kamui_storm' },
+                { id: 'kamui_blessing', magicId: 'kamui_blessing' }
             ]
         };
         
         this.currentShop = null;
         this.isShopOpen = false;
+        this.commonShopItemsPerPage = 3;
+        this.shopItemsPerPage = this.commonShopItemsPerPage;
     }
     
     // ショップアイテムの詳細情報を取得
@@ -3212,7 +3611,7 @@ class ShopSystem {
         if (shopItem.magicId && window.magicSystem) {
             const magic = window.magicSystem.magicDatabase[shopItem.magicId];
             if (magic) {
-                const learned = window.magicSystem.hasLearned(shopItem.magicId);
+                const learned = window.magicSystem.hasLearned(shopItem.magicId, window.player);
                 return {
                     ...magic,
                     isMagic: true,
@@ -3237,8 +3636,7 @@ class ShopSystem {
     
     // ショップを開く
     openShop(shopType, shopkeeper) {
-        // 未実装の店舗（ギルド・銀行等）はダイアログのみ表示してショップUIは出さない
-        const supportedTypes = ['weapons', 'armor', 'items', 'magic', 'inn'];
+        const supportedTypes = [...Object.keys(this.shopData), 'inn'];
         if (!supportedTypes.includes(shopType)) {
             const name = shopkeeper && shopkeeper.name ? shopkeeper.name : '?';
             const dialogue = shopkeeper && shopkeeper.dialogue ? shopkeeper.dialogue : '...';
@@ -3254,7 +3652,6 @@ class ShopSystem {
         this.isShopOpen = true;
         this.selectedItemIndex = 0;
         this.showShopUI(shopType, shopkeeper);
-        this.setupShopKeyboard();
     }
     
     // ショップUIを表示
@@ -3275,13 +3672,14 @@ class ShopSystem {
             weapons: '🗡️ 武器店',
             armor: '🛡️ 防具店',
             items: '🧪 道具店',
-            magic: '🔮 魔法店'
+            magic: '🔮 魔法店',
+            black_market: '🕶️ 闇市'
         };
         const shopTitle = titleMap[shopType] || '🏪 一般店';
 
         const items = this.shopData[shopType] || this.shopData.items;
         this.shopItems = items;
-        this.shopItemsPerPage = 4;
+        this.shopItemsPerPage = this.commonShopItemsPerPage;
         this.shopType = shopType;
         this.shopTitle = shopTitle;
         this.shopkeeper = shopkeeper;
@@ -3298,7 +3696,7 @@ class ShopSystem {
         overlay.id = 'shopUI';
         overlay.className = 'shop-overlay';
         overlay.innerHTML = `
-            <div class="shop-container">
+            <div class="shop-container shop-list-panel">
                 <div class="shop-title" id="shopTitleEl"></div>
                 <div class="shop-keeper-line" id="shopKeeperLine"></div>
                 <div class="shop-meta">
@@ -3341,7 +3739,7 @@ class ShopSystem {
         if (goldEl) goldEl.textContent = window.player ? window.player.gold : 0;
 
         const items = this.shopItems || [];
-        const perPage = this.shopItemsPerPage || 4;
+        const perPage = this.shopItemsPerPage || this.commonShopItemsPerPage || 3;
         const totalPages = Math.max(1, Math.ceil(items.length / perPage));
         const currentPage = Math.floor(this.selectedItemIndex / perPage);
         if (pageEl) pageEl.textContent = `${currentPage + 1} / ${totalPages}`;
@@ -3401,76 +3799,77 @@ class ShopSystem {
     // キーボード操作のセットアップ
     setupShopKeyboard() {
         if (this.shopKeyHandler) {
-            document.removeEventListener('keydown', this.shopKeyHandler);
+            document.removeEventListener('keydown', this.shopKeyHandler, true);
         }
         this.shopKeyHandler = (e) => {
-            if (!this.isShopOpen) return;
-
-            const items = this.shopItems || [];
-            const perPage = this.shopItemsPerPage || 4;
-
-            if (this.shopType === 'inn') {
-                // 宿屋: 左右で 宿泊/やめる、Enter で決定
-                if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-                    e.preventDefault();
-                    this.innSelectedOption = (this.innSelectedOption === 0) ? 1 : 0;
-                    this.renderShopUI();
-                    return;
-                }
-                if (e.key === 'Enter' || e.key === 'z' || e.key === 'Z' || e.key === ' ') {
-                    e.preventDefault();
-                    if (this.innSelectedOption === 0) {
-                        this.stayAtInn();
-                    } else {
-                        this.closeShop();
-                    }
-                    return;
-                }
-                if (e.key === 'x' || e.key === 'X' || e.key === 'Escape') {
-                    e.preventDefault();
-                    this.closeShop();
-                    return;
-                }
-                return;
-            }
-
-            if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                if (items.length === 0) return;
-                this.selectedItemIndex = Math.max(0, this.selectedItemIndex - 1);
-                this.renderShopUI();
-            } else if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                if (items.length === 0) return;
-                this.selectedItemIndex = Math.min(items.length - 1, this.selectedItemIndex + 1);
-                this.renderShopUI();
-            } else if (e.key === 'ArrowLeft') {
-                e.preventDefault();
-                if (items.length === 0) return;
-                const currentPage = Math.floor(this.selectedItemIndex / perPage);
-                if (currentPage > 0) {
-                    this.selectedItemIndex = Math.max(0, (currentPage - 1) * perPage);
-                    this.renderShopUI();
-                }
-            } else if (e.key === 'ArrowRight') {
-                e.preventDefault();
-                if (items.length === 0) return;
-                const currentPage = Math.floor(this.selectedItemIndex / perPage);
-                const totalPages = Math.max(1, Math.ceil(items.length / perPage));
-                if (currentPage < totalPages - 1) {
-                    this.selectedItemIndex = Math.min(items.length - 1, (currentPage + 1) * perPage);
-                    this.renderShopUI();
-                }
-            } else if (e.key === 'Enter' || e.key === 'z' || e.key === 'Z' || e.key === ' ') {
-                e.preventDefault();
-                this.buyItem(this.shopType, this.selectedItemIndex);
-            } else if (e.key === 'x' || e.key === 'X' || e.key === 'Escape') {
-                e.preventDefault();
-                this.closeShop();
-            }
+            this.handleKeyboardInput(e);
         };
 
         document.addEventListener('keydown', this.shopKeyHandler, true);
+    }
+
+    handleKeyboardInput(e) {
+        if (!this.isShopOpen) return;
+
+        e.preventDefault();
+        if (typeof e.stopImmediatePropagation === 'function') {
+            e.stopImmediatePropagation();
+        } else if (typeof e.stopPropagation === 'function') {
+            e.stopPropagation();
+        }
+
+        const items = this.shopItems || [];
+        const perPage = this.shopItemsPerPage || this.commonShopItemsPerPage || 3;
+
+        if (this.shopType === 'inn') {
+            // 宿屋: 左右で 宿泊/やめる、Enter/Z/Space で決定
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                this.innSelectedOption = (this.innSelectedOption === 0) ? 1 : 0;
+                this.renderShopUI();
+                return;
+            }
+            if (e.key === 'Enter' || e.key === 'z' || e.key === 'Z' || e.key === ' ') {
+                if (this.innSelectedOption === 0) {
+                    this.stayAtInn();
+                } else {
+                    this.closeShop();
+                }
+                return;
+            }
+            if (e.key === 'x' || e.key === 'X' || e.key === 'Escape') {
+                this.closeShop();
+            }
+            return;
+        }
+
+        if (e.key === 'ArrowUp') {
+            if (items.length === 0) return;
+            this.selectedItemIndex = Math.max(0, this.selectedItemIndex - 1);
+            this.renderShopUI();
+        } else if (e.key === 'ArrowDown') {
+            if (items.length === 0) return;
+            this.selectedItemIndex = Math.min(items.length - 1, this.selectedItemIndex + 1);
+            this.renderShopUI();
+        } else if (e.key === 'ArrowLeft') {
+            if (items.length === 0) return;
+            const currentPage = Math.floor(this.selectedItemIndex / perPage);
+            if (currentPage > 0) {
+                this.selectedItemIndex = Math.max(0, (currentPage - 1) * perPage);
+                this.renderShopUI();
+            }
+        } else if (e.key === 'ArrowRight') {
+            if (items.length === 0) return;
+            const currentPage = Math.floor(this.selectedItemIndex / perPage);
+            const totalPages = Math.max(1, Math.ceil(items.length / perPage));
+            if (currentPage < totalPages - 1) {
+                this.selectedItemIndex = Math.min(items.length - 1, (currentPage + 1) * perPage);
+                this.renderShopUI();
+            }
+        } else if (e.key === 'Enter' || e.key === 'z' || e.key === 'Z' || e.key === ' ') {
+            this.buyItem(this.shopType, this.selectedItemIndex);
+        } else if (e.key === 'x' || e.key === 'X' || e.key === 'Escape') {
+            this.closeShop();
+        }
     }
 
     // 宿屋UI（在 viewport）
@@ -3492,7 +3891,7 @@ class ShopSystem {
         overlay.id = 'shopUI';
         overlay.className = 'shop-overlay';
         overlay.innerHTML = `
-            <div class="shop-container">
+            <div class="shop-container shop-inn-panel">
                 <div class="shop-title" id="shopTitleEl">🏠 ${shopkeeper.name || ''}の宿屋</div>
                 <div class="shop-keeper-line">「${shopkeeper.dialogue || ''}」</div>
                 <div class="shop-inn-body">

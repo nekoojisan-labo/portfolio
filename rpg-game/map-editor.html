@@ -252,18 +252,40 @@ canvas#editor {
 </div>
 
 <script>
-const MAP_LIST = [
-    'shinjuku_center_plaza',
-    'shinjuku_station_gate',
-    'subway_concourse_a',
-    'shopping_street_north',
-    'shopping_street_south',
-    'black_market_entrance',
-    'residential_street',
-    'shrine_south_gate',
-    'tokyo_gov_approach',
-    'biodome_gate'
+// マップグループ（編集対象を整理して表示）
+const MAP_GROUPS = [
+    {
+        label: '🌆 フィールドマップ',
+        maps: [
+            'shinjuku_center_plaza',
+            'shinjuku_station_gate',
+            'subway_concourse_a',
+            'shopping_street_north',
+            'shopping_street_south',
+            'black_market_entrance',
+            'residential_street',
+            'shrine_south_gate',
+            'tokyo_gov_approach',
+            'biodome_gate'
+        ]
+    },
+    {
+        label: '🏪 ショップ・施設内',
+        maps: [
+            'shop_weapon',
+            'shop_armor',
+            'shop_item',
+            'shop_magic',
+            'shop_inn',
+            'shop_guild',
+            'shop_bank',
+            'shop_black_market'
+        ]
+    }
 ];
+
+// 全マップを平らに（処理用）
+const MAP_LIST = MAP_GROUPS.flatMap(g => g.maps);
 
 const STORAGE_KEY = 'rpg-map-editor-v2';
 const TILE = 8;
@@ -295,11 +317,17 @@ const walkSummary = document.getElementById('walkSummary');
 const brushSizeInput = document.getElementById('brushSize');
 
 // ---- init ----
-MAP_LIST.forEach(name => {
-    const opt = document.createElement('option');
-    opt.value = name;
-    opt.textContent = name;
-    mapSelect.appendChild(opt);
+// グループ単位で optgroup として表示
+MAP_GROUPS.forEach(group => {
+    const og = document.createElement('optgroup');
+    og.label = group.label;
+    group.maps.forEach(name => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        og.appendChild(opt);
+    });
+    mapSelect.appendChild(og);
 });
 mapSelect.value = currentMap;
 loadMap(currentMap);
@@ -543,14 +571,20 @@ function exportTiles() {
 
 function dumpAllMaps() {
     const lines = [];
-    for (const m of MAP_LIST) {
-        const rects = tilesToRects(allData[m].walkTiles);
-        const exits = allData[m].exits;
-        lines.push(`// === ${m} ===`);
-        lines.push(`walkableRects: ${formatRects(rects)},`);
-        lines.push(`exits: ${formatExits(exits)},`);
+    MAP_GROUPS.forEach(group => {
+        lines.push(`// =========================================`);
+        lines.push(`// ${group.label}`);
+        lines.push(`// =========================================`);
         lines.push('');
-    }
+        group.maps.forEach(m => {
+            const rects = tilesToRects(allData[m].walkTiles);
+            const exits = allData[m].exits;
+            lines.push(`// ----- ${m} -----`);
+            lines.push(`walkableRects: ${formatRects(rects)},`);
+            lines.push(`exits: ${formatExits(exits)},`);
+            lines.push('');
+        });
+    });
     dumpAll.value = lines.join('\n');
 }
 

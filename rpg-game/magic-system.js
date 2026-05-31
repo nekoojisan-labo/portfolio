@@ -145,7 +145,8 @@ class MagicSystem {
     }
     
     // キャラクターIDを取得
-    getCharacterId(character) {
+    getCharacterId(character = window.player) {
+        if (!character) return 'player';
         return character.characterId || character.name || 'player';
     }
 
@@ -296,7 +297,7 @@ class MagicSystem {
     }
 
     // 魔法を習得しているかチェック
-    hasLearned(magicId, character) {
+    hasLearned(magicId, character = window.player) {
         const charId = this.getCharacterId(character);
         const learnedMagic = this.learnedMagicByCharacter[charId] || {};
         return !!learnedMagic[magicId];

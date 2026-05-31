@@ -1216,7 +1216,7 @@ class BattleSystem {
                 enemySprite.style.filter = 'none';
                 const imagePath = this.getEnemyImagePath(this.currentEnemy);
                 if (imagePath) {
-                    enemySprite.innerHTML = `<img src="${imagePath}" alt="${this.currentEnemy.name}" style="width: 180px; max-height: 140px; object-fit: contain; filter: drop-shadow(0 0 14px rgba(255, 80, 80, 0.55));">`;
+                    enemySprite.innerHTML = `<img src="${imagePath}" alt="${this.currentEnemy.name}" decoding="async" onerror="if (!this.dataset.fallbackTried && this.src.includes('.webp')) { this.dataset.fallbackTried = '1'; this.src = this.src.replace('.webp', '.png'); } else { this.style.display = 'none'; }" style="width: 180px; max-height: 140px; object-fit: contain; filter: drop-shadow(0 0 14px rgba(255, 80, 80, 0.55));">`;
                 } else {
                     enemySprite.textContent = this.currentEnemy.emoji;
                 }
@@ -1247,12 +1247,18 @@ class BattleSystem {
 
     getEnemyImagePath(enemy) {
         if (!enemy) return null;
-        if (enemy.image) return enemy.image;
-        if (enemy.bossId && this.enemyImageMap[enemy.bossId]) return this.enemyImageMap[enemy.bossId];
-        if (enemy.type && this.enemyImageMap[enemy.type]) return this.enemyImageMap[enemy.type];
-        if (enemy.name && enemy.name.includes('ドローン')) return 'assets/enemies/watcher.png';
-        if (enemy.name && enemy.name.includes('デウス')) return 'assets/enemies/deus_machina.png';
-        if (enemy.name && enemy.name.includes('アーク')) return 'assets/enemies/ark_prime.png';
+        const path = (
+            enemy.image ||
+            (enemy.bossId && this.enemyImageMap[enemy.bossId]) ||
+            (enemy.type && this.enemyImageMap[enemy.type]) ||
+            (enemy.name && enemy.name.includes('ドローン') ? 'assets/enemies/watcher.png' : null) ||
+            (enemy.name && enemy.name.includes('デウス') ? 'assets/enemies/deus_machina.png' : null) ||
+            (enemy.name && enemy.name.includes('アーク') ? 'assets/enemies/ark_prime.png' : null)
+        );
+        if (typeof path === 'string' && path.startsWith('assets/enemies/') && path.endsWith('.png')) {
+            return path.replace(/\.png$/, '.webp');
+        }
+        if (path) return path;
         return null;
     }
     

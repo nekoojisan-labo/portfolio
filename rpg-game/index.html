@@ -5,12 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>デウス・コード 八百万の神託 - RPG Demo</title>
+    <link rel="preload" as="image" href="assets/title/title-screen.webp" type="image/webp">
+    <!-- build: 2026-05-11T23:55 (mobile-responsive-webp) -->
+    <script>window.__BUILD__='2026-05-11T23:55-mobile-webp';</script>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+        }
+
+        html, body {
+            /* iOS Safari の dvh 単位対応 */
+            height: 100%;
         }
 
         body {
@@ -26,6 +37,9 @@
             -webkit-touch-callout: none;
             align-items: center;
             min-height: 100vh;
+            min-height: 100dvh; /* dynamic viewport height: mobile URLバー対応 */
+            /* iPhone ノッチ・ホームバー対応 */
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
         }
 
         .game-container {
@@ -39,6 +53,7 @@
             flex-direction: column;
             width: min(800px, 100vw);
             max-height: 100vh;
+            max-height: 100dvh; /* dvh で URLバー伸縮に対応 */
             /* テキスト選択・ドラッグを禁止（ゲーム操作中の誤動作防止） */
             user-select: none;
             -webkit-user-select: none;
@@ -46,6 +61,12 @@
             -ms-user-select: none;
             -webkit-touch-callout: none;
             -webkit-user-drag: none;
+        }
+
+        .game-container.title-mode .game-message-panel,
+        .game-container.title-mode .on-screen-controller,
+        .game-container.opening-mode .on-screen-controller {
+            display: none !important;
         }
 
         .game-container *,
@@ -549,7 +570,7 @@
         #titleScreen {
             background:
                 linear-gradient(180deg, rgba(0, 0, 0, 0.16), rgba(0, 0, 0, 0.68)),
-                url('assets/title/title-screen.png') center / cover no-repeat;
+                url('assets/title/title-screen.webp') center / cover no-repeat;
         }
 
         #titleScreen h1 {
@@ -779,6 +800,9 @@
             background: rgba(0, 0, 0, 0.85);
             display: none;
             z-index: 600;
+            box-sizing: border-box;
+            padding: 10px;
+            overflow: hidden;
         }
         
         .menu-overlay.active {
@@ -792,15 +816,19 @@
             background: linear-gradient(135deg, #1a1a2e, #0a0a0a);
             border: 3px solid #00ffff;
             border-radius: 10px;
-            padding: 14px 16px;
-            width: min(440px, 92%);
-            max-width: 92%;
-            max-height: calc(100% - 12px);
+            padding: 10px 14px;
+            width: min(520px, calc(100% - 20px));
+            max-width: calc(100% - 20px);
+            max-height: calc(100% - 20px);
             overflow: hidden;
             box-sizing: border-box;
             box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
             display: flex;
             flex-direction: column;
+        }
+
+        .main-menu-panel {
+            height: min(394px, calc(100% - 20px));
         }
 
         .menu-title {
@@ -812,12 +840,99 @@
             flex-shrink: 0;
         }
 
+        .party-tabs-row {
+            display: grid;
+            grid-template-columns: 34px minmax(0, 1fr) 34px;
+            gap: 6px;
+            align-items: center;
+            margin-bottom: 8px;
+            flex-shrink: 0;
+        }
+
+        .party-switch {
+            width: 34px;
+            height: 34px;
+            border-radius: 6px;
+            border: 2px solid #00ffff;
+            background: rgba(0, 255, 255, 0.12);
+            color: #e0eef5;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .party-tabs {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            min-width: 0;
+        }
+
+        .party-tabs::-webkit-scrollbar {
+            display: none;
+        }
+
+        .party-tab {
+            flex: 1 1 0;
+            min-width: 74px;
+            height: 34px;
+            padding: 0 10px;
+            background: rgba(0, 128, 255, 0.28);
+            border: 2px solid #0080ff;
+            border-radius: 6px;
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .party-tab.active {
+            background: linear-gradient(135deg, #00ffff 0%, #0080ff 100%);
+            border-color: #00ffff;
+            color: #000000;
+        }
+
+        .menu-content-wrapper {
+            display: grid;
+            grid-template-columns: 92px minmax(0, 1fr);
+            gap: 10px;
+            margin-bottom: 8px;
+            min-height: 0;
+            flex-shrink: 0;
+        }
+
+        .character-portrait {
+            min-width: 0;
+        }
+
+        .character-portrait img,
+        .character-portrait-fallback {
+            width: 88px;
+            height: 112px;
+            max-width: 100%;
+            object-fit: contain;
+            border: 2px solid #0f3460;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            box-sizing: border-box;
+        }
+
+        .character-portrait-fallback {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+        }
+
         .menu-stats {
             background: rgba(0, 0, 0, 0.5);
             border: 2px solid #0f3460;
             border-radius: 5px;
-            padding: 8px 10px;
-            margin-bottom: 8px;
+            padding: 7px 9px;
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 4px 10px;
@@ -836,6 +951,7 @@
             display: flex;
             justify-content: space-between;
             font-size: 12px;
+            min-width: 0;
         }
 
         .menu-options {
@@ -852,11 +968,15 @@
             background: rgba(0, 255, 255, 0.1);
             border: 2px solid #00ffff;
             border-radius: 5px;
-            padding: 8px;
+            min-height: 40px;
+            padding: 8px 10px;
             cursor: pointer;
             transition: all 0.2s;
             text-align: center;
             font-size: 14px;
+            font-weight: bold;
+            color: #e0eef5;
+            box-sizing: border-box;
         }
         
         .menu-option:hover {
@@ -998,6 +1118,7 @@
             z-index: 800;
             box-sizing: border-box;
             padding: 12px;
+            overflow: hidden;
         }
 
         .shop-container {
@@ -1009,11 +1130,16 @@
             color: #e0eef5;
             font-family: 'Courier New', monospace;
             box-sizing: border-box;
-            width: min(560px, 92%);
-            max-height: 92%;
+            width: min(560px, calc(100% - 24px));
+            max-height: calc(100% - 24px);
             display: flex;
             flex-direction: column;
-            padding: 12px 14px;
+            overflow: hidden;
+            padding: 10px 14px;
+        }
+
+        .shop-list-panel {
+            height: min(318px, calc(100% - 24px));
         }
 
         .shop-title {
@@ -1061,8 +1187,10 @@
         .shop-items {
             display: flex;
             flex-direction: column;
-            gap: 5px;
-            margin: 4px 0 6px;
+            gap: 6px;
+            margin: 6px 0 8px;
+            flex: 0 0 auto;
+            min-height: 0;
         }
 
         .shop-item-entry {
@@ -1074,7 +1202,10 @@
             border: 2px solid rgba(0, 255, 255, 0.25);
             border-radius: 6px;
             box-sizing: border-box;
-            min-height: 50px;
+            height: 58px;
+            min-height: 58px;
+            max-height: 58px;
+            overflow: hidden;
             transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
         }
 
@@ -1100,6 +1231,7 @@
             font-weight: bold;
             color: #e0eef5;
             margin: 0 0 2px;
+            line-height: 1.25;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -1108,6 +1240,7 @@
         .shop-item-desc {
             font-size: 11px;
             color: #99b3bf;
+            line-height: 1.25;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -1124,7 +1257,9 @@
         }
 
         .shop-empty-row {
-            min-height: 50px;
+            height: 58px;
+            min-height: 58px;
+            max-height: 58px;
         }
 
         .shop-hint {
@@ -1132,9 +1267,14 @@
             color: #6a8a96;
             text-align: center;
             letter-spacing: 0.5px;
-            margin-top: auto;
-            padding-top: 4px;
+            flex: 0 0 auto;
+            margin-top: 0;
+            padding-top: 6px;
             border-top: 1px solid rgba(0, 255, 255, 0.12);
+        }
+
+        .shop-inn-panel {
+            height: min(260px, calc(100% - 24px));
         }
 
         .shop-inn-body {
@@ -1264,12 +1404,24 @@
 
         @media (max-width: 800px) {
             .shop-container {
-                width: min(440px, 94%);
-                padding: 10px 12px;
+                width: min(440px, calc(100% - 20px));
+                max-height: calc(100% - 20px);
+                padding: 9px 12px;
+            }
+
+            .shop-list-panel {
+                height: min(308px, calc(100% - 20px));
             }
 
             .shop-title {
                 font-size: 16px;
+            }
+
+            .shop-item-entry,
+            .shop-empty-row {
+                height: 56px;
+                min-height: 56px;
+                max-height: 56px;
             }
 
             .shop-item-name {
@@ -1282,22 +1434,37 @@
         }
 
         /* Back to Portfolio Button */
+        .controller-actions {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-shrink: 0;
+            pointer-events: auto;
+        }
+
         .back-button {
-            position: absolute;
-            top: 20px;
-            left: 20px;
+            position: static;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 204px;
+            box-sizing: border-box;
             background: rgba(0, 0, 0, 0.8);
             color: #0f3460;
             text-decoration: none;
-            padding: 10px 20px;
+            padding: 9px 18px;
             border-radius: 25px;
             font-size: 14px;
             font-weight: bold;
+            line-height: 1.2;
+            white-space: nowrap;
             transition: all 0.3s ease;
             backdrop-filter: blur(10px);
             border: 2px solid #0f3460;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-            z-index: 2000;
+            z-index: 1;
         }
         
         .back-button:hover {
@@ -1596,8 +1763,72 @@
 
         /* スマートフォン向け: ボタンを大きく、操作しやすく */
         @media (max-width: 800px) {
+            .game-container {
+                width: 100vw;
+                max-width: 100vw;
+                border-left-width: 0;
+                border-right-width: 0;
+                border-radius: 0;
+            }
+
+            .game-container.title-mode,
+            .game-container.opening-mode {
+                height: 100vh;
+                height: 100dvh;
+                max-height: 100vh;
+                max-height: 100dvh;
+            }
+
+            .game-container.title-mode .game-viewport,
+            .game-container.opening-mode .game-viewport {
+                aspect-ratio: auto;
+                flex: 1 1 auto;
+                min-height: 0;
+            }
+
+            #titleScreen {
+                padding: clamp(24px, 8dvh, 64px) 18px;
+            }
+
+            #titleScreen h1 {
+                font-size: clamp(34px, 11vw, 50px);
+                line-height: 1.08;
+                max-width: 100%;
+            }
+
+            #titleScreen h2 {
+                font-size: clamp(17px, 5.3vw, 24px);
+                margin-top: 6px;
+            }
+
+            #titleScreen p {
+                font-size: clamp(13px, 3.7vw, 16px);
+                line-height: 1.7;
+                padding: 0 18px;
+            }
+
+            .start-button {
+                min-height: 48px;
+                padding: 12px 22px;
+            }
+
             .on-screen-controller {
                 padding: 12px 14px;
+                /* iPhone ホームバー対応 */
+                padding-bottom: max(12px, env(safe-area-inset-bottom));
+            }
+
+            /* メッセージパネル: モバイルでは縦スペース節約のため縮小 */
+            .game-message-panel {
+                height: 170px;
+                margin: 6px 8px 0;
+                width: calc(100% - 16px);
+            }
+
+            .game-container.opening-mode .game-message-panel {
+                flex: 0 0 clamp(150px, 28dvh, 210px);
+                height: auto;
+                margin: 0 8px 8px;
             }
 
             .dpad-container {
@@ -1679,13 +1910,22 @@
 
             /* メニュー系のレスポンシブ対応 */
             .menu-container {
-                width: min(420px, 92%);
-                max-width: 92%;
-                padding: 18px;
+                width: min(500px, calc(100% - 20px));
+                max-width: calc(100% - 20px);
+                padding: 10px 12px;
+            }
+
+            .main-menu-panel {
+                height: min(388px, calc(100% - 20px));
             }
 
             .menu-title {
-                font-size: 20px;
+                font-size: 18px;
+            }
+
+            .character-portrait img,
+            .character-portrait-fallback {
+                height: 108px;
             }
 
             #kamuiSkillMenu {
@@ -1719,8 +1959,28 @@
 
         /* さらに小さい画面用（iPhone SE など） */
         @media (max-width: 400px) {
+            #titleScreen {
+                padding: clamp(18px, 6dvh, 44px) 14px;
+            }
+
+            #titleScreen h1 {
+                font-size: clamp(30px, 10.4vw, 40px);
+            }
+
             .on-screen-controller {
-                padding: 10px 8px;
+                padding: 8px 6px;
+                padding-bottom: max(8px, env(safe-area-inset-bottom));
+            }
+
+            .game-message-panel {
+                height: 140px;
+                margin: 4px 6px 0;
+                width: calc(100% - 12px);
+            }
+
+            .game-container.opening-mode .game-message-panel {
+                flex-basis: clamp(132px, 25dvh, 170px);
+                margin: 0 6px 6px;
             }
 
             .dpad-container {
@@ -1763,6 +2023,12 @@
 
             .action-buttons {
                 gap: 8px;
+            }
+
+            .back-button {
+                min-width: 166px;
+                padding: 8px 12px;
+                font-size: 12px;
             }
 
             /* 戦闘画面のUI調整（小画面・パネル化済み） */
@@ -1813,17 +2079,55 @@
 
             /* メニュー系のレスポンシブ対応（小画面） */
             .menu-container {
-                width: min(360px, 94%);
-                max-width: 94%;
-                padding: 14px;
+                width: min(360px, calc(100% - 16px));
+                max-width: calc(100% - 16px);
+                padding: 9px 10px;
+            }
+
+            .main-menu-panel {
+                height: min(382px, calc(100% - 16px));
             }
 
             .menu-title {
-                font-size: 18px;
+                font-size: 16px;
             }
 
             .menu-stats {
                 font-size: 11px;
+            }
+
+            .party-tabs-row {
+                grid-template-columns: 30px minmax(0, 1fr) 30px;
+                gap: 5px;
+            }
+
+            .party-switch {
+                width: 30px;
+                height: 30px;
+                font-size: 16px;
+            }
+
+            .party-tab {
+                min-width: 62px;
+                height: 30px;
+                font-size: 12px;
+                padding: 0 8px;
+            }
+
+            .menu-content-wrapper {
+                grid-template-columns: 76px minmax(0, 1fr);
+                gap: 8px;
+            }
+
+            .character-portrait img,
+            .character-portrait-fallback {
+                width: 72px;
+                height: 96px;
+            }
+
+            .menu-option {
+                min-height: 36px;
+                font-size: 13px;
             }
 
             #kamuiSkillMenu {
@@ -1848,11 +2152,76 @@
                 font-size: 11px;
             }
         }
+
+        /* ===== ランドスケープ（横持ち）モバイル対応 =====
+           縦の高さが少ない場合、メッセージパネルを縮め、ポートフォリオボタンを隠す */
+        @media (orientation: landscape) and (max-height: 500px) {
+            .game-container {
+                border-width: 1px;
+                border-radius: 0;
+                width: 100vw;
+                max-width: 100vw;
+            }
+
+            .game-message-panel {
+                height: 90px;
+                margin: 4px 6px 0;
+                width: calc(100% - 12px);
+            }
+
+            .game-msg-body {
+                font-size: 12px !important;
+                line-height: 1.4 !important;
+            }
+
+            .on-screen-controller {
+                padding: 4px 10px;
+                padding-bottom: max(4px, env(safe-area-inset-bottom));
+            }
+
+            .dpad-container {
+                width: 110px;
+                height: 110px;
+            }
+
+            .dpad-button {
+                width: 36px;
+                height: 36px;
+                font-size: 16px;
+            }
+
+            .dpad-up, .dpad-down { left: 37px; }
+            .dpad-left, .dpad-right, .dpad-center { top: 37px; }
+            .dpad-down { bottom: 0; }
+            .dpad-right { right: 0; }
+            .dpad-center { left: 37px; }
+
+            .action-button {
+                width: 46px;
+                height: 46px;
+                font-size: 10px;
+            }
+
+            .action-buttons {
+                gap: 6px;
+            }
+
+            /* スペース確保のためポートフォリオボタンを非表示 */
+            .back-button {
+                display: none;
+            }
+        }
+
+        /* タッチ最適化: D-pad/アクションボタンのダブルタップズーム防止 */
+        .dpad-button,
+        .action-button {
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
     </style>
 </head>
 <body>
-    <a href="../" class="back-button">← ポートフォリオに戻る</a>
-    <div class="game-container">
+    <div class="game-container title-mode">
         <div class="game-viewport">
         <canvas id="gameCanvas" width="800" height="450" draggable="false" oncontextmenu="return false;" ondragstart="return false;" onselectstart="return false;"></canvas>
 
@@ -1899,71 +2268,74 @@
 
         <!-- Menu Screen -->
         <div class="menu-overlay" id="menuOverlay">
-            <div class="menu-container">
+            <div class="menu-container main-menu-panel">
                 <div class="menu-title">メニュー</div>
 
                 <!-- パーティメンバータブ -->
-                <div class="party-tabs" id="partyTabs" style="display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; flex-shrink: 0;">
-                    <!-- JavaScriptで動的生成 -->
+                <div class="party-tabs-row">
+                    <button class="party-switch" type="button" id="partyPrevButton">←</button>
+                    <div class="party-tabs" id="partyTabs">
+                        <!-- JavaScriptで動的生成 -->
+                    </div>
+                    <button class="party-switch" type="button" id="partyNextButton">→</button>
                 </div>
 
-                <div class="menu-content-wrapper" style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 8px;">
+                <div class="menu-content-wrapper">
                     <!-- キャラクター立ち絵 -->
-                    <div class="character-portrait" style="flex-shrink: 0;">
-                        <img id="menuCharacterPortrait" src="assets/characters/kaito_portrait.png"
+                    <div class="character-portrait">
+                        <img id="menuCharacterPortrait" src="assets/characters/kaito_portrait.webp"
                              alt="カイト"
-                             style="width: 90px; height: 150px; max-width: 100%; object-fit: contain; border: 2px solid #0f3460; border-radius: 8px; background: rgba(0,0,0,0.3);"
-                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                        <div id="menuCharacterEmoji" style="display: none; width: 90px; height: 150px; max-width: 100%; background: rgba(0,0,0,0.3); border: 2px solid #0f3460; border-radius: 8px; align-items: center; justify-content: center; font-size: 56px;">🧑‍💼</div>
+                             decoding="async"
+                             data-fallback-src="assets/characters/kaito_portrait.png"
+                             onerror="if (this.dataset.fallbackSrc) { this.src = this.dataset.fallbackSrc; this.dataset.fallbackSrc = ''; } else { this.style.display='none'; this.nextElementSibling.style.display='flex'; }">
+                        <div id="menuCharacterEmoji" class="character-portrait-fallback">🧑‍💼</div>
                     </div>
-                    <div style="flex: 1; min-width: 180px;">
-                        <div class="menu-stats">
-                            <div class="menu-stat-row">
-                                <span>名前:</span>
-                                <span id="menuCharacterName">カイト</span>
-                            </div>
-                            <div class="menu-stat-row">
-                                <span>役割:</span>
-                                <span id="menuCharacterRole">主人公</span>
-                            </div>
-                            <div class="menu-stat-row">
-                                <span>レベル:</span>
-                                <span id="menuLevel">1</span>
-                            </div>
-                            <div class="menu-stat-row">
-                                <span>HP:</span>
-                                <span><span id="menuHP">100</span>/<span id="menuMaxHP">100</span></span>
-                            </div>
-                            <div class="menu-stat-row">
-                                <span>MP:</span>
-                                <span><span id="menuMP">50</span>/<span id="menuMaxMP">50</span></span>
-                            </div>
-                            <div class="menu-stat-row">
-                                <span>攻撃力:</span>
-                                <span id="menuAttack">15</span>
-                            </div>
-                            <div class="menu-stat-row">
-                                <span>防御力:</span>
-                                <span id="menuDefense">5</span>
-                            </div>
-                            <div class="menu-stat-row" id="menuExpRow">
-                                <span>経験値:</span>
-                                <span><span id="menuExp">0</span>/<span id="menuExpNeeded">100</span></span>
-                            </div>
-                            <div class="menu-stat-row" id="menuGoldRow">
-                                <span>ゴールド:</span>
-                                <span id="menuGold">0</span>
-                            </div>
+                    <div class="menu-stats">
+                        <div class="menu-stat-row">
+                            <span>名前:</span>
+                            <span id="menuCharacterName">カイト</span>
+                        </div>
+                        <div class="menu-stat-row">
+                            <span>役割:</span>
+                            <span id="menuCharacterRole">主人公</span>
+                        </div>
+                        <div class="menu-stat-row">
+                            <span>レベル:</span>
+                            <span id="menuLevel">1</span>
+                        </div>
+                        <div class="menu-stat-row">
+                            <span>HP:</span>
+                            <span><span id="menuHP">100</span>/<span id="menuMaxHP">100</span></span>
+                        </div>
+                        <div class="menu-stat-row">
+                            <span>MP:</span>
+                            <span><span id="menuMP">50</span>/<span id="menuMaxMP">50</span></span>
+                        </div>
+                        <div class="menu-stat-row">
+                            <span>攻撃力:</span>
+                            <span id="menuAttack">15</span>
+                        </div>
+                        <div class="menu-stat-row">
+                            <span>防御力:</span>
+                            <span id="menuDefense">5</span>
+                        </div>
+                        <div class="menu-stat-row" id="menuExpRow">
+                            <span>経験値:</span>
+                            <span><span id="menuExp">0</span>/<span id="menuExpNeeded">100</span></span>
+                        </div>
+                        <div class="menu-stat-row" id="menuGoldRow">
+                            <span>ゴールド:</span>
+                            <span id="menuGold">0</span>
                         </div>
                     </div>
                 </div>
                 <div class="menu-options" id="menuOptions">
-                    <div class="menu-option" data-menu="items">アイテム</div>
-                    <div class="menu-option" data-menu="equipment">装備</div>
-                    <div class="menu-option" data-menu="kamui">神威</div>
-                    <div class="menu-option" data-menu="close">閉じる</div>
+                    <button class="menu-option" type="button" data-menu="items">アイテム</button>
+                    <button class="menu-option" type="button" data-menu="equipment">装備</button>
+                    <button class="menu-option" type="button" data-menu="kamui">神威</button>
+                    <button class="menu-option" type="button" data-menu="close">閉じる</button>
                 </div>
-                <div class="menu-close">Q/Eでキャラ切替 / ↑↓←→で選択 / ENTERで決定 / Xキーで閉じる</div>
+                <div class="menu-close">←→/Q/E キャラ切替 / ↑↓ 選択 / Z 決定 / X 閉じる</div>
             </div>
         </div>
         
@@ -1974,7 +2346,7 @@
                 <div class="item-list" id="itemList">
                     <div class="empty-inventory">アイテムを持っていません</div>
                 </div>
-                <div class="menu-close">↑↓で選択 / ENTERで使用 / ESCで戻る</div>
+                <div class="menu-close">↑↓ 選択 / Z 使用 / X 戻る</div>
             </div>
         </div>
         
@@ -2020,7 +2392,7 @@
                     </div>
                 </div>
                 
-                <div class="menu-close">↑↓で選択 / ENTERで装備変更 / ESCで戻る</div>
+                <div class="menu-close">↑↓ 選択 / Z 装備変更 / X 戻る</div>
             </div>
         </div>
 
@@ -2033,7 +2405,7 @@
                 <div id="kamuiSkillGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 8px 0; max-height: 280px; overflow-y: auto;">
                     <!-- JavaScriptで動的生成 -->
                 </div>
-                <div class="menu-close">↑↓←→で選択 / ENTERで使用 / ESCで戻る</div>
+                <div class="menu-close">↑↓←→ 選択 / Z 使用 / X 戻る</div>
             </div>
         </div>
 
@@ -2118,23 +2490,26 @@
             </div>
 
             <!-- アクションボタン -->
-            <div class="action-buttons">
-                <div class="action-button menu" data-key="m">
-                    <div style="text-align: center; font-size: 12px;">
-                        <div>メニュー</div>
-                        <div style="font-size: 10px;">M</div>
+            <div class="controller-actions">
+                <a href="../" class="back-button">← ポートフォリオに戻る</a>
+                <div class="action-buttons">
+                    <div class="action-button menu" data-key="m">
+                        <div style="text-align: center; font-size: 12px;">
+                            <div>メニュー</div>
+                            <div style="font-size: 10px;">M</div>
+                        </div>
                     </div>
-                </div>
-                <div class="action-button primary" data-key="z">
-                    <div style="text-align: center; font-size: 12px;">
-                        <div>決定</div>
-                        <div style="font-size: 10px;">Z/Space/Enter</div>
+                    <div class="action-button primary" data-key="z">
+                        <div style="text-align: center; font-size: 12px;">
+                            <div>決定</div>
+                            <div style="font-size: 10px;">Z/Space/Enter</div>
+                        </div>
                     </div>
-                </div>
-                <div class="action-button secondary" data-key="x">
-                    <div style="text-align: center; font-size: 12px;">
-                        <div>戻る</div>
-                        <div style="font-size: 10px;">X</div>
+                    <div class="action-button secondary" data-key="x">
+                        <div style="text-align: center; font-size: 12px;">
+                            <div>戻る</div>
+                            <div style="font-size: 10px;">X</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2144,9 +2519,9 @@
     <!-- 外部スクリプト読み込み -->
     <script src="item-system.js"></script>
     <script src="equipment-system.js"></script>
-    <script src="magic-system.js"></script>
-    <script src="battle-system.js"></script>
-    <script src="map-system.js?v=19"></script>
+    <script src="magic-system.js?v=26"></script>
+    <script src="battle-system.js?v=34"></script>
+    <script src="map-system.js?v=34"></script>
     <script src="map-system-grid.js"></script>
     <script src="player-grid-movement.js"></script>
     <script src="bgm-system.js"></script>
@@ -2341,7 +2716,8 @@
             speed: 8,
             facing: 'down',
             stepCount: 0,
-            isMoving: false
+            isMoving: false,
+            animTime: 0
         };
 
         // グローバルプレイヤー参照
@@ -2352,15 +2728,22 @@
         const PLAYER_SPRITE_FRAME_HEIGHT = 92;
         const PLAYER_SPRITE_ROWS = { down: 0, left: 1, right: 2, up: 3 };
         const playerSprite = new Image();
-        playerSprite.src = 'assets/characters/sprites/kaito_walk.png';
+        playerSprite.decoding = 'async';
         let playerSpriteLoaded = false;
+        let playerSpriteFallbackTried = false;
         playerSprite.onload = () => {
             playerSpriteLoaded = true;
             console.log('✅ プレイヤースプライト読み込み完了');
         };
         playerSprite.onerror = () => {
+            if (!playerSpriteFallbackTried) {
+                playerSpriteFallbackTried = true;
+                playerSprite.src = 'assets/characters/sprites/kaito_walk.png?v=34';
+                return;
+            }
             console.log('⚠️ プレイヤースプライト読み込み失敗 - 絵文字で表示');
         };
+        playerSprite.src = 'assets/characters/sprites/kaito_walk.webp?v=34';
 
         // Input handling
         const keys = {};
@@ -2372,8 +2755,11 @@
         document.addEventListener('keydown', (e) => {
             // ショップが開いている場合
             if (window.gameShop && window.gameShop.isShopOpen) {
-                // ショップのキーボード操作は後で実装
-                e.preventDefault();
+                if (typeof window.gameShop.handleKeyboardInput === 'function') {
+                    window.gameShop.handleKeyboardInput(e);
+                } else {
+                    e.preventDefault();
+                }
                 return;
             }
 
@@ -2660,15 +3046,15 @@
             }
         ];
         const openingVisuals = [
-            'assets/opening/opening-01.png',
-            'assets/opening/opening-02.png',
-            'assets/opening/opening-03.png',
-            'assets/opening/opening-04.png',
-            'assets/opening/opening-05.png',
-            'assets/opening/opening-06.png',
-            'assets/opening/opening-07.png',
-            'assets/opening/opening-08.png',
-            'assets/opening/opening-09.png'
+            'assets/opening/opening-01.webp',
+            'assets/opening/opening-02.webp',
+            'assets/opening/opening-03.webp',
+            'assets/opening/opening-04.webp',
+            'assets/opening/opening-05.webp',
+            'assets/opening/opening-06.webp',
+            'assets/opening/opening-07.webp',
+            'assets/opening/opening-08.webp',
+            'assets/opening/opening-09.webp'
         ];
         let currentOpeningIndex = 0;
 
@@ -2736,7 +3122,9 @@
             openingStarted = true;
 
             document.getElementById('titleScreen').style.display = 'none';
-            document.querySelector('.game-container').classList.add('opening-mode');
+            const gameContainer = document.querySelector('.game-container');
+            gameContainer.classList.remove('title-mode');
+            gameContainer.classList.add('opening-mode');
             document.getElementById('openingScreen').style.display = 'flex';
             // オープニングは GameMessagePanel に本文を流し込む（panel は viewport の外に常設）
             window.openingTypewriterActive = true;
@@ -2924,7 +3312,9 @@
             }
 
             document.getElementById('titleScreen').style.display = 'none';
-            document.querySelector('.game-container').classList.remove('opening-mode');
+            const gameContainer = document.querySelector('.game-container');
+            gameContainer.classList.remove('title-mode', 'opening-mode');
+            gameContainer.classList.add('gameplay-mode');
             document.getElementById('openingScreen').style.display = 'none';
             document.getElementById('gameUI').style.display = 'block';
             document.getElementById('mapInfo').style.display = 'block';
@@ -3121,21 +3511,25 @@
             ctx.fill();
 
             if (playerSpriteLoaded) {
-                const row = PLAYER_SPRITE_ROWS[player.facing] ?? PLAYER_SPRITE_ROWS.down;
-                const frame = player.isMoving ? Math.floor(performance.now() / 120) % 4 : 1;
-                const drawWidth = 58;
-                const drawHeight = 74;
+                const f = (mapSystem && mapSystem.computeWalkFrame)
+                    ? mapSystem.computeWalkFrame(player.facing, player.isMoving, player.animTime || 0)
+                    : { sx: (player.isMoving ? 0 : 0) * PLAYER_SPRITE_FRAME_WIDTH, sy: (PLAYER_SPRITE_ROWS[player.facing] ?? 0) * PLAYER_SPRITE_FRAME_HEIGHT, sw: PLAYER_SPRITE_FRAME_WIDTH, sh: PLAYER_SPRITE_FRAME_HEIGHT };
+                const drawWidth = 52;
+                const drawHeight = 66;
+                const previousSmoothing = ctx.imageSmoothingEnabled;
+                ctx.imageSmoothingEnabled = false;
                 ctx.drawImage(
                     playerSprite,
-                    frame * PLAYER_SPRITE_FRAME_WIDTH,
-                    row * PLAYER_SPRITE_FRAME_HEIGHT,
-                    PLAYER_SPRITE_FRAME_WIDTH,
-                    PLAYER_SPRITE_FRAME_HEIGHT,
+                    f.sx,
+                    f.sy,
+                    f.sw,
+                    f.sh,
                     playerDrawX - drawWidth / 2,
                     playerDrawY - drawHeight + 6,
                     drawWidth,
                     drawHeight
                 );
+                ctx.imageSmoothingEnabled = previousSmoothing;
             } else {
                 // フォールバック：絵文字で描画
                 const playerSize = 48;
@@ -3201,23 +3595,23 @@
             let newX = player.x;
             let newY = player.y;
             player.isMoving = false;
+            const moveX = (keys['ArrowRight'] || keys['d'] ? 1 : 0) - (keys['ArrowLeft'] || keys['a'] ? 1 : 0);
+            const moveY = (keys['ArrowDown'] || keys['s'] ? 1 : 0) - (keys['ArrowUp'] || keys['w'] ? 1 : 0);
             
-            if (keys['ArrowUp'] || keys['w']) {
+            if (moveY < 0) {
                 newY = Math.max(18, player.y - speed);
-                player.facing = 'up';
             }
-            if (keys['ArrowDown'] || keys['s']) {
+            if (moveY > 0) {
                 newY = Math.min(mapBounds.height - 18, player.y + speed);
-                player.facing = 'down';
             }
-            if (keys['ArrowLeft'] || keys['a']) {
+            if (moveX < 0) {
                 newX = Math.max(18, player.x - speed);
-                player.facing = 'left';
             }
-            if (keys['ArrowRight'] || keys['d']) {
+            if (moveX > 0) {
                 newX = Math.min(mapBounds.width - 18, player.x + speed);
-                player.facing = 'right';
             }
+            if (moveX !== 0 && Math.abs(moveX) >= Math.abs(moveY)) player.facing = moveX > 0 ? 'right' : 'left';
+            else if (moveY !== 0) player.facing = moveY > 0 ? 'down' : 'up';
             
             // 衝突判定（旧座標を渡してNPCから離れる動きを許可）
             if (newX !== player.x || newY !== player.y) {
@@ -3234,6 +3628,7 @@
             // 移動した場合
             if (moved) {
                 player.isMoving = true;
+                player.animTime = (player.animTime || 0) + 16;
                 player.stepCount++;
                 document.getElementById('stepCount').textContent = player.stepCount;
                 
@@ -3283,13 +3678,16 @@
         function runMapTransition(transition) {
             if (!transition || !transition.nextMap) return;
 
-            mapSystem.transitionToMap(transition.nextMap);
+            if (!mapSystem.transitionToMap(transition.nextMap)) return;
 
             setTimeout(() => {
                 const spawn = mapSystem.getSpawnPoint(transition.exit, canvas);
                 player.x = spawn.x;
                 player.y = spawn.y;
                 mapSystem.updateCamera(player.x, player.y, canvas);
+                if (mapSystem.startTransitionCooldown) {
+                    mapSystem.startTransitionCooldown();
+                }
 
                 updateMapInfo();
                 console.log('Player repositioned after map transition:', {
@@ -3386,12 +3784,37 @@
         // メニューシステム
         let selectedPartyMemberIndex = 0;
 
+        function getMenuMembers() {
+            const allMembers = [player];
+            if (window.partySystem) {
+                allMembers.push(...window.partySystem.getMembers());
+            }
+            return allMembers;
+        }
+
+        function selectPartyMember(index) {
+            const allMembers = getMenuMembers();
+            if (allMembers.length === 0) {
+                selectedPartyMemberIndex = 0;
+                return;
+            }
+            selectedPartyMemberIndex = (index + allMembers.length) % allMembers.length;
+            updatePartyTabs();
+            updateMenuStats();
+        }
+
+        function changeSelectedPartyMember(delta) {
+            selectPartyMember(selectedPartyMemberIndex + delta);
+        }
+
         function openMenu() {
             const menuOverlay = document.getElementById('menuOverlay');
             if (menuOverlay) {
+                if (typeof clearMessage === 'function') {
+                    clearMessage();
+                }
                 menuOverlay.classList.add('active');
                 menuSelectedIndex = 0;
-                selectedPartyMemberIndex = 0;
                 updatePartyTabs();
                 updateMenuStats();
                 updateMenuSelection();
@@ -3419,104 +3842,22 @@
         
         function handleMenuInput(key) {
             const options = document.querySelectorAll('#menuOptions .menu-option');
-            const cols = 2; // 2列グリッドレイアウト
             const totalOptions = options.length;
 
             // Q/Eキーでパーティメンバー切り替え
-            if (key === 'q' || key === 'Q') {
-                const allMembers = [player];
-                if (window.partySystem) {
-                    allMembers.push(...window.partySystem.getMembers());
-                }
-                selectedPartyMemberIndex = (selectedPartyMemberIndex - 1 + allMembers.length) % allMembers.length;
-                updatePartyTabs();
-                updateMenuStats();
-            } else if (key === 'e' || key === 'E') {
-                const allMembers = [player];
-                if (window.partySystem) {
-                    allMembers.push(...window.partySystem.getMembers());
-                }
-                selectedPartyMemberIndex = (selectedPartyMemberIndex + 1) % allMembers.length;
-                updatePartyTabs();
-                updateMenuStats();
+            if (key === 'q' || key === 'Q' || key === 'ArrowLeft') {
+                changeSelectedPartyMember(-1);
+            } else if (key === 'e' || key === 'E' || key === 'ArrowRight') {
+                changeSelectedPartyMember(1);
             }
-            // 2列グリッドナビゲーション
+            // メニュー項目は上下で順送り
             else if (key === 'ArrowUp' || key === 'w' || key === 'W') {
-                // 上の行へ移動
-                const currentRow = Math.floor(menuSelectedIndex / cols);
-                const currentCol = menuSelectedIndex % cols;
-                const newRow = currentRow - 1;
-                if (newRow >= 0) {
-                    const newIndex = newRow * cols + currentCol;
-                    if (newIndex < totalOptions) {
-                        menuSelectedIndex = newIndex;
-                    }
-                } else {
-                    // 一番上の行にいる場合、一番下の行へ
-                    const maxRow = Math.floor((totalOptions - 1) / cols);
-                    const newIndex = maxRow * cols + currentCol;
-                    if (newIndex < totalOptions) {
-                        menuSelectedIndex = newIndex;
-                    } else {
-                        // 最後の行に該当する列がない場合、最後のオプションへ
-                        menuSelectedIndex = totalOptions - 1;
-                    }
-                }
+                menuSelectedIndex = (menuSelectedIndex - 1 + totalOptions) % totalOptions;
                 updateMenuSelection();
             } else if (key === 'ArrowDown' || key === 's' || key === 'S') {
-                // 下の行へ移動
-                const currentRow = Math.floor(menuSelectedIndex / cols);
-                const currentCol = menuSelectedIndex % cols;
-                const maxRow = Math.floor((totalOptions - 1) / cols);
-                const newRow = currentRow + 1;
-                if (newRow <= maxRow) {
-                    const newIndex = newRow * cols + currentCol;
-                    if (newIndex < totalOptions) {
-                        menuSelectedIndex = newIndex;
-                    } else {
-                        // 下の行に該当する列がない場合、最後のオプションへ
-                        menuSelectedIndex = totalOptions - 1;
-                    }
-                } else {
-                    // 一番下の行にいる場合、一番上の行へ
-                    const newIndex = currentCol;
-                    if (newIndex < totalOptions) {
-                        menuSelectedIndex = newIndex;
-                    } else {
-                        menuSelectedIndex = 0;
-                    }
-                }
+                menuSelectedIndex = (menuSelectedIndex + 1) % totalOptions;
                 updateMenuSelection();
-            } else if (key === 'ArrowLeft' || key === 'a' || key === 'A') {
-                // 左の列へ移動
-                const currentRow = Math.floor(menuSelectedIndex / cols);
-                const currentCol = menuSelectedIndex % cols;
-                if (currentCol > 0) {
-                    menuSelectedIndex = currentRow * cols + (currentCol - 1);
-                } else {
-                    // 一番左の列にいる場合、右の列へ
-                    const newIndex = currentRow * cols + (cols - 1);
-                    if (newIndex < totalOptions) {
-                        menuSelectedIndex = newIndex;
-                    }
-                }
-                updateMenuSelection();
-            } else if (key === 'ArrowRight' || key === 'd' || key === 'D') {
-                // 右の列へ移動
-                const currentRow = Math.floor(menuSelectedIndex / cols);
-                const currentCol = menuSelectedIndex % cols;
-                if (currentCol < cols - 1) {
-                    const newIndex = currentRow * cols + (currentCol + 1);
-                    if (newIndex < totalOptions) {
-                        menuSelectedIndex = newIndex;
-                    }
-                } else {
-                    // 一番右の列にいる場合、左の列へ
-                    menuSelectedIndex = currentRow * cols;
-                }
-                updateMenuSelection();
-            } else if (key === 'Enter') {
-                // 決定キー: ENTERのみ（Spaceは除外）
+            } else if (key === 'Enter' || key === ' ' || key === 'z' || key === 'Z') {
                 const selectedOption = options[menuSelectedIndex];
                 if (selectedOption) {
                     executeMenuOption(selectedOption.dataset.menu);
@@ -3557,6 +3898,15 @@
                     executeMenuOption(option.dataset.menu);
                 };
             });
+
+            const prevButton = document.getElementById('partyPrevButton');
+            const nextButton = document.getElementById('partyNextButton');
+            if (prevButton) {
+                prevButton.onclick = () => changeSelectedPartyMember(-1);
+            }
+            if (nextButton) {
+                nextButton.onclick = () => changeSelectedPartyMember(1);
+            }
         }
 
         // パーティメンバータブの更新
@@ -3564,44 +3914,56 @@
             const tabsContainer = document.getElementById('partyTabs');
             if (!tabsContainer) return;
 
-            // プレイヤー + パーティメンバー
-            const allMembers = [player];
-            if (window.partySystem) {
-                allMembers.push(...window.partySystem.getMembers());
+            const allMembers = getMenuMembers();
+            if (selectedPartyMemberIndex >= allMembers.length) {
+                selectedPartyMemberIndex = 0;
             }
 
             // タブを生成
             tabsContainer.innerHTML = '';
             allMembers.forEach((member, index) => {
                 const tab = document.createElement('button');
-                tab.style.cssText = `
-                    padding: 8px 15px;
-                    background: ${index === selectedPartyMemberIndex ? 'linear-gradient(135deg, #00ffff 0%, #0080ff 100%)' : 'rgba(0, 128, 255, 0.3)'};
-                    border: 2px solid ${index === selectedPartyMemberIndex ? '#00ffff' : '#0080ff'};
-                    border-radius: 5px;
-                    color: ${index === selectedPartyMemberIndex ? '#000000' : '#ffffff'};
-                    font-size: 14px;
-                    font-weight: bold;
-                    cursor: pointer;
-                    transition: all 0.3s;
-                `;
+                tab.type = 'button';
+                tab.className = 'party-tab' + (index === selectedPartyMemberIndex ? ' active' : '');
                 tab.textContent = member.name || 'カイト';
                 tab.onclick = () => {
-                    selectedPartyMemberIndex = index;
-                    updatePartyTabs();
-                    updateMenuStats();
+                    selectPartyMember(index);
                 };
                 tabsContainer.appendChild(tab);
             });
         }
 
+        function getOptimizedCharacterImagePath(path) {
+            if (typeof path === 'string' && path.startsWith('assets/characters/') && path.endsWith('.png')) {
+                return path.replace(/\.png$/, '.webp');
+            }
+            return path;
+        }
+
+        function setMenuCharacterPortrait(portrait, emoji, imagePath, fallbackEmoji) {
+            if (!portrait || !emoji) return;
+
+            const optimizedPath = getOptimizedCharacterImagePath(imagePath);
+            portrait.dataset.fallbackSrc = optimizedPath !== imagePath ? imagePath : '';
+            portrait.onerror = () => {
+                if (portrait.dataset.fallbackSrc) {
+                    portrait.src = portrait.dataset.fallbackSrc;
+                    portrait.dataset.fallbackSrc = '';
+                    return;
+                }
+                portrait.style.display = 'none';
+                emoji.style.display = 'flex';
+            };
+            portrait.src = optimizedPath;
+            portrait.style.display = 'block';
+            emoji.style.display = 'none';
+            emoji.textContent = fallbackEmoji;
+        }
+
         // メニューのステータス表示を更新
         function updateMenuStats() {
             // 表示するメンバーを取得
-            const allMembers = [player];
-            if (window.partySystem) {
-                allMembers.push(...window.partySystem.getMembers());
-            }
+            const allMembers = getMenuMembers();
             const member = allMembers[selectedPartyMemberIndex] || player;
 
             // 名前と役割
@@ -3654,17 +4016,11 @@
             const emoji = document.getElementById('menuCharacterEmoji');
 
             if (member === player) {
-                portrait.src = 'assets/characters/kaito_portrait.png';
-                portrait.style.display = 'block';
-                emoji.style.display = 'none';
-                emoji.textContent = '🧑‍💼';
+                setMenuCharacterPortrait(portrait, emoji, 'assets/characters/kaito_portrait.png', '🧑‍💼');
             } else {
                 // 他のキャラクターの画像パス
                 const portraitPath = `assets/characters/${member.id}_portrait.png`;
-                portrait.src = portraitPath;
-                portrait.style.display = 'block';
-                emoji.style.display = 'none';
-                emoji.textContent = member.sprite || '👤';
+                setMenuCharacterPortrait(portrait, emoji, portraitPath, member.sprite || '👤');
             }
         }
         
@@ -3738,8 +4094,7 @@
             } else if (key === 'ArrowDown' || key === 's' || key === 'S') {
                 itemSelectedIndex = (itemSelectedIndex + 1) % inventory.length;
                 updateItemList();
-            } else if (key === 'Enter') {
-                // 決定キー: ENTERのみ
+            } else if (key === 'Enter' || key === ' ' || key === 'z' || key === 'Z') {
                 const selectedItem = inventory[itemSelectedIndex];
                 useItemFromMenu(selectedItem.id);
             } else if (key === 'Escape' || key === 'x' || key === 'X') {
@@ -4394,8 +4749,7 @@
             } else if (key === 'ArrowDown' || key === 's' || key === 'S') {
                 equipmentSelectedIndex = (equipmentSelectedIndex + 1) % inventory.length;
                 updateEquipmentDisplay();
-            } else if (key === 'Enter') {
-                // 決定キー: ENTERのみ
+            } else if (key === 'Enter' || key === ' ' || key === 'z' || key === 'Z') {
                 const selectedEquipment = inventory[equipmentSelectedIndex];
                 equipFromMenu(selectedEquipment.id);
             } else if (key === 'Escape' || key === 'x' || key === 'X') {

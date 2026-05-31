@@ -1,19 +1,29 @@
 // ==========================================
 // BGMシステム (Background Music System)
 // ==========================================
+// 世代トークン(_gen)方式:
+//   - すべての再生要求を _requestTrack() に一本化して直列化する
+//   - 新しい Audio を生成する前に、必ず現在の Audio を即時停止する
+//   - play() / フェードの requestAnimationFrame など全ての非同期コールバックは
+//     自分が発行された時点の世代(myGen)を握り、最新世代と一致しない場合は no-op
+//   これにより「古い要求が生成した Audio が鳴り続けて新しい曲と混ざる」競合を排除する。
 
 class BGMSystem {
     constructor() {
         this.currentBGM = null;      // 現在再生中のBGM ID
         this.currentScene = null;    // 現在のシーン（'field', 'battle', 'opening'）
         this.fieldBGM = null;        // フィールドBGM（バトル後に復帰用）
-        this.audio = null;
-        this.volume = 0.3;           // デフォルト音量（0.0 - 1.0）
+        this.audio = null;           // 現在の唯一の Audio 要素
+        this.volume = 0.3;           // マスター音量（0.0 - 1.0）
         this.fadeDuration = 1000;    // フェード時間（ミリ秒）
+
+        // 直列化用トークン
+        this._gen = 0;               // 再生要求の世代カウンタ（要求ごとに ++）
+        this._fadeGen = 0;           // フェードの世代カウンタ（フェード割り込み用）
+
+        // 状態フラグ（ログ・参照用。正しさの担保には使わない）
         this.isFading = false;
-        this.isTransitioning = false; // BGM切り替え中フラグ
         this.isUnlocked = false;     // ブラウザの自動再生ロック解除フラグ
-        this.pendingBGM = null;      // 切り替え待ちのBGM
 
         // BGM定義（実際の音楽ファイルパスはここで設定）
         this.bgmTracks = {
@@ -116,202 +126,180 @@ class BGMSystem {
             }
         };
 
-        console.log('BGM System initialized');
+        console.log('BGM System initialized (gen-token serialized)');
     }
 
-    // BGM再生（内部用）
-    _playInternal(trackId, fadeIn = false) {
+    // ==========================================
+    // 内部: 現在の Audio を即時停止して破棄
+    // ==========================================
+    _stopAudioImmediate() {
+        if (this.audio) {
+            try { this.audio.pause(); } catch (e) {}
+            try { this.audio.currentTime = 0; } catch (e) {}
+            try { this.audio.src = ''; } catch (e) {}
+            this.audio = null;
+        }
+    }
+
+    // ==========================================
+    // 内部: 進行中のフェードを中断
+    // ==========================================
+    _stopFade() {
+        this._fadeGen++;     // 走っている step() を次フレームで失効させる
+        this.isFading = false;
+    }
+
+    // ==========================================
+    // すべての再生要求の唯一の入口（直列化の心臓部）
+    // ==========================================
+    _requestTrack(trackId, options = {}) {
+        const scene = (options.scene !== undefined) ? options.scene : this.currentScene;
+        const fadeIn = !!options.fadeIn;
         const track = this.bgmTracks[trackId];
 
         if (!track) {
             console.warn(`[BGM] Track not found: ${trackId}`);
-            this.isTransitioning = false;
             return;
         }
 
-        // 音楽ファイルが存在しない場合
-        if (!track.path) {
-            console.log(`[BGM] "${track.name}" is not available yet.`);
-            this.isTransitioning = false;
-            return;
-        }
-
-        // 既存のaudioが存在する場合は完全に停止して破棄
-        if (this.audio) {
-            console.log(`[BGM] Stopping previous audio before loading new track`);
-            this.audio.pause();
-            this.audio.currentTime = 0;
-            this.audio.src = '';
-            this.audio = null;
-        }
-
-        try {
-            console.log(`[BGM] Loading: ${track.path}`);
-            this.audio = new Audio(track.path);
-            this.audio.loop = true;
-            this.audio.volume = fadeIn ? 0 : (track.volume * this.volume);
-            this.audio.preload = 'auto';
-
-            this.audio.addEventListener('error', (e) => {
-                console.error(`[BGM ERROR] Cannot load: ${track.path}`);
-                this.isTransitioning = false;
-            });
-
-            const playPromise = this.audio.play();
-
-            if (playPromise !== undefined) {
-                playPromise.then(() => {
-                    this.currentBGM = trackId;
-                    this.isUnlocked = true;
-                    this.isTransitioning = false;
-                    console.log(`[BGM] ✓ Playing: ${track.name} (scene: ${this.currentScene})`);
-
-                    if (fadeIn) {
-                        this.fadeIn(track.volume * this.volume);
-                    }
-                }).catch(error => {
-                    console.warn(`[BGM] Auto-play blocked: ${error.message}`);
-                    this.waitForUserInteraction(trackId, fadeIn);
-                });
-            }
-        } catch (error) {
-            console.error('[BGM] Failed to create audio:', error);
-            this.isTransitioning = false;
-        }
-    }
-
-    // BGM再生（外部からの呼び出し用）
-    play(trackId, fadeIn = false) {
-        // 同じBGMが既に再生中の場合はスキップ
+        // 同じ曲が既に正常再生中ならシーンだけ更新してスキップ
         if (this.currentBGM === trackId && this.audio && !this.audio.paused) {
+            if (scene) this.currentScene = scene;
             console.log(`[BGM] Already playing: ${trackId}`);
             return;
         }
 
-        // 無音の場合は停止
-        if (trackId === 'silence') {
-            this.stop(true);
+        // 新しい世代を発行。これ以前の世代が生成した非同期処理はすべて失効する。
+        const myGen = ++this._gen;
+        if (scene) this.currentScene = scene;
+
+        // 旧フェード・旧 Audio を「新 Audio 生成前に」確実に止める（混線の根本対策）
+        this._stopFade();
+        this._stopAudioImmediate();
+        this.currentBGM = null;
+
+        // 無音 / ファイル未設定なら停止状態で確定
+        if (trackId === 'silence' || !track.path) {
+            console.log(`[BGM] "${track.name}" -> silent / not available`);
             return;
         }
 
-        // 切り替え中の場合は待機リストに追加
-        if (this.isTransitioning) {
-            console.log(`[BGM] Transition in progress, queuing: ${trackId}`);
-            this.pendingBGM = { trackId, fadeIn };
+        this._startTrack(trackId, track, fadeIn, myGen);
+    }
+
+    // ==========================================
+    // 内部: 指定世代で新しい Audio を起動
+    // ==========================================
+    _startTrack(trackId, track, fadeIn, myGen) {
+        let el;
+        try {
+            el = new Audio(track.path);
+        } catch (error) {
+            console.error('[BGM] Failed to create audio:', error);
             return;
         }
 
-        // 前のBGMが再生中の場合は確実に停止してから新しいBGMを再生
-        if (this.audio && this.currentBGM && this.currentBGM !== trackId) {
-            console.log(`[BGM] Stopping previous BGM (${this.currentBGM}) before playing ${trackId}`);
-            this.isTransitioning = true;
+        el.loop = true;
+        el.preload = 'auto';
+        el.volume = fadeIn ? 0 : (track.volume * this.volume);
 
-            // フェードアウトしてから新しいBGMを再生
-            this.fadeOut(() => {
-                if (this.audio) {
-                    this.audio.pause();
-                    this.audio.currentTime = 0;
-                    this.audio.src = '';
-                    this.audio = null;
+        el.addEventListener('error', () => {
+            if (myGen !== this._gen || this.audio !== el) return; // 失効した要求
+            console.error(`[BGM ERROR] Cannot load: ${track.path}`);
+        });
+
+        // この時点で this.audio は新要素に確定（旧要素は停止済み）
+        this.audio = el;
+        console.log(`[BGM] Loading: ${track.path} (gen ${myGen}, scene ${this.currentScene})`);
+
+        const playPromise = el.play();
+
+        if (playPromise !== undefined) {
+            playPromise.then(() => {
+                if (myGen !== this._gen || this.audio !== el) return; // 失効
+                this.currentBGM = trackId;
+                this.isUnlocked = true;
+                console.log(`[BGM] ✓ Playing: ${track.name}`);
+                if (fadeIn) {
+                    this._fade(el, track.volume * this.volume, myGen);
                 }
-                this.currentBGM = null;
-
-                // 少し待ってから新しいBGMを開始
-                setTimeout(() => {
-                    this._playInternal(trackId, fadeIn);
-                }, 100);
+            }).catch((error) => {
+                if (myGen !== this._gen || this.audio !== el) return; // 失効
+                console.warn(`[BGM] Auto-play blocked: ${error.message}`);
+                this.waitForUserInteraction(trackId, fadeIn, el, myGen);
             });
         } else {
-            this._playInternal(trackId, fadeIn);
+            // 古いブラウザ（Promiseを返さない）
+            this.currentBGM = trackId;
+            this.isUnlocked = true;
         }
     }
 
-    // フィールドBGM切り替え（マップ移動時）
+    // ==========================================
+    // 内部: 世代付きフェード（要素単位）
+    // ==========================================
+    _fade(el, targetVolume, myGen, onDone) {
+        const fadeId = ++this._fadeGen;
+        this.isFading = true;
+        const startVolume = el.volume;
+        const startTime = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+
+        const step = () => {
+            // 新しい要求 / 新しいフェード / 要素差し替えのいずれかが起きたら中断
+            if (fadeId !== this._fadeGen || myGen !== this._gen || this.audio !== el) {
+                return;
+            }
+            const now = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+            const progress = Math.min((now - startTime) / this.fadeDuration, 1);
+            el.volume = Math.max(0, Math.min(1, startVolume + (targetVolume - startVolume) * progress));
+
+            if (progress < 1) {
+                requestAnimationFrame(step);
+            } else {
+                this.isFading = false;
+                if (onDone) onDone();
+            }
+        };
+
+        requestAnimationFrame(step);
+    }
+
+    // ==========================================
+    // 公開API: 汎用再生
+    // ==========================================
+    play(trackId, fadeIn = false) {
+        this._requestTrack(trackId, { fadeIn });
+    }
+
+    // ==========================================
+    // 公開API: フィールドBGM切り替え（マップ移動時）
+    // ==========================================
     changeFieldBGM(trackId) {
         console.log(`[BGM] === Field BGM Change: ${this.currentBGM} -> ${trackId} ===`);
-
-        // 同じBGMなら何もしない
-        if (this.currentBGM === trackId && this.audio && !this.audio.paused) {
-            console.log(`[BGM] Same field BGM, continuing: ${trackId}`);
-            return;
-        }
-
-        // 切り替え中なら待機
-        if (this.isTransitioning) {
-            console.log(`[BGM] Transition in progress, queuing field: ${trackId}`);
-            this.pendingBGM = { trackId, fadeIn: true, scene: 'field' };
-            return;
-        }
-
-        this.isTransitioning = true;
-        this.currentScene = 'field';
         this.fieldBGM = trackId;
-
-        // 前のBGMがあればフェードアウト
-        if (this.audio && this.currentBGM) {
-            this.fadeOut(() => {
-                if (this.audio) {
-                    this.audio.pause();
-                    this.audio = null;
-                }
-                this.currentBGM = null;
-                // 少し待ってから新しいBGMを開始
-                setTimeout(() => {
-                    this._playInternal(trackId, true);
-                }, 100);
-            });
-        } else {
-            this._playInternal(trackId, true);
-        }
+        this._requestTrack(trackId, { scene: 'field', fadeIn: true });
     }
 
-    // バトルBGM開始
+    // ==========================================
+    // 公開API: バトルBGM開始
+    // ==========================================
     startBattleBGM(isBoss = false) {
         const trackId = isBoss ? 'boss_battle' : 'battle';
         console.log(`[BGM] === Battle Start: ${trackId} ===`);
 
-        // 切り替え中なら待機
-        if (this.isTransitioning) {
-            console.log(`[BGM] Transition in progress, queuing battle: ${trackId}`);
-            this.pendingBGM = { trackId, fadeIn: true, scene: 'battle' };
-            return;
-        }
-
-        // 現在のフィールドBGMを保存
-        if (this.currentScene === 'field') {
+        // 現在のフィールドBGMを保存（_requestTrack が currentBGM を消す前に取得）
+        if (this.currentScene === 'field' && this.currentBGM) {
             this.fieldBGM = this.currentBGM;
         }
 
-        this.isTransitioning = true;
-        this.currentScene = 'battle';
-
-        // フィールドBGMを停止してからバトルBGMを開始
-        if (this.audio && this.currentBGM) {
-            this.fadeOut(() => {
-                if (this.audio) {
-                    this.audio.pause();
-                    this.audio = null;
-                }
-                this.currentBGM = null;
-                setTimeout(() => {
-                    this._playInternal(trackId, true);
-                }, 100);
-            });
-        } else {
-            this._playInternal(trackId, true);
-        }
+        this._requestTrack(trackId, { scene: 'battle', fadeIn: true });
     }
 
-    // バトル終了後、フィールドBGMに復帰
+    // ==========================================
+    // 公開API: バトル終了後、フィールドBGMに復帰
+    // ==========================================
     endBattleBGM() {
         console.log(`[BGM] === Battle End, returning to field: ${this.fieldBGM} ===`);
-
-        // 切り替え中なら待機
-        if (this.isTransitioning) {
-            console.log(`[BGM] Transition in progress, queuing field return`);
-            this.pendingBGM = { trackId: this.fieldBGM, fadeIn: true, scene: 'field' };
-            return;
-        }
 
         if (!this.fieldBGM) {
             console.log(`[BGM] No field BGM to return to`);
@@ -319,131 +307,63 @@ class BGMSystem {
             return;
         }
 
-        this.isTransitioning = true;
-        this.currentScene = 'field';
-
-        // バトルBGMを停止してからフィールドBGMを開始
-        if (this.audio && this.currentBGM) {
-            this.fadeOut(() => {
-                if (this.audio) {
-                    this.audio.pause();
-                    this.audio = null;
-                }
-                this.currentBGM = null;
-                setTimeout(() => {
-                    this._playInternal(this.fieldBGM, true);
-                }, 100);
-            });
-        } else {
-            this._playInternal(this.fieldBGM, true);
-        }
+        this._requestTrack(this.fieldBGM, { scene: 'field', fadeIn: true });
     }
 
-    // BGM停止
+    // ==========================================
+    // 公開API: BGM停止
+    // ==========================================
     stop(fadeOut = false) {
+        const myGen = ++this._gen;   // 進行中の要求をすべて失効させる
+
         if (!this.audio) {
-            console.log('[BGM] No audio to stop');
+            this.currentBGM = null;
             return;
         }
 
         console.log(`[BGM] Stopping current BGM: ${this.currentBGM} (fadeOut: ${fadeOut})`);
 
         if (fadeOut) {
-            this.fadeOut(() => {
-                if (this.audio) {
-                    this.audio.pause();
-                    this.audio.currentTime = 0;
-                    this.audio = null;
-                }
-                console.log('[BGM] Fade out completed, audio stopped');
+            const el = this.audio;
+            this._fade(el, 0, myGen, () => {
+                if (myGen !== this._gen || this.audio !== el) return;
+                this._stopAudioImmediate();
                 this.currentBGM = null;
+                console.log('[BGM] Fade out completed, audio stopped');
             });
         } else {
-            this.audio.pause();
-            this.audio.currentTime = 0;
-            this.audio = null;
+            this._stopFade();
+            this._stopAudioImmediate();
             this.currentBGM = null;
             console.log('[BGM] Audio stopped immediately');
         }
     }
 
-    // BGM一時停止
+    // ==========================================
+    // 公開API: 一時停止 / 再開
+    // ==========================================
     pause() {
         if (this.audio) {
-            this.audio.pause();
+            try { this.audio.pause(); } catch (e) {}
         }
     }
 
-    // BGM再開
     resume() {
         if (this.audio) {
-            this.audio.play().catch(error => {
+            this.audio.play().catch((error) => {
                 console.warn('Failed to resume BGM:', error);
             });
         }
     }
 
-    // フェードイン
-    fadeIn(targetVolume) {
-        if (!this.audio || this.isFading) return;
-
-        this.isFading = true;
-        const startVolume = 0;
-        const startTime = Date.now();
-
-        const fade = () => {
-            const elapsed = Date.now() - startTime;
-            const progress = Math.min(elapsed / this.fadeDuration, 1);
-
-            if (this.audio) {
-                this.audio.volume = startVolume + (targetVolume - startVolume) * progress;
-            }
-
-            if (progress < 1) {
-                requestAnimationFrame(fade);
-            } else {
-                this.isFading = false;
-            }
-        };
-
-        fade();
-    }
-
-    // フェードアウト
-    fadeOut(callback) {
-        if (!this.audio || this.isFading) {
-            if (callback) callback();
-            return;
-        }
-
-        this.isFading = true;
-        const startVolume = this.audio.volume;
-        const startTime = Date.now();
-
-        const fade = () => {
-            const elapsed = Date.now() - startTime;
-            const progress = Math.min(elapsed / this.fadeDuration, 1);
-
-            if (this.audio) {
-                this.audio.volume = startVolume * (1 - progress);
-            }
-
-            if (progress < 1) {
-                requestAnimationFrame(fade);
-            } else {
-                this.isFading = false;
-                if (callback) callback();
-            }
-        };
-
-        fade();
-    }
-
-    // マスター音量設定
+    // ==========================================
+    // 公開API: マスター音量設定
+    // ==========================================
     setVolume(volume) {
         this.volume = Math.max(0, Math.min(1, volume));
 
-        if (this.audio && this.currentBGM) {
+        // フェード中でなければ即反映（フェード中は _fade が音量を管理）
+        if (this.audio && this.currentBGM && !this.isFading) {
             const track = this.bgmTracks[this.currentBGM];
             if (track) {
                 this.audio.volume = track.volume * this.volume;
@@ -451,52 +371,59 @@ class BGMSystem {
         }
     }
 
-    // ユーザー操作を待ってBGMを再生（ブラウザの自動再生ポリシー対応）
-    waitForUserInteraction(trackId, fadeIn = false) {
-        const unlockAudio = () => {
-            if (!this.isUnlocked) {
-                console.log('[BGM] User interaction detected, unlocking audio...');
-                this.isUnlocked = true;
-
-                // 再度再生を試みる
-                if (this.audio) {
-                    this.audio.play().then(() => {
-                        console.log('[BGM] Audio unlocked and playing');
-                        if (fadeIn) {
-                            const track = this.bgmTracks[trackId];
-                            if (track) {
-                                this.fadeIn(track.volume * this.volume);
-                            }
-                        }
-                    }).catch(e => {
-                        console.warn('[BGM] Still cannot play:', e);
-                    });
-                }
-
-                // リスナーを削除
-                document.removeEventListener('click', unlockAudio);
-                document.removeEventListener('keydown', unlockAudio);
-                document.removeEventListener('touchstart', unlockAudio);
-            }
+    // ==========================================
+    // ユーザー操作を待ってBGMを再生（自動再生ポリシー対応・世代付き）
+    // ==========================================
+    waitForUserInteraction(trackId, fadeIn, el, myGen) {
+        const cleanup = () => {
+            document.removeEventListener('click', unlock);
+            document.removeEventListener('keydown', unlock);
+            document.removeEventListener('touchstart', unlock);
         };
 
-        // ユーザー操作イベントを待つ
-        document.addEventListener('click', unlockAudio, { once: true });
-        document.addEventListener('keydown', unlockAudio, { once: true });
-        document.addEventListener('touchstart', unlockAudio, { once: true });
+        const unlock = () => {
+            // 既に新しい要求に切り替わっていたら何もしない
+            if (myGen !== this._gen || this.audio !== el) {
+                cleanup();
+                return;
+            }
+            console.log('[BGM] User interaction detected, unlocking audio...');
+            this.isUnlocked = true;
+
+            el.play().then(() => {
+                if (myGen !== this._gen || this.audio !== el) return;
+                this.currentBGM = trackId;
+                console.log('[BGM] Audio unlocked and playing');
+                if (fadeIn) {
+                    const track = this.bgmTracks[trackId];
+                    if (track) this._fade(el, track.volume * this.volume, myGen);
+                }
+            }).catch((e) => {
+                console.warn('[BGM] Still cannot play:', e);
+            });
+
+            cleanup();
+        };
+
+        document.addEventListener('click', unlock, { once: true });
+        document.addEventListener('keydown', unlock, { once: true });
+        document.addEventListener('touchstart', unlock, { once: true });
     }
 
+    // ==========================================
     // 現在のBGM情報を取得
+    // ==========================================
     getCurrentBGM() {
         if (!this.currentBGM) return null;
-
         return {
             id: this.currentBGM,
             ...this.bgmTracks[this.currentBGM]
         };
     }
 
+    // ==========================================
     // BGMリスト取得
+    // ==========================================
     getTrackList() {
         return Object.entries(this.bgmTracks).map(([id, track]) => ({
             id,
