@@ -2565,9 +2565,9 @@
 
     <!-- 外部スクリプト読み込み -->
     <script src="item-system.js"></script>
-    <script src="equipment-system.js"></script>
+    <script src="equipment-system.js?v=47"></script>
     <script src="magic-system.js?v=27"></script>
-    <script src="battle-system.js?v=35"></script>
+    <script src="battle-system.js?v=47"></script>
     <script src="map-system.js?v=46"></script>
     <script src="map-system-grid.js"></script>
     <script src="player-grid-movement.js"></script>
@@ -4217,7 +4217,9 @@ function drawWalkChar(ctx, cx, footY, facing, isMoving, t, pal, scale){
             // 経験値は全キャラクターに表示
             expRow.style.display = 'flex';
             const currentExp = member.exp || 0;
-            const expNeeded = member.level * 100; // レベル × 100が必要経験値
+            // 戦闘のレベルアップ判定式(calculateExpNeeded)と表示を一致させる
+            const expCurve = window.CHARACTER_GROWTH?.[member.characterId]?.expCurve || 'normal';
+            const expNeeded = window.calculateExpNeeded ? window.calculateExpNeeded(member.level, expCurve) : member.level * 100;
             document.getElementById('menuExp').textContent = currentExp;
             document.getElementById('menuExpNeeded').textContent = expNeeded;
 

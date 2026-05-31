@@ -1425,13 +1425,19 @@ class BattleSystem {
     enemySkillAttack(player) {
         const skillDamage = Math.floor(this.currentEnemy.attack * 1.5);
         const variance = Math.floor(Math.random() * 5);
-        const damage = Math.max(1, skillDamage + variance - Math.floor((player.defense || 5) / 3));
+        let damage = Math.max(1, skillDamage + variance - Math.floor((player.defense || 5) / 3));
 
         // パーティメンバーからランダムにターゲットを選択
         const allMembers = this.getPartyMembers();
         const target = allMembers[Math.floor(Math.random() * allMembers.length)];
 
         this.addBattleLog(`${this.currentEnemy.name}の とくしゅこうげき！`);
+        // 防御中は特殊攻撃も半減（通常攻撃と同じ扱い。従来は特殊に防御が効かなかった）
+        if (target.defending) {
+            damage = Math.floor(damage / 2);
+            this.addBattleLog(`${target.name}は ぼうぎょしている！`);
+            target.defending = false;
+        }
 
         target.hp = Math.max(0, target.hp - damage);
         this.addBattleLog(`${target.name}に ${Math.floor(damage)}の ダメージ！`);
@@ -1565,16 +1571,10 @@ class BattleSystem {
                 }
                 // 装備品かチェック
                 else if (window.equipmentSystem && window.equipmentSystem.equipmentDatabase[dropEntry.id]) {
-                    // 装備品をプレイヤーのインベントリに追加
-                    if (!window.player.equipmentInventory) {
-                        window.player.equipmentInventory = [];
-                    }
-
+                    // 装備品は equipmentSystem.inventory へ入れる（装備メニューはこちらを読む。
+                    // 旧 player.equipmentInventory 配列はメニュー未参照で永久に使えなかったバグを修正）
                     const equipData = window.equipmentSystem.equipmentDatabase[dropEntry.id];
-                    window.player.equipmentInventory.push({
-                        id: dropEntry.id,
-                        ...equipData
-                    });
+                    window.equipmentSystem.addEquipment(dropEntry.id, 1);
 
                     droppedItems.push({
                         name: equipData.name,
@@ -1618,6 +1618,10 @@ class BattleSystem {
     levelUpCharacter(character) {
         const characterId = character.characterId || 'kaito';
         const oldLevel = character.level;
+        // このレベルに必要だったexpを消費（消費しないとprocessLevelUpsが同レベルで無限/多段暴発する）
+        const expCurve = window.CHARACTER_GROWTH?.[characterId]?.expCurve || 'normal';
+        const needed = window.calculateExpNeeded ? window.calculateExpNeeded(character.level, expCurve) : character.level * 100;
+        character.exp = Math.max(0, (character.exp || 0) - needed);
         character.level++;
 
         // ステータス成長（ランダム幅付き）

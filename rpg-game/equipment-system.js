@@ -569,9 +569,9 @@ class EquipmentSystem {
         // 装備ボーナスを計算
         const equipStats = this.getTotalStats();
 
-        // 現在のHPとMPの割合を保存
-        const hpRatio = player.hp / player.maxHp;
-        const mpRatio = player.mp / player.maxMp;
+        // 現在のHPとMPの割合を保存（maxHp/maxMp=0時のNaN伝播を防止）
+        const hpRatio = player.maxHp ? player.hp / player.maxHp : 1;
+        const mpRatio = player.maxMp ? player.mp / player.maxMp : 1;
 
         // ステータスを再計算
         player.attack = player.baseAttack + equipStats.attack;
