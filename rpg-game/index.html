@@ -2530,8 +2530,7 @@
     <script src="equipment-system.js"></script>
     <script src="magic-system.js?v=27"></script>
     <script src="battle-system.js?v=35"></script>
-    <script src="char-anim.js?v=40"></script>
-    <script src="map-system.js?v=40"></script>
+    <script src="map-system.js?v=41"></script>
     <script src="map-system-grid.js"></script>
     <script src="player-grid-movement.js"></script>
     <script src="bgm-system.js?v=35"></script>
@@ -3694,9 +3693,16 @@ function drawWalkChar(ctx, cx, footY, facing, isMoving, t, pal, scale){
             ctx.ellipse(playerDrawX, playerDrawY + 4, 18, 7, 0, 0, Math.PI * 2);
             ctx.fill();
 
-            // 脚スイング歩行アニメ(整列スプライト・元アート保持・跳ねない)
-            if (playerSpriteLoaded && window.drawCharAnim) {
-                window.drawCharAnim(ctx, playerSprite, playerDrawX, playerDrawY + 6, player.facing, player.isMoving, player.animTime || 0, 0.74);
+            // フルフレーム再生(本物の歩行コマをそのまま送る・整数スナップ)
+            if (playerSpriteLoaded && mapSystem && mapSystem.computeWalkFrame) {
+                const f = mapSystem.computeWalkFrame(player.facing, player.isMoving, player.animTime || 0);
+                const dw = 52, dh = 66;
+                const dx = Math.round(playerDrawX - dw / 2);
+                const dy = Math.round((playerDrawY + 6) - dh);
+                const ps = ctx.imageSmoothingEnabled;
+                ctx.imageSmoothingEnabled = false;
+                ctx.drawImage(playerSprite, f.sx, f.sy, f.sw, f.sh, dx, dy, dw, dh);
+                ctx.imageSmoothingEnabled = ps;
             }
         }
 

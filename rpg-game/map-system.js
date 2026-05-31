@@ -2920,19 +2920,15 @@ class MapSystem {
 
             if (sprite && sprite.complete && sprite.naturalWidth > 0) {
                 if (this.isWalkSpriteSheet(spritePath, sprite)) {
-                    // 脚スイング歩行アニメ(整列スプライト・元アート保持・跳ねない)
-                    let drewNpc = false;
-                    if (typeof window !== 'undefined' && window.drawCharAnim) {
-                        const sc = npc.hostile ? 0.78 : 0.68;
-                        drewNpc = window.drawCharAnim(ctx, sprite, position.x, position.y + 6, npc.facing || 'down', npc.isMoving, npc.animTime || 0, sc);
-                    }
-                    if (!drewNpc) {
-                        const f = this.computeWalkFrame(npc.facing, npc.isMoving, npc.animTime || 0);
-                        const dw = npc.hostile ? 56 : 48, dh = npc.hostile ? 72 : 62;
-                        const ps = ctx.imageSmoothingEnabled; ctx.imageSmoothingEnabled = false;
-                        ctx.drawImage(sprite, f.sx, f.sy, f.sw, f.sh, position.x - dw / 2, position.y - dh + 6, dw, dh);
-                        ctx.imageSmoothingEnabled = ps;
-                    }
+                    // フルフレーム再生(本物の歩行コマをそのまま送る・整数スナップ)
+                    const f = this.computeWalkFrame(npc.facing, npc.isMoving, npc.animTime || 0);
+                    const dw = npc.hostile ? 56 : 48, dh = npc.hostile ? 72 : 62;
+                    const dx = Math.round(position.x - dw / 2);
+                    const dy = Math.round(position.y - dh + 6);
+                    const ps = ctx.imageSmoothingEnabled;
+                    ctx.imageSmoothingEnabled = false;
+                    ctx.drawImage(sprite, f.sx, f.sy, f.sw, f.sh, dx, dy, dw, dh);
+                    ctx.imageSmoothingEnabled = ps;
                 } else {
                     const size = npc.hostile ? 50 : 44;
                     ctx.drawImage(sprite, position.x - size / 2, position.y - size, size, size * 1.25);
