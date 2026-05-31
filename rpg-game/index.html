@@ -601,6 +601,38 @@
             justify-content: center;
         }
 
+        /* VN会話ポートレート（話者を左右に立てる） */
+        .vn-portraits {
+            position: absolute;
+            inset: 0 0 150px 0;            /* 下のメッセージパネル(約170px)を避ける */
+            pointer-events: none;
+            z-index: 46;
+            opacity: 0;
+            transition: opacity .3s ease;
+        }
+        .vn-portraits.active { opacity: 1; }
+        .vn-portrait {
+            position: absolute;
+            bottom: 0;
+            height: 78%;
+            max-height: 360px;
+            opacity: 0;
+            filter: brightness(0.42) saturate(0.65) blur(0.3px);
+            transition: opacity .3s ease, filter .25s ease, transform .25s ease;
+            transform: translateY(10px) scale(0.95);
+            will-change: filter, transform;
+            -webkit-user-drag: none; user-select: none;
+            drop-shadow: 0 8px 24px rgba(0,0,0,0.6);
+        }
+        .vn-portrait.shown { opacity: 1; }
+        .vn-portrait.speaking {
+            filter: brightness(1.06) saturate(1);
+            transform: translateY(0) scale(1);
+            z-index: 2;
+        }
+        .vn-left  { left: -2%; }
+        .vn-right { right: -2%; }
+
         /* RPG風メッセージボックス */
         .opening-story-panel {
             width: calc(100% - 24px);
@@ -2244,6 +2276,12 @@
         <!-- Opening Story Screen (背景画像のみ。本文は #gameMessagePanel に表示) -->
         <div class="title-screen" id="openingScreen" style="display: none;"></div>
 
+        <!-- VN会話ポートレート: ストーリー会話で話者を左右に立て、話している方をハイライト -->
+        <div id="vnPortraits" class="vn-portraits" aria-hidden="true">
+            <img id="vnPortraitLeft" class="vn-portrait vn-left" alt="" decoding="async">
+            <img id="vnPortraitRight" class="vn-portrait vn-right" alt="" decoding="async">
+        </div>
+
         <div class="map-info" id="mapInfo" style="display: none;">
             <strong id="mapName">新宿 - 中央区画</strong>
             <div class="map-details">
@@ -2535,7 +2573,7 @@
     <script src="player-grid-movement.js"></script>
     <script src="bgm-system.js?v=35"></script>
     <script src="party-system.js"></script>
-    <script src="story-events.js"></script>
+    <script src="story-events.js?v=45"></script>
 
     <script>
         const canvas = document.getElementById('gameCanvas');

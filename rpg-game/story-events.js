@@ -36,6 +36,15 @@ class StoryEventSystem {
         this.hintEl = document.getElementById('gameMessageHint');
         this.controlsEl = this.panelEl.querySelector('.game-msg-controls');
 
+        // VN会話ポートレート
+        this.vnPortraits = document.getElementById('vnPortraits');
+        this.vnLeft = document.getElementById('vnPortraitLeft');
+        this.vnRight = document.getElementById('vnPortraitRight');
+        // 話者名 → ポートレートのキャラキー
+        this.PORTRAIT_KEYS = { 'カイト': 'kaito', 'アカリ': 'akari', 'リク': 'riku', 'ヤミ': 'yami' };
+        this.vnLeftKey = null;   // 左に立っているキャラキー
+        this.vnRightKey = null;  // 右
+
         // 互換性のため eventOverlay/eventTextBox/continueButton 参照は残す（旧コードからの呼び出し対策）
         this.eventOverlay = this.panelEl;
         this.eventTextBox = this.panelEl;
@@ -378,8 +387,67 @@ class StoryEventSystem {
             window.pauseGame = true;
         }
 
+        // VN会話ポートレートの配役（このイベントに出る話者から左右を決める）
+        this.setupPortraits(event);
+
         // 最初のシーンを表示
         this.showScene();
+    }
+
+    // このイベントの話者からポートレートの左右を決めて立てる
+    setupPortraits(event) {
+        if (!this.vnPortraits || !this.vnLeft || !this.vnRight) return;
+        this.vnLeftKey = null;
+        this.vnRightKey = null;
+        const keysInOrder = [];
+        for (const sc of (event.scenes || [])) {
+            const k = this.PORTRAIT_KEYS[sc.character];
+            if (k && !keysInOrder.includes(k)) keysInOrder.push(k);
+        }
+        if (keysInOrder.length === 0) {
+            // 立ち絵が無いイベント（システム/NPCのみ）はポートレート非表示
+            this.vnPortraits.classList.remove('active');
+            this.vnLeft.classList.remove('shown', 'speaking');
+            this.vnRight.classList.remove('shown', 'speaking');
+            return;
+        }
+        // 主人公(kaito)は左固定、相手は右。kaitoが居なければ先頭を左に。
+        if (keysInOrder.includes('kaito')) {
+            this.vnLeftKey = 'kaito';
+            this.vnRightKey = keysInOrder.find(k => k !== 'kaito') || null;
+        } else {
+            this.vnLeftKey = keysInOrder[0];
+            this.vnRightKey = keysInOrder[1] || null;
+        }
+        this._applyPortrait(this.vnLeft, this.vnLeftKey);
+        this._applyPortrait(this.vnRight, this.vnRightKey);
+        this.vnPortraits.classList.add('active');
+    }
+
+    _applyPortrait(imgEl, key) {
+        if (!imgEl) return;
+        if (!key) { imgEl.classList.remove('shown', 'speaking'); imgEl.removeAttribute('src'); return; }
+        const webp = `assets/characters/${key}_portrait.webp`;
+        imgEl.onerror = () => { imgEl.onerror = null; imgEl.src = `assets/characters/${key}_portrait.png`; };
+        imgEl.src = webp;
+        imgEl.classList.add('shown');
+        imgEl.classList.remove('speaking');
+    }
+
+    // 現在の話者をハイライト
+    updateSpeaker(characterName) {
+        if (!this.vnPortraits) return;
+        const key = this.PORTRAIT_KEYS[characterName] || null;
+        if (this.vnLeft) this.vnLeft.classList.toggle('speaking', !!key && key === this.vnLeftKey);
+        if (this.vnRight) this.vnRight.classList.toggle('speaking', !!key && key === this.vnRightKey);
+    }
+
+    hidePortraits() {
+        if (!this.vnPortraits) return;
+        this.vnPortraits.classList.remove('active');
+        if (this.vnLeft) this.vnLeft.classList.remove('shown', 'speaking');
+        if (this.vnRight) this.vnRight.classList.remove('shown', 'speaking');
+        this.vnLeftKey = this.vnRightKey = null;
     }
 
     // シーンを表示
@@ -407,6 +475,8 @@ class StoryEventSystem {
         } else {
             this.headerEl.classList.remove('active');
         }
+        // VNポートレート: 現在の話者をハイライト
+        this.updateSpeaker(characterName);
 
         // 選択肢をクリア
         this.eventChoices.innerHTML = '';
@@ -492,6 +562,9 @@ class StoryEventSystem {
                 storyFlags[`${id}_completed`] = true;
             }
         }
+
+        // VNポートレートを片付け
+        this.hidePortraits();
 
         // パネルを隠す
         this.panelEl.classList.remove('active');
