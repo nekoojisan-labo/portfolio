@@ -2910,7 +2910,7 @@ class MapSystem {
                         const stem = fileName.replace(/\.[^.]+$/, '');
                         const palettes = window.CHAR_PALETTES || {};
                         const palette = palettes[stem] || window.DEFAULT_PALETTE;
-                        const scale = npc.hostile ? 1.2 : 1.0;
+                        const scale = npc.hostile ? 1.35 : 1.15;
                         const previousSmoothing = ctx.imageSmoothingEnabled;
                         ctx.imageSmoothingEnabled = false;
                         window.drawWalkChar(ctx, position.x, position.y + 6, npc.facing || 'down', npc.isMoving, npc.animTime || 0, palette, scale);
