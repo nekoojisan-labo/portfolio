@@ -358,6 +358,21 @@ class ItemSystem {
             message: `${item.name} x${quantity}を売却した！\n${totalValue}ゴールドを手に入れた。`
         };
     }
+
+    // === セーブ用: id→数量のみ ===
+    toJSON() {
+        const out = {};
+        for (const id in this.inventory) out[id] = this.inventory[id].quantity;
+        return out;
+    }
+    // === ロード用: DBから再構築 ===
+    fromJSON(data) {
+        this.inventory = {};
+        if (!data) return;
+        for (const id in data) {
+            if (this.itemDatabase[id] && data[id] > 0) this.addItem(id, data[id]);
+        }
+    }
 }
 
 // グローバルにエクスポート

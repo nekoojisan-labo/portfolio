@@ -2271,6 +2271,7 @@
             <h2>八百万の神託</h2>
             <p style="margin-bottom: 20px; color: #aaa;">神々の力をその身に降ろし、AIが支配する無機質な世界に、人の心を取り戻せ</p>
             <button class="start-button" onclick="startOpening()">ゲーム開始</button>
+            <button class="start-button" id="continueButton" style="display:none; margin-top:10px;" onclick="continueGame()">つづきから</button>
         </div>
 
         <!-- Opening Story Screen (背景画像のみ。本文は #gameMessagePanel に表示) -->
@@ -2564,15 +2565,15 @@
     </div><!-- /.game-container -->
 
     <!-- 外部スクリプト読み込み -->
-    <script src="item-system.js"></script>
+    <script src="item-system.js?v=47"></script>
     <script src="equipment-system.js?v=47"></script>
-    <script src="magic-system.js?v=27"></script>
+    <script src="magic-system.js?v=47"></script>
     <script src="battle-system.js?v=47"></script>
     <script src="map-system.js?v=46"></script>
     <script src="map-system-grid.js"></script>
     <script src="player-grid-movement.js"></script>
     <script src="bgm-system.js?v=35"></script>
-    <script src="party-system.js"></script>
+    <script src="party-system.js?v=47"></script>
     <script src="story-events.js?v=45"></script>
 
     <script>
@@ -3215,6 +3216,8 @@ function drawWalkChar(ctx, cx, footY, facing, isMoving, t, pal, scale){
         window.addEventListener('load', () => {
             setupTouchControls();
             console.log('[Touch Controls] Re-initialized after window load');
+            // セーブがあればタイトルに「つづきから」を表示
+            if (typeof refreshContinueButton === 'function') refreshContinueButton();
         });
 
         // Opening Story System
@@ -3333,6 +3336,21 @@ function drawWalkChar(ctx, cx, footY, facing, isMoving, t, pal, scale){
 
             return pages.length > 0 ? pages : [trimmed];
         }
+
+        // タイトルでセーブの有無を判定し「つづきから」を出す
+        function refreshContinueButton() {
+            const btn = document.getElementById('continueButton');
+            if (btn) btn.style.display = (typeof hasSaveData === 'function' && hasSaveData()) ? 'inline-block' : 'none';
+        }
+        // 「つづきから」: オープニングを飛ばして直接 startGame(true)
+        function continueGame() {
+            if (openingStarted || gameStarted) return;
+            document.getElementById('titleScreen').style.display = 'none';
+            const gc = document.querySelector('.game-container');
+            if (gc) gc.classList.remove('title-mode');
+            startGame(true);
+        }
+        window.continueGame = continueGame;
 
         function startOpening() {
             // 重複実行を防止
@@ -3510,7 +3528,7 @@ function drawWalkChar(ctx, cx, footY, facing, isMoving, t, pal, scale){
         // GameMessagePanel のクリックから呼べるように明示的にエクスポート
         window.nextOpeningMessage = nextOpeningMessage;
 
-        function startGame() {
+        function startGame(loadOnStart = false) {
             console.log('[DEBUG] startGame() called');
 
             // 重複実行を防止
@@ -3627,6 +3645,8 @@ function drawWalkChar(ctx, cx, footY, facing, isMoving, t, pal, scale){
                 console.error('[ERROR] StoryEventSystem failed:', e);
             }
 
+            // デバッグ用初期化（ロード時はスキップ＝セーブ内容で上書きされる二重化を防止）
+            if (!loadOnStart) {
             // デバッグ用: 初期アイテムを追加
             itemSystem.addItem('heal_potion', 3);
             itemSystem.addItem('energy_core', 2);
@@ -3660,7 +3680,8 @@ function drawWalkChar(ctx, cx, footY, facing, isMoving, t, pal, scale){
             magicSystem.learnMagic('heal', player);
             magicSystem.learnMagic('fire_bolt', player);
             console.log('✅ カイトが初期スキルを習得: heal, fire_bolt');
-            
+            } // end if(!loadOnStart) — デバッグ初期化
+
             // グローバルに公開
             window.itemSystem = itemSystem;
             window.equipmentSystem = equipmentSystem;
@@ -3678,26 +3699,26 @@ function drawWalkChar(ctx, cx, footY, facing, isMoving, t, pal, scale){
             // magicSystem.learnMagic('fire_bolt', player);
 
             gameStarted = true;
-            updateMapInfo();
-            gameLoop();
-
-            // オープニングBGMを確実に停止してからフィールドBGMを再生
-            console.log('[BGM] Stopping opening BGM and starting field BGM');
-
-            // 2Dピクセル座標ベースのマップシステムのBGM
-            const initialMap = mapSystem.maps[mapSystem.currentMap];
-            if (initialMap && initialMap.bgm) {
-                bgmSystem.changeFieldBGM(initialMap.bgm);
+            if (loadOnStart && loadGame()) {
+                // ロード成功: applyGameState で状態/カメラ/UI/BGM 適用済み。自動イベント/初期BGMはスキップ
+                gameLoop();
+            } else {
+                updateMapInfo();
+                gameLoop();
+                console.log('[BGM] Starting field BGM');
+                const initialMap = mapSystem.maps[mapSystem.currentMap];
+                if (initialMap && initialMap.bgm) {
+                    bgmSystem.changeFieldBGM(initialMap.bgm);
+                }
+                // チャプター1開始イベントを自動再生（新規開始時のみ）
+                storyEventSystem.checkAutoEvents({
+                    storyFlags,
+                    player,
+                    mapSystem,
+                    magicSystem,
+                    partySystem
+                });
             }
-
-            // チャプター1開始イベントを自動再生
-            storyEventSystem.checkAutoEvents({
-                storyFlags,
-                player,
-                mapSystem,
-                magicSystem,
-                partySystem
-            });
 
             // デバッグ用: グローバルアクセス
             window.debugMapSystem = mapSystem;
@@ -3977,26 +3998,98 @@ function drawWalkChar(ctx, cx, footY, facing, isMoving, t, pal, scale){
             return distance < 50;
         }
 
-        function saveGame() {
-            const saveData = {
-                player: player,
-                currentMap: mapSystem.currentMap,
-                timestamp: new Date().toISOString()
+        // ===== セーブ/ロード（全状態シリアライズ） =====
+        const SAVE_KEY = 'deusCodeSave';
+        const SAVE_VERSION = 2;
+
+        // player の恒久ステータスのみ抽出（x/y/facing/isMoving/animTime/stepCount は除外）
+        function serializePlayer() {
+            return {
+                characterId: player.characterId, name: player.name, role: player.role,
+                level: player.level, exp: player.exp, gold: player.gold,
+                hp: player.hp, mp: player.mp, maxHp: player.maxHp, maxMp: player.maxMp,
+                baseMaxHp: player.baseMaxHp, baseMaxMp: player.baseMaxMp,
+                baseAttack: player.baseAttack, baseDefense: player.baseDefense,
+                baseMagic: player.baseMagic, baseSpeed: player.baseSpeed,
+                attack: player.attack, defense: player.defense, magic: player.magic, speed: player.speed
             };
-            
-            localStorage.setItem('deusCodeSave', JSON.stringify(saveData));
-            showMessage('ゲームを セーブしました');
+        }
+
+        function serializeGameState() {
+            return {
+                version: SAVE_VERSION,
+                timestamp: new Date().toISOString(),
+                currentMap: mapSystem.currentMap,
+                player: serializePlayer(),
+                storyFlags: { ...storyFlags },
+                items: itemSystem ? itemSystem.toJSON() : {},
+                equipment: equipmentSystem ? equipmentSystem.toJSON() : {},
+                magic: magicSystem ? magicSystem.toJSON() : {},
+                party: partySystem ? partySystem.toJSON() : []
+            };
+        }
+
+        function hasSaveData() {
+            try {
+                const raw = localStorage.getItem(SAVE_KEY);
+                if (!raw) return false;
+                const d = JSON.parse(raw);
+                return !!(d && d.version === SAVE_VERSION);
+            } catch (e) { return false; }
+        }
+
+        function saveGame() {
+            try {
+                localStorage.setItem(SAVE_KEY, JSON.stringify(serializeGameState()));
+                showMessage('ゲームを セーブしました');
+            } catch (e) {
+                console.error('[Save] failed:', e);
+                showMessage('セーブに失敗しました');
+            }
+        }
+
+        // 全状態を現行 systems に適用（systems は startGame で new 済み前提）
+        function applyGameState(data) {
+            if (data.player) Object.assign(player, data.player);
+            if (data.storyFlags) {
+                for (const k in storyFlags) delete storyFlags[k];
+                Object.assign(storyFlags, data.storyFlags);
+            }
+            if (itemSystem) itemSystem.fromJSON(data.items);
+            if (magicSystem) magicSystem.fromJSON(data.magic);
+            if (partySystem) partySystem.fromJSON(data.party);
+            // 装備は最後（recalculatePlayerStats が base+装備を一発計算＝二重加算なし）
+            if (equipmentSystem) equipmentSystem.fromJSON(data.equipment, player);
+
+            // マップ復元: currentMap を直接セットしスポーン地点へ
+            const mapId = mapSystem.normalizeMapId(data.currentMap);
+            mapSystem.currentMap = mapId;
+            const spawn = mapSystem.getSpawnPoint({ to: mapId, spawnX: 400, spawnY: 380 }, canvas);
+            player.x = spawn.x; player.y = spawn.y;
+            if (mapSystem.updateCamera) mapSystem.updateCamera(player.x, player.y, canvas);
+
+            updateMapInfo();
+            if (window.updateUI) updateUI();
+            const m = mapSystem.maps[mapSystem.currentMap];
+            if (m && m.bgm && bgmSystem) bgmSystem.changeFieldBGM(m.bgm);
         }
 
         function loadGame() {
-            const saveData = localStorage.getItem('deusCodeSave');
-            if (saveData) {
-                const data = JSON.parse(saveData);
-                Object.assign(player, data.player);
-                mapSystem.currentMap = mapSystem.normalizeMapId(data.currentMap);
+            try {
+                const raw = localStorage.getItem(SAVE_KEY);
+                if (!raw) return false;
+                const data = JSON.parse(raw);
+                if (!data || data.version !== SAVE_VERSION) {
+                    console.warn('[Load] incompatible save version, ignoring');
+                    return false;
+                }
+                applyGameState(data);
+                console.log('[Load] game state restored');
                 return true;
+            } catch (e) {
+                console.error('[Load] failed:', e);
+                return false;
             }
-            return false;
         }
 
         // メニューシステム

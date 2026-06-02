@@ -589,6 +589,32 @@ class EquipmentSystem {
             total: { attack: player.attack, defense: player.defense, maxHp: player.maxHp, maxMp: player.maxMp }
         });
     }
+
+    // === セーブ用: 装備スロット(id)と在庫(id→数量) ===
+    toJSON() {
+        const inv = {};
+        for (const id in this.inventory) inv[id] = this.inventory[id].quantity;
+        return { equipped: { ...this.equipped }, inventory: inv };
+    }
+    // === ロード用: DB参照で再構築。equipped は在庫を消費せず直接セット ===
+    fromJSON(data, player) {
+        this.equipped = { weapon: null, head: null, body: null, hands: null, accessory: null };
+        this.inventory = {};
+        if (data) {
+            if (data.inventory) {
+                for (const id in data.inventory) {
+                    if (this.equipmentDatabase[id] && data.inventory[id] > 0) this.addEquipment(id, data.inventory[id]);
+                }
+            }
+            if (data.equipped) {
+                for (const slot in this.equipped) {
+                    const id = data.equipped[slot];
+                    if (id && this.equipmentDatabase[id]) this.equipped[slot] = id;
+                }
+            }
+        }
+        if (player) this.recalculatePlayerStats(player);
+    }
 }
 
 // グローバルにエクスポート

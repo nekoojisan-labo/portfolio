@@ -345,6 +345,27 @@ class MagicSystem {
             message: `${magic.name}を習得した！\n${magic.price}ゴールドを支払った。`
         };
     }
+
+    // === セーブ用: charId→[magicId] ===
+    toJSON() {
+        const out = {};
+        for (const charId in this.learnedMagicByCharacter) {
+            out[charId] = Object.keys(this.learnedMagicByCharacter[charId]);
+        }
+        return out;
+    }
+    // === ロード用: DBから再構築（既習得は正当なのでrole制約を回避して直接格納） ===
+    fromJSON(data) {
+        this.learnedMagicByCharacter = {};
+        if (!data) return;
+        for (const charId in data) {
+            this.learnedMagicByCharacter[charId] = {};
+            for (const magicId of data[charId]) {
+                const magic = this.magicDatabase[magicId];
+                if (magic) this.learnedMagicByCharacter[charId][magicId] = { ...magic };
+            }
+        }
+    }
 }
 
 // グローバルにエクスポート

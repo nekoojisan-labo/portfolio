@@ -52,6 +52,15 @@ class PartySystem {
     getMember(characterId) {
         return this.members.find(m => m.id === characterId);
     }
+
+    // === セーブ用: メンバーは純データなのでディープコピー ===
+    toJSON() {
+        return this.members.map(m => JSON.parse(JSON.stringify(m)));
+    }
+    // === ロード用: members を置換 ===
+    fromJSON(data) {
+        this.members = Array.isArray(data) ? data.map(m => ({ ...m })) : [];
+    }
 }
 
 // キャラクターデータ定義
