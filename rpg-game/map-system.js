@@ -1909,27 +1909,41 @@ class MapSystem {
             }
         })();
 
-        if (overridesDisabled || typeof localStorage === 'undefined') return;
+        if (overridesDisabled) return;
 
-        const storageKeys = [
-            'rpg-map-editor-v1',
-            'deusCodeWalkabilityOverrides'
-        ];
         const overrides = {};
 
-        storageKeys.forEach(storageKey => {
-            try {
-                const stored = JSON.parse(localStorage.getItem(storageKey) || '{}');
-                Object.entries(stored).forEach(([mapId, data]) => {
-                    overrides[mapId] = {
-                        ...(overrides[mapId] || {}),
-                        ...(data || {})
-                    };
-                });
-            } catch (error) {
-                console.warn(`[Map] Failed to parse ${storageKey}:`, error);
-            }
-        });
+        // 1) ソース焼き込みデフォルト（全端末・本番で有効。最も低い優先度）
+        const baked = (typeof window !== 'undefined' && window.MAP_WALKABILITY_DEFAULTS) || null;
+        if (baked) {
+            Object.entries(baked).forEach(([mapId, data]) => {
+                overrides[mapId] = { ...(overrides[mapId] || {}), ...(data || {}) };
+            });
+        }
+
+        // 2) localStorage（エディタの即時プレビュー。ブラウザ限定。焼き込みを上書き）
+        if (typeof localStorage !== 'undefined') {
+            const storageKeys = [
+                'rpg-map-editor-v1',
+                'deusCodeWalkabilityOverrides'
+            ];
+
+            storageKeys.forEach(storageKey => {
+                try {
+                    const stored = JSON.parse(localStorage.getItem(storageKey) || '{}');
+                    Object.entries(stored).forEach(([mapId, data]) => {
+                        overrides[mapId] = {
+                            ...(overrides[mapId] || {}),
+                            ...(data || {})
+                        };
+                    });
+                } catch (error) {
+                    console.warn(`[Map] Failed to parse ${storageKey}:`, error);
+                }
+            });
+        }
+
+        if (Object.keys(overrides).length === 0) return;
 
         Object.entries(overrides).forEach(([mapId, data]) => {
             const targetMapId = this.normalizeMapId(mapId);
