@@ -16,6 +16,7 @@ class StoryEventSystem {
 
         this.initializeUI();
         this.registerChapter1Events();
+        this.registerChapter2Events();
 
         console.log('📖 Story Event System initialized');
     }
@@ -244,7 +245,7 @@ class StoryEventSystem {
         // イベント2: 地下鉄入口での警告
         this.registerEvent('subway_entrance_warning', {
             trigger: 'location',
-            location: 'subway_entrance',
+            location: 'subway_concourse_a',
             requiredFlags: { chapter1_started: true },
             oneTime: true,
             scenes: [
@@ -339,6 +340,47 @@ class StoryEventSystem {
                 storyFlags.chapter1_complete = true;
                 // 神社マップへのアクセスを解放
                 console.log('✅ Shrine path opened - Chapter 1 complete');
+            }
+        });
+    }
+
+    // チャプター2/3のイベント（神託・エンディング）
+    registerChapter2Events() {
+        // 老神主の神託（神宮で老神主に話しかけた時に index.html から発火）
+        this.registerEvent('priest_oracle', {
+            trigger: 'manual',
+            scenes: [
+                { character: '老神主', text: 'よく来た、神威の力に目覚めし者よ。わしはこの社を守りし最後の神主じゃ。' },
+                { character: '老神主', text: 'アーク...あの機械仕掛けの神は、人から「心」を奪い、完全なる管理で世を凍りつかせた。' },
+                { character: 'カイト', text: '感情を失った市民たち...あれはアークの仕業だったのか。' },
+                { character: '老神主', text: 'アークの中枢は東京都庁にある。だが、お前一人の力では届かぬ。八百万の神々が遣わした同志を集めよ。' },
+                { character: '老神主', text: 'バイオドームに眠る守りの戦士「リク」、闇市に潜む魔を操る者「ヤミ」。二人を仲間にし、都庁へ挑むのじゃ。' },
+                { character: 'アカリ', text: 'リクとヤミ...その二人を探せばいいのね。' },
+                { character: 'システム', text: '目標が更新された：リクとヤミを仲間にする' }
+            ],
+            onComplete: (storyFlags) => {
+                storyFlags.metPriest = true;
+                storyFlags.chapter2_started = true;
+                console.log('✅ Priest oracle - Chapter 2 started');
+            }
+        });
+
+        // アーク・プライム撃破エンディング（都庁最上階のボス撃破時に発火）
+        this.registerEvent('arc_defeated_ending', {
+            trigger: 'manual',
+            scenes: [
+                { character: 'アーク・プライム', text: 'バカな...完全なる秩序が...人間ごときの「不確定」に...敗れる...だと...' },
+                { character: 'カイト', text: '秩序だけじゃ、人は生きられない。喜びも、痛みも、全部ひっくるめて人間なんだ。' },
+                { character: 'アカリ', text: '見て、カイト...街に色が戻ってくる。みんなの表情が...' },
+                { character: 'リク', text: '人々の心が、戻り始めている。俺たちは、やったんだ。' },
+                { character: 'ヤミ', text: '...悪くない結末ね。八百万の神々も、満足でしょう。' },
+                { character: 'システム', text: '【八百万の神託 — 完】\nアークは倒れ、東京に心が戻った。ご褒美に、裏ダンジョン「深層トンネル」が解放された。' }
+            ],
+            onComplete: (storyFlags) => {
+                storyFlags.arcDefeated = true;
+                storyFlags.chapter3_complete = true;
+                storyFlags.gameCleared = true;
+                console.log('✅ Arc Prime defeated - Game cleared!');
             }
         });
     }
@@ -563,6 +605,11 @@ class StoryEventSystem {
             }
         }
 
+        // 目標バナー更新（onComplete でフラグが変化しているため）
+        if (typeof window.refreshObjective === 'function') {
+            try { window.refreshObjective(); } catch (e) { /* noop */ }
+        }
+
         // VNポートレートを片付け
         this.hidePortraits();
 
@@ -614,6 +661,19 @@ class StoryEventSystem {
                     }, 1000); // 1秒後に再生
                     break; // 一度に一つだけ
                 }
+            }
+        }
+    }
+
+    // 特定マップ入場時の location イベントをチェック（index.html の onEnterMap から呼ぶ）
+    checkLocationEvents(mapId, context) {
+        for (const [eventId, event] of this.events.entries()) {
+            if (event.trigger === 'location' && event.location === mapId) {
+                const storyFlags = context.storyFlags || window.storyFlags || {};
+                if (storyFlags[`${eventId}_completed`]) continue;
+                // requiredFlags は triggerEvent 側で検証される
+                setTimeout(() => this.triggerEvent(eventId, context), 600);
+                break; // 一度に一つだけ
             }
         }
     }

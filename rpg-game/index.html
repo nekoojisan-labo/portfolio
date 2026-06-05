@@ -2291,6 +2291,39 @@
             </div>
         </div>
 
+        <!-- 目標バナー（クエストガイド：今やるべきことと行き先を常時表示） -->
+        <div class="objective-banner" id="objectiveBanner" style="display:none;">
+            <div class="obj-chapter" id="objChapter"></div>
+            <div class="obj-row"><span class="obj-icon">🎯</span><span class="obj-title" id="objTitle"></span></div>
+            <div class="obj-where" id="objWhere"></div>
+        </div>
+        <style>
+            .objective-banner {
+                position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
+                z-index: 60; max-width: 94%;
+                background: rgba(8, 12, 22, 0.82);
+                border: 1px solid rgba(39, 196, 255, 0.55);
+                border-radius: 10px; padding: 5px 14px 7px;
+                text-align: center; pointer-events: none;
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+                backdrop-filter: blur(2px);
+                animation: objPop .35s ease;
+            }
+            @keyframes objPop { from { opacity: 0; transform: translateX(-50%) translateY(-6px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+            .objective-banner .obj-chapter { font-size: 10px; letter-spacing: .12em; color: #7fb8d8; margin-bottom: 1px; }
+            .objective-banner .obj-row { display: flex; align-items: center; justify-content: center; gap: 6px; }
+            .objective-banner .obj-icon { font-size: 13px; }
+            .objective-banner .obj-title { font-size: 14px; font-weight: 700; color: #eaf6ff; }
+            .objective-banner .obj-where { font-size: 11px; color: #9fb6cc; margin-top: 2px; }
+            .objective-banner.cleared { border-color: rgba(255, 210, 63, 0.7); }
+            .objective-banner.cleared .obj-title { color: #ffd23f; }
+            @media (max-width: 600px) {
+                .objective-banner { top: 4px; padding: 4px 10px 5px; }
+                .objective-banner .obj-title { font-size: 12px; }
+                .objective-banner .obj-where { font-size: 10px; }
+            }
+        </style>
+
         <div class="encounter-indicator" id="encounterIndicator">
             ⚠️ 敵の気配を感じる...
         </div>
@@ -2378,6 +2411,7 @@
                     </div>
                 </div>
                 <div class="menu-options" id="menuOptions">
+                    <button class="menu-option" type="button" data-menu="quest">クエスト</button>
                     <button class="menu-option" type="button" data-menu="items">アイテム</button>
                     <button class="menu-option" type="button" data-menu="equipment">装備</button>
                     <button class="menu-option" type="button" data-menu="kamui">神威</button>
@@ -2395,6 +2429,15 @@
                     <div class="empty-inventory">アイテムを持っていません</div>
                 </div>
                 <div class="menu-close">↑↓ 選択 / Z 使用 / X 戻る</div>
+            </div>
+        </div>
+
+        <!-- Quest Log -->
+        <div class="menu-overlay" id="questMenuOverlay">
+            <div class="menu-container" style="width: min(520px, 92%);">
+                <div class="menu-title">クエスト</div>
+                <div class="item-list" id="questLogList" style="text-align:left;"></div>
+                <div class="menu-close">X / Z で戻る</div>
             </div>
         </div>
         
@@ -2570,12 +2613,13 @@
     <script src="magic-system.js?v=47"></script>
     <script src="battle-system.js?v=47"></script>
     <script src="map-walkability-data.js?v=5"></script>
-    <script src="map-system.js?v=47"></script>
+    <script src="map-system.js?v=48"></script>
     <script src="map-system-grid.js"></script>
     <script src="player-grid-movement.js"></script>
     <script src="bgm-system.js?v=35"></script>
     <script src="party-system.js?v=47"></script>
-    <script src="story-events.js?v=45"></script>
+    <script src="quest-system.js?v=1"></script>
+    <script src="story-events.js?v=46"></script>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
@@ -2728,7 +2772,8 @@
         let itemSystem = null;
         let equipmentSystem = null;
         let magicSystem = null;
-        
+        let questSystem = null;
+
         // Game state
         let gameStarted = false;
         let storyFlags = {
@@ -3013,6 +3058,14 @@ function drawWalkChar(ctx, cx, footY, facing, isMoving, t, pal, scale){
             const itemMenuOverlay = document.getElementById('itemMenuOverlay');
             if (itemMenuOverlay && itemMenuOverlay.classList.contains('active')) {
                 handleItemMenuInput(e.key);
+                e.preventDefault();
+                return;
+            }
+
+            // クエストログが開いている場合
+            const questMenuOverlay = document.getElementById('questMenuOverlay');
+            if (questMenuOverlay && questMenuOverlay.classList.contains('active')) {
+                handleQuestLogInput(e.key);
                 e.preventDefault();
                 return;
             }
@@ -3646,6 +3699,13 @@ function drawWalkChar(ctx, cx, footY, facing, isMoving, t, pal, scale){
                 console.error('[ERROR] StoryEventSystem failed:', e);
             }
 
+            try {
+                if (window.QuestSystem) { questSystem = new QuestSystem(); window.questSystem = questSystem; }
+                console.log('[DEBUG] ✓ QuestSystem initialized');
+            } catch (e) {
+                console.error('[ERROR] QuestSystem failed:', e);
+            }
+
             // デバッグ用初期化（ロード時はスキップ＝セーブ内容で上書きされる二重化を防止）
             if (!loadOnStart) {
             // デバッグ用: 初期アイテムを追加
@@ -3720,6 +3780,7 @@ function drawWalkChar(ctx, cx, footY, facing, isMoving, t, pal, scale){
                     partySystem
                 });
             }
+            refreshObjective();
 
             // デバッグ用: グローバルアクセス
             window.debugMapSystem = mapSystem;
@@ -3930,12 +3991,119 @@ function drawWalkChar(ctx, cx, footY, facing, isMoving, t, pal, scale){
                 }
 
                 updateMapInfo();
+                onEnterMap(mapSystem.currentMap);
                 console.log('Player repositioned after map transition:', {
                     x: player.x,
                     y: player.y,
                     map: mapSystem.currentMap
                 });
             }, 350);
+        }
+
+        // ===== クエスト/目標ガイド =====
+        // マップ入場時: 場所フラグの設定＋location イベント＋目標更新
+        function onEnterMap(mapId) {
+            if (!mapId) return;
+            const LOCATION_FLAGS = {
+                subway_concourse_a: 'exploredSubway',
+                biodome_gate: 'exploredBiodome',
+                black_market_entrance: 'visitedBlackMarket',
+                tokyo_gov_approach: 'enteredGov'
+            };
+            const flag = LOCATION_FLAGS[mapId];
+            if (flag) storyFlags[flag] = true;
+            if (storyEventSystem && storyEventSystem.checkLocationEvents) {
+                storyEventSystem.checkLocationEvents(mapId, { storyFlags, player, mapSystem, magicSystem, partySystem });
+            }
+            refreshObjective();
+        }
+
+        // 目標バナーを現在の storyFlags から更新
+        function refreshObjective() {
+            const banner = document.getElementById('objectiveBanner');
+            if (!banner || !questSystem) return;
+            const chapterEl = document.getElementById('objChapter');
+            const titleEl = document.getElementById('objTitle');
+            const whereEl = document.getElementById('objWhere');
+            const cur = questSystem.getCurrent(storyFlags);
+            if (!cur) {
+                // 全クリア
+                const ending = window.QUEST_ENDING || { title: 'クリア！' };
+                banner.classList.add('cleared');
+                chapterEl.textContent = 'COMPLETE';
+                titleEl.textContent = '🎉 ' + ending.title;
+                whereEl.textContent = '';
+                banner.style.display = 'block';
+                return;
+            }
+            banner.classList.remove('cleared');
+            const prog = questSystem.getProgress(storyFlags);
+            chapterEl.textContent = `${questSystem.getChapterTitle(cur)}　(${prog.done}/${prog.total})`;
+            titleEl.textContent = cur.title;
+            whereEl.textContent = cur.where ? '→ ' + cur.where : '';
+            banner.style.display = 'block';
+        }
+        window.refreshObjective = refreshObjective;
+
+        // 仲間加入（リク/ヤミ）
+        function recruitMember(memberId, npc) {
+            const joinedFlag = memberId + 'Joined';
+            if (storyFlags[joinedFlag]) {
+                showMessage(`${npc.name}: 「共に行こう。アークを止めるまでな。」`);
+                return;
+            }
+            const data = window.CHARACTER_DATA && window.CHARACTER_DATA[memberId];
+            if (partySystem && data) {
+                partySystem.addMember({ ...data });
+                // 初期習得スキル
+                const member = partySystem.getMember(memberId);
+                const growth = window.CHARACTER_GROWTH && window.CHARACTER_GROWTH[memberId];
+                if (window.magicSystem && member && data.skills) {
+                    data.skills.forEach(sk => { try { window.magicSystem.learnMagic(sk, member); } catch (e) {} });
+                }
+            }
+            storyFlags[joinedFlag] = true;
+            if (memberId === 'yami') storyFlags.metYami = true;
+            showMessage(`${npc.name}が仲間に加わった！\n「${npc.dialogue || 'よろしく頼む。'}」`);
+            console.log(`Recruited: ${memberId}`);
+            updateUI();
+            refreshObjective();
+        }
+
+        // 神宮の老神主と会話（神託イベント発火）
+        function advancePriest(npc) {
+            if (!storyFlags.metPriest) {
+                if (storyEventSystem) {
+                    storyEventSystem.triggerEvent('priest_oracle', { storyFlags, player, mapSystem, magicSystem, partySystem });
+                } else {
+                    storyFlags.metPriest = true; storyFlags.chapter2_started = true;
+                }
+            } else {
+                showMessage(`老神主: 「リクとヤミを集め、都庁のアークを討つのじゃ。」`);
+            }
+            refreshObjective();
+        }
+
+        // ボスNPC撃破時のフラグ＆イベント
+        function onBossDefeated(bossKey) {
+            if (bossKey === 'corrupted_drone') {
+                storyFlags.bossDefeated = true;
+                if (storyEventSystem) storyEventSystem.triggerEvent('shrine_path_opens', { storyFlags, player, mapSystem, magicSystem, partySystem });
+                else { storyFlags.chapter1_complete = true; storyFlags.shrine_unlocked = true; }
+            } else if (bossKey === 'arc_prime') {
+                if (storyEventSystem) storyEventSystem.triggerEvent('arc_defeated_ending', { storyFlags, player, mapSystem, magicSystem, partySystem });
+                else { storyFlags.arcDefeated = true; storyFlags.gameCleared = true; }
+            }
+            refreshObjective();
+        }
+        window.onBossDefeated = onBossDefeated;
+
+        // ボスNPCとの戦闘を開始（撃破コールバック付き）
+        function startBossNpcBattle(npc, bossKey) {
+            const enemyData = battleSystem.enemyDatabase.deusMachina;
+            const enemy = { ...enemyData, currentHp: enemyData.hp, currentMp: enemyData.mp, name: npc.name, boss: true, bossId: bossKey };
+            if (npc.level) enemy.level = npc.level;
+            battleSystem.startBattle(enemy, true, () => onBossDefeated(bossKey));
         }
 
         function checkInteractions() {
@@ -3946,8 +4114,21 @@ function drawWalkChar(ctx, cx, footY, facing, isMoving, t, pal, scale){
             if (entrance) {
                 runMapTransition(entrance);
             } else if (npc) {
-                if (npc.hostile) {
-                    // 強制戦闘
+                // --- 進行に関わるボス（撃破でフラグ＆イベント） ---
+                if (npc.name === '暴走ドローン') {
+                    if (storyFlags.bossDefeated || storyFlags.chapter1_complete) {
+                        showMessage('砕け散ったドローンの残骸が転がっている。');
+                    } else {
+                        startBossNpcBattle(npc, 'corrupted_drone');
+                    }
+                } else if (npc.name === 'アーク・プライム') {
+                    if (storyFlags.arcDefeated) {
+                        showMessage('機能を停止したアーク・プライムが静かに佇んでいる。');
+                    } else {
+                        startBossNpcBattle(npc, 'arc_prime');
+                    }
+                } else if (npc.hostile) {
+                    // 通常の強制戦闘
                     const enemyData = battleSystem.enemyDatabase.deusMachina;
                     battleSystem.startBattle({
                         ...enemyData,
@@ -3958,22 +4139,26 @@ function drawWalkChar(ctx, cx, footY, facing, isMoving, t, pal, scale){
                 } else if (npc.shop) {
                     // ショップを開く
                     window.gameShop.openShop(npc.shopType, npc);
+                } else if (npc.name === 'リク') {
+                    recruitMember('riku', npc);
+                } else if (npc.name === 'ヤミ') {
+                    recruitMember('yami', npc);
+                } else if (npc.name === '老神主') {
+                    advancePriest(npc);
                 } else {
-                    // クエストNPCの場合、フラグをチェック
+                    // クエストNPC / 通常NPC
                     if (npc.questFlag && npc.questDialogue) {
                         if (!storyFlags[npc.questFlag]) {
-                            // 初めて話す場合、クエスト会話を表示してフラグを立てる
                             showMessage(`${npc.name}: 「${npc.questDialogue}」`);
                             storyFlags[npc.questFlag] = true;
                             console.log(`Story flag set: ${npc.questFlag}`);
                         } else {
-                            // 既に話した場合、通常の会話
                             showMessage(`${npc.name}: 「${npc.dialogue}」`);
                         }
                     } else {
-                        // 通常のNPC
                         showMessage(`${npc.name}: 「${npc.dialogue}」`);
                     }
+                    refreshObjective();
                 }
             } else if (treasure) {
                 // 宝箱を開く
@@ -4073,6 +4258,7 @@ function drawWalkChar(ctx, cx, footY, facing, isMoving, t, pal, scale){
             if (window.updateUI) updateUI();
             const m = mapSystem.maps[mapSystem.currentMap];
             if (m && m.bgm && bgmSystem) bgmSystem.changeFieldBGM(m.bgm);
+            if (typeof refreshObjective === 'function') refreshObjective();
         }
 
         function loadGame() {
@@ -4182,6 +4368,10 @@ function drawWalkChar(ctx, cx, footY, facing, isMoving, t, pal, scale){
         
         function executeMenuOption(menuType) {
             switch(menuType) {
+                case 'quest':
+                    // クエストログを開く
+                    openQuestLog();
+                    break;
                 case 'items':
                     // アイテムメニューを開く
                     openItemMenu();
@@ -4339,6 +4529,49 @@ function drawWalkChar(ctx, cx, footY, facing, isMoving, t, pal, scale){
         }
         
         // アイテムメニュー
+        // ===== クエストログ（メニュー内） =====
+        function openQuestLog() {
+            closeMenu();
+            const ov = document.getElementById('questMenuOverlay');
+            if (!ov) return;
+            renderQuestLog();
+            ov.classList.add('active');
+        }
+        function closeQuestLog() {
+            const ov = document.getElementById('questMenuOverlay');
+            if (ov) ov.classList.remove('active');
+            openMenu();
+        }
+        function renderQuestLog() {
+            const list = document.getElementById('questLogList');
+            if (!list || !questSystem) return;
+            const groups = questSystem.getLog(storyFlags);
+            const allDone = questSystem.isAllComplete(storyFlags);
+            let html = '';
+            groups.forEach(g => {
+                html += `<div style="color:#7fb8d8;font-size:12px;margin:10px 0 4px;letter-spacing:.06em;">${g.chapterTitle}</div>`;
+                g.items.forEach(it => {
+                    const mark = it.current ? '▶' : it.done ? '✓' : '・';
+                    const color = it.current ? '#ffd23f' : it.done ? '#6fe39a' : '#90a4bb';
+                    const deco = (it.done && !it.current) ? 'opacity:.65;' : '';
+                    html += `<div style="display:flex;gap:8px;padding:3px 6px;${deco}">`
+                        + `<span style="color:${color};width:14px;flex:none;">${mark}</span>`
+                        + `<span style="flex:1;color:#e6eef6;">${it.title}`
+                        + (it.current && it.where ? `<div style="font-size:11px;color:#9fb6cc;margin-top:1px;">→ ${it.where}</div>` : '')
+                        + `</span></div>`;
+                });
+            });
+            if (allDone && window.QUEST_ENDING) {
+                html += `<div style="color:#ffd23f;margin-top:12px;font-size:13px;">🎉 ${window.QUEST_ENDING.title}</div>`;
+            }
+            list.innerHTML = html;
+        }
+        function handleQuestLogInput(key) {
+            if (key === 'Escape' || key === 'x' || key === 'X' || key === 'z' || key === 'Z' || key === 'Enter' || key === ' ') {
+                closeQuestLog();
+            }
+        }
+
         function openItemMenu() {
             closeMenu();
             const itemMenuOverlay = document.getElementById('itemMenuOverlay');
@@ -4873,8 +5106,10 @@ function drawWalkChar(ctx, cx, footY, facing, isMoving, t, pal, scale){
                 messageBox.textContent = '';
             }
             console.log('[Battle] resetBattleUIState: input state restored for field');
+            // 戦闘後に目標を更新（ボス撃破等でフラグが変わっている可能性）
+            if (typeof refreshObjective === 'function') refreshObjective();
         };
-        
+
         function showBattleItemMenu() {
             const inventory = itemSystem.getInventory();
 

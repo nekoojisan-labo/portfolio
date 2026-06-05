@@ -8,7 +8,7 @@ class MapSystem {
         this.maps = {};
         this.mapImages = {};
         this.spriteImages = {};
-        this.assetVersion = '46';
+        this.assetVersion = '50';
         this.baseWidth = 800;
         this.baseHeight = 450;
         this.camera = { x: 0, y: 0 };
@@ -1825,8 +1825,9 @@ class MapSystem {
                 ],
                 exits: [
                     // 西 → 新宿中央広場。spawnは center_plaza の東側 walkable 内
-                    { x: 6, y: 206, width: 33, height: 33, to: 'shinjuku_center_plaza', direction: 'west', spawnX: 660, spawnY: 240 }
-                    // ※ 北 (360, 72) は tokyo_gov(legacy) 用、東 (764, 201) と 南 (364, 394) は隣接マップ未定義のため保留
+                    { x: 6, y: 206, width: 33, height: 33, to: 'shinjuku_center_plaza', direction: 'west', spawnX: 660, spawnY: 240 },
+                    // 北 → 都庁2階（中央上部の入口）。spawnは floor2 の下側
+                    { x: 352, y: 28, width: 96, height: 30, to: 'tokyo_gov_floor2', direction: 'north', spawnX: 400, spawnY: 380 }
                 ],
                 npcs: [
                     { x: 340, y: 320, emoji: '🤖', name: 'セキュリティドローン', dialogue: '警告：不正アクセスを検知。', hostile: true },
@@ -2496,6 +2497,9 @@ class MapSystem {
 
     getOptimizedImagePath(path) {
         if (typeof path !== 'string') return path;
+        if (path.startsWith('assets/characters/sprites/') && path.endsWith('_walk.png')) {
+            return path;
+        }
         const webpEligible = (
             path.startsWith('assets/maps/') ||
             path.startsWith('assets/characters/') ||
@@ -2580,6 +2584,48 @@ class MapSystem {
 
     getNPCSpritePath(npc) {
         return npc.image || this.npcSpriteMap[npc.name] || null;
+    }
+
+    isShopStaffNPC(npc, spritePath = null) {
+        if (!npc) return false;
+        const path = spritePath || this.getNPCSpritePath(npc) || '';
+        const name = npc.name || '';
+        return Boolean(
+            npc.shop ||
+            /merchant_|innkeeper|banker|guildmaster|dark_merchant/.test(path) ||
+            /商人|店|宿屋|銀行|ギルド|闇市/.test(name)
+        );
+    }
+
+    drawShopStaffMarker(ctx, x, y) {
+        ctx.save();
+        ctx.translate(Math.round(x), Math.round(y));
+        ctx.fillStyle = 'rgba(5, 8, 14, 0.86)';
+        ctx.beginPath();
+        ctx.moveTo(0, -10);
+        ctx.lineTo(10, 0);
+        ctx.lineTo(0, 10);
+        ctx.lineTo(-10, 0);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.72)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.fillStyle = '#f5d76e';
+        ctx.beginPath();
+        ctx.moveTo(0, -6);
+        ctx.lineTo(6, 0);
+        ctx.lineTo(0, 6);
+        ctx.lineTo(-6, 0);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = '#fff7b0';
+        ctx.fillRect(-1, -4, 2, 8);
+        ctx.fillRect(-4, -1, 8, 2);
+        ctx.restore();
     }
 
     isWalkSpriteSheet(spritePath, sprite) {
@@ -2922,6 +2968,7 @@ class MapSystem {
         map.npcs.forEach(npc => {
             const spritePath = this.getNPCSpritePath(npc);
             const sprite = spritePath ? this.loadSpriteImage(spritePath) : null;
+            const shopStaff = this.isShopStaffNPC(npc, spritePath);
             const position = this.worldToScreenPoint(npc.x, npc.y);
 
             // 影（NPCも濃く・大きく）
@@ -2936,7 +2983,7 @@ class MapSystem {
                 if (this.isWalkSpriteSheet(spritePath, sprite)) {
                     // フルフレーム再生(本物の歩行コマをそのまま送る・整数スナップ)
                     const f = this.computeWalkFrame(npc.facing, npc.isMoving, npc.animTime || 0);
-                    const dw = npc.hostile ? 56 : 48, dh = npc.hostile ? 72 : 62;
+                    const dw = npc.hostile ? 56 : 50, dh = npc.hostile ? 72 : 64;
                     const dx = Math.round(position.x - dw / 2);
                     const dy = Math.round(position.y - dh + 6);
                     const ps = ctx.imageSmoothingEnabled;
@@ -2970,10 +3017,8 @@ class MapSystem {
                 }
             }
 
-            if (npc.shop && !npc.questFlag) {
-                ctx.font = '14px Arial';
-                ctx.fillStyle = '#f5d76e';
-                ctx.fillText('●', position.x + 13, position.y - 20);
+            if (shopStaff && !npc.questFlag) {
+                this.drawShopStaffMarker(ctx, position.x + 18, position.y - 24);
             }
         });
     }
