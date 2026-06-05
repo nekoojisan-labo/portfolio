@@ -2961,11 +2961,28 @@ class MapSystem {
     }
     
     // NPCを描画
+    // storyFlags に応じて消えるべきNPCか（撃破ボス・加入済み仲間）。
+    // 描画・接触判定・衝突すべてで参照し、リロード/セーブをまたいで永続させる。
+    isNPCHidden(npc, storyFlags) {
+        if (!npc || !storyFlags) return false;
+        switch (npc.name) {
+            // 仲間になったキャラはマップから消す（パーティにいるのに立っている矛盾を防ぐ）
+            case 'アカリ': return !!(storyFlags.chapter1_started || storyFlags.metAkari);
+            case 'リク': return !!storyFlags.rikuJoined;
+            case 'ヤミ': return !!storyFlags.yamiJoined;
+            // 撃破したボスは消す
+            case '暴走ドローン': return !!(storyFlags.bossDefeated || storyFlags.chapter1_complete);
+            case 'アーク・プライム': return !!storyFlags.arcDefeated;
+            default: return false;
+        }
+    }
+
     drawNPCs(ctx, storyFlags) {
         const map = this.maps[this.currentMap];
         if (!map || !map.npcs) return;
 
         map.npcs.forEach(npc => {
+            if (this.isNPCHidden(npc, storyFlags)) return; // 撃破/加入済みは描画しない
             const spritePath = this.getNPCSpritePath(npc);
             const sprite = spritePath ? this.loadSpriteImage(spritePath) : null;
             const shopStaff = this.isShopStaffNPC(npc, spritePath);
@@ -3469,20 +3486,22 @@ class MapSystem {
     checkNPCInteraction(playerX, playerY) {
         const map = this.maps[this.currentMap];
         if (!map || !map.npcs) return null;
-        
+
         const interactionRange = 50;
-        
+        const storyFlags = (typeof window !== 'undefined') ? window.storyFlags : null;
+
         for (const npc of map.npcs) {
+            if (this.isNPCHidden(npc, storyFlags)) continue; // 撃破/加入済みは話しかけ不可
             const distance = Math.sqrt(
-                Math.pow(playerX - npc.x, 2) + 
+                Math.pow(playerX - npc.x, 2) +
                 Math.pow(playerY - npc.y, 2)
             );
-            
+
             if (distance < interactionRange) {
                 return npc;
             }
         }
-        
+
         return null;
     }
     
@@ -3552,8 +3571,10 @@ class MapSystem {
         const npcRadius = 14; // NPC衝突半径を縮小（旧20で詰まりやすかった）
         const threshold = playerRadius + npcRadius;
         const useEscapeMode = oldX !== null && oldY !== null;
+        const storyFlags = (typeof window !== 'undefined') ? window.storyFlags : null;
 
         for (const npc of map.npcs) {
+            if (this.isNPCHidden(npc, storyFlags)) continue; // 撃破/加入済みは衝突しない
             const newDist = Math.hypot(x - npc.x, y - npc.y);
             if (newDist >= threshold) continue;
 

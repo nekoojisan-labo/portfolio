@@ -104,8 +104,8 @@ const BattlePanel = (() => {
         els.panel.classList.add('active', 'battle-mode');
         els.panel.classList.add('battle-log-mode');
         els.body.classList.remove('battle-cmd-mode');
-        // 直近3〜4行を表示
-        const max = opts.maxLines || 4;
+        // 直近2行のみ表示（今・誰が・何をしたかを明確にし、行動が雑然と流れないように）
+        const max = opts.maxLines || 2;
         const recent = (lines || []).slice(-max);
         const safe = recent.map(l => String(l == null ? '' : l)
             .replace(/&/g, '&amp;')
