@@ -1229,19 +1229,10 @@ class BattleSystem {
         if (battleScreen) {
             battleScreen.classList.add('active');
             document.getElementById('gameUI').style.display = 'none';
+            battleScreen.classList.remove('is-shaking');
 
-            // 敵スプライトをリセット
-            const enemySprite = document.getElementById('enemySprite');
-            if (enemySprite) {
-                enemySprite.style.opacity = '1';
-                enemySprite.style.filter = 'none';
-                const imagePath = this.getEnemyImagePath(this.currentEnemy);
-                if (imagePath) {
-                    enemySprite.innerHTML = `<img src="${imagePath}" alt="${this.currentEnemy.name}" decoding="async" onerror="if (!this.dataset.fallbackTried && this.src.includes('.webp')) { this.dataset.fallbackTried = '1'; this.src = this.src.replace('.webp', '.png'); } else { this.style.display = 'none'; }" style="width: 180px; max-height: 140px; object-fit: contain; filter: drop-shadow(0 0 14px rgba(255, 80, 80, 0.55));">`;
-                } else {
-                    enemySprite.textContent = this.currentEnemy.emoji;
-                }
-            }
+            this.setBattleBackground();
+            this.renderEnemySprite(this.currentEnemy);
 
             // 敵情報更新
             document.getElementById('enemyName').textContent = this.currentEnemy.name;
@@ -1263,6 +1254,86 @@ class BattleSystem {
             BattlePanel.renderLog([`${this.currentEnemy.name} が あらわれた！`]);
 
             this.updateBattleUI();
+        }
+    }
+
+    getBattleBackground(area, mapId) {
+        const normalizedArea = String(area || '');
+        const normalizedMapId = String(mapId || '');
+        let key = 'bg_city';
+
+        if (normalizedMapId.includes('tokyo_gov')) {
+            key = 'bg_gov';
+        } else if (['city', 'town', 'market', 'shop', 'residential_street', 'house'].includes(normalizedArea)) {
+            key = 'bg_city';
+        } else if (normalizedArea === 'subway') {
+            key = 'bg_subway';
+        } else if (normalizedArea === 'dungeon') {
+            key = 'bg_abyss';
+        } else if (normalizedArea === 'shrine') {
+            key = 'bg_shrine';
+        } else if (normalizedArea === 'garden') {
+            key = 'bg_biodome';
+        }
+
+        return `assets/battle/${key}.webp`;
+    }
+
+    setBattleBackground() {
+        const bgImage = document.getElementById('battleBgImage');
+        if (!bgImage) return;
+
+        const mapSystem = window.mapSystem;
+        const mapId = mapSystem?.currentMap || '';
+        const currentMap = mapId && mapSystem?.maps ? mapSystem.maps[mapId] : null;
+        let area = currentMap?.area || '';
+        if (!area && typeof mapSystem?.getCurrentArea === 'function') {
+            area = mapSystem.getCurrentArea() || '';
+        }
+
+        bgImage.style.display = 'block';
+        delete bgImage.dataset.fallbackTried;
+        bgImage.onerror = function() {
+            if (!this.dataset.fallbackTried && this.src.includes('.webp')) {
+                this.dataset.fallbackTried = '1';
+                this.src = this.src.replace('.webp', '.png');
+                return;
+            }
+            this.style.display = 'none';
+        };
+        bgImage.src = this.getBattleBackground(area, mapId);
+    }
+
+    renderEnemySprite(enemy) {
+        const enemyArea = document.getElementById('enemyArea');
+        const enemySprite = document.getElementById('enemySprite');
+        if (!enemySprite) return;
+
+        if (enemyArea) {
+            enemyArea.classList.remove('is-hit');
+        }
+        enemySprite.classList.remove('is-hit');
+        enemySprite.style.opacity = '1';
+        enemySprite.style.filter = 'none';
+        enemySprite.innerHTML = '';
+
+        const imagePath = this.getEnemyImagePath(enemy);
+        if (imagePath) {
+            const img = document.createElement('img');
+            img.src = imagePath;
+            img.alt = enemy?.name || '';
+            img.decoding = 'async';
+            img.onerror = function() {
+                if (!this.dataset.fallbackTried && this.src.includes('.webp')) {
+                    this.dataset.fallbackTried = '1';
+                    this.src = this.src.replace('.webp', '.png');
+                    return;
+                }
+                this.style.display = 'none';
+            };
+            enemySprite.appendChild(img);
+        } else {
+            enemySprite.textContent = enemy?.emoji || '??';
         }
     }
 
@@ -1926,23 +1997,64 @@ class BattleSystem {
     
     // ダメージエフェクト表示
     showDamageEffect(damage, isEnemy, isCritical = false) {
-        const damageEl = document.createElement('div');
-        damageEl.className = 'damage-number' + (isCritical ? ' critical' : '');
-        damageEl.textContent = Math.floor(damage);
-        
-        if (isEnemy) {
-            damageEl.style.left = '50%';
-            damageEl.style.top = '30%';
-        } else {
-            damageEl.style.right = '200px';
-            damageEl.style.bottom = '200px';
-        }
-        
         const battleScreen = document.getElementById('battleScreen');
-        if (battleScreen) {
-            battleScreen.appendChild(damageEl);
-            setTimeout(() => damageEl.remove(), 1000);
+        if (!battleScreen) return;
+
+        const damageEl = document.createElement('div');
+        damageEl.className = 'damage-number' + (isEnemy ? '' : ' party-damage') + (isCritical ? ' critical' : '');
+        damageEl.textContent = Math.floor(damage);
+        const screenRect = battleScreen.getBoundingClientRect();
+
+        if (isEnemy) {
+            const enemyArea = document.getElementById('enemyArea');
+            const enemySprite = document.getElementById('enemySprite');
+            if (enemyArea) {
+                const enemyRect = enemyArea.getBoundingClientRect();
+                damageEl.style.left = `${enemyRect.left + enemyRect.width / 2 - screenRect.left}px`;
+                damageEl.style.top = `${enemyRect.top + enemyRect.height * 0.34 - screenRect.top}px`;
+                enemyArea.classList.remove('is-hit');
+                void enemyArea.offsetWidth;
+                enemyArea.classList.add('is-hit');
+                setTimeout(() => enemyArea.classList.remove('is-hit'), 320);
+            } else {
+                damageEl.style.left = '50%';
+                damageEl.style.top = '30%';
+            }
+            if (enemySprite) {
+                enemySprite.classList.remove('is-hit');
+                void enemySprite.offsetWidth;
+                enemySprite.classList.add('is-hit');
+                setTimeout(() => enemySprite.classList.remove('is-hit'), 320);
+            }
+        } else {
+            const partyContainer = document.getElementById('battlePartyStatus');
+            const partyPanels = partyContainer ? Array.from(partyContainer.children) : [];
+            const panelIndex = Math.min(Math.max(this.currentMemberIndex || 0, 0), Math.max(partyPanels.length - 1, 0));
+            const targetPanel = partyPanels[panelIndex];
+
+            if (targetPanel) {
+                const panelRect = targetPanel.getBoundingClientRect();
+                damageEl.style.left = `${panelRect.left + panelRect.width / 2 - screenRect.left}px`;
+                damageEl.style.top = `${panelRect.top + panelRect.height * 0.18 - screenRect.top}px`;
+                targetPanel.classList.remove('is-hit');
+                void targetPanel.offsetWidth;
+                targetPanel.classList.add('is-hit');
+                setTimeout(() => targetPanel.classList.remove('is-hit'), 320);
+            } else {
+                damageEl.style.left = '72%';
+                damageEl.style.top = '70%';
+            }
         }
+
+        if (isCritical || this.isBossBattle) {
+            battleScreen.classList.remove('is-shaking');
+            void battleScreen.offsetWidth;
+            battleScreen.classList.add('is-shaking');
+            setTimeout(() => battleScreen.classList.remove('is-shaking'), 460);
+        }
+
+        battleScreen.appendChild(damageEl);
+        setTimeout(() => damageEl.remove(), 1000);
     }
     
     // UI更新
@@ -1969,75 +2081,111 @@ class BattleSystem {
         this.updatePartyStatus();
     }
 
+    createBattlePartyMeter(label, current, max, ratio, type) {
+        const meter = document.createElement('div');
+        meter.className = 'battle-party-meter';
+
+        const row = document.createElement('div');
+        row.className = 'battle-party-meter-row';
+
+        const labelEl = document.createElement('span');
+        labelEl.textContent = label;
+
+        const valueEl = document.createElement('span');
+        valueEl.className = 'battle-party-meter-value';
+        valueEl.textContent = `${Math.floor(current)}/${Math.floor(max)}`;
+
+        const track = document.createElement('div');
+        track.className = 'battle-party-track';
+
+        const fill = document.createElement('div');
+        fill.className = `battle-party-fill ${type}`;
+        if (type === 'hp' && ratio <= 0.25) {
+            fill.classList.add('danger');
+        } else if (type === 'hp' && ratio <= 0.5) {
+            fill.classList.add('warn');
+        }
+        fill.style.width = `${Math.max(0, Math.min(1, ratio)) * 100}%`;
+
+        row.appendChild(labelEl);
+        row.appendChild(valueEl);
+        track.appendChild(fill);
+        meter.appendChild(row);
+        meter.appendChild(track);
+        return meter;
+    }
+
     // パーティメンバーのステータス表示を更新
     updatePartyStatus() {
         const statusContainer = document.getElementById('battlePartyStatus');
         if (!statusContainer) return;
 
-        // プレイヤー + パーティメンバー
-        const allMembers = [window.player];
-        if (window.partySystem) {
-            allMembers.push(...window.partySystem.getMembers());
-        }
+        const allMembers = this.getPartyMembers();
 
-        // ステータスボックスを生成
         statusContainer.innerHTML = '';
         allMembers.forEach((member, index) => {
-            const hpRatio = Math.max(0, Math.min(1, (member.hp || member.maxHp) / (member.maxHp || 100)));
-            const mpRatio = Math.max(0, Math.min(1, (member.mp || member.maxMp) / (member.maxMp || 50)));
+            if (!member) return;
+
+            const maxHp = Math.max(1, member.maxHp ?? member.baseMaxHp ?? 100);
+            const maxMp = Math.max(0, member.maxMp ?? member.baseMaxMp ?? 50);
+            const currentHp = Math.max(0, Math.min(maxHp, member.hp ?? maxHp));
+            const currentMp = maxMp > 0 ? Math.max(0, Math.min(maxMp, member.mp ?? maxMp)) : 0;
+            const hpRatio = currentHp / maxHp;
+            const mpRatio = maxMp > 0 ? currentMp / maxMp : 0;
+            const name = member.name || 'カイト';
+            const characterId = member === window.player ? 'kaito' : (member.characterId || member.id || 'kaito');
+            const isActive = index === this.currentMemberIndex && this.waitingForCommand;
 
             const statusBox = document.createElement('div');
-            // キャンバス右上に配置するためコンパクト化
-            statusBox.style.cssText = `
-                background: rgba(0, 0, 0, 0.78);
-                border: 2px solid #00ffff;
-                border-radius: 5px;
-                padding: 5px 8px;
-                min-width: 0;
-                width: 190px;
-                box-shadow: 0 0 12px rgba(0, 255, 255, 0.25);
-                font-size: 12px;
-            `;
+            statusBox.className = 'battle-party-card' + (isActive ? ' is-active' : '') + (currentHp <= 0 ? ' is-down' : '');
+            statusBox.dataset.memberIndex = String(index);
+            statusBox.setAttribute('role', 'listitem');
 
-            // HP色を設定
-            let hpColor = '#44ff44';
-            if (hpRatio <= 0.25) hpColor = '#ff4444';
-            else if (hpRatio <= 0.5) hpColor = '#ffff44';
+            const portrait = document.createElement('div');
+            portrait.className = 'battle-party-portrait';
 
-            statusBox.innerHTML = `
-                <div style="display: flex; justify-content: space-between; margin-bottom: 3px; font-size: 12px; color: #00ffff;">
-                    <span>${member.name || 'カイト'}</span>
-                    <span>Lv.${member.level || 1}</span>
-                </div>
-                <div style="margin-bottom: 2px;">
-                    <div style="display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 1px;">
-                        <span style="color: #aaa;">HP</span>
-                        <span style="color: #fff;">${Math.max(0, member.hp || member.maxHp)}/${member.maxHp || 100}</span>
-                    </div>
-                    <div style="background: #333; height: 6px; border-radius: 3px; overflow: hidden;">
-                        <div style="
-                            width: ${hpRatio * 100}%;
-                            height: 100%;
-                            background: linear-gradient(90deg, ${hpColor}, ${hpColor}dd);
-                            transition: width 0.3s;
-                        "></div>
-                    </div>
-                </div>
-                <div>
-                    <div style="display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 1px;">
-                        <span style="color: #aaa;">MP</span>
-                        <span style="color: #fff;">${member.mp || member.maxMp}/${member.maxMp || 50}</span>
-                    </div>
-                    <div style="background: #333; height: 4px; border-radius: 2px; overflow: hidden;">
-                        <div style="
-                            width: ${mpRatio * 100}%;
-                            height: 100%;
-                            background: linear-gradient(90deg, #4444ff, #4444ffdd);
-                            transition: width 0.3s;
-                        "></div>
-                    </div>
-                </div>
-            `;
+            const initial = document.createElement('div');
+            initial.className = 'battle-party-initial';
+            initial.textContent = Array.from(name)[0] || '?';
+
+            const portraitImg = document.createElement('img');
+            portraitImg.src = `assets/characters/${characterId}_portrait.webp`;
+            portraitImg.alt = name;
+            portraitImg.decoding = 'async';
+            portraitImg.onerror = function() {
+                if (!this.dataset.fallbackTried && this.src.includes('.webp')) {
+                    this.dataset.fallbackTried = '1';
+                    this.src = this.src.replace('.webp', '.png');
+                    return;
+                }
+                this.style.display = 'none';
+            };
+            portrait.appendChild(initial);
+            portrait.appendChild(portraitImg);
+
+            const info = document.createElement('div');
+            info.className = 'battle-party-info';
+
+            const head = document.createElement('div');
+            head.className = 'battle-party-head';
+
+            const nameEl = document.createElement('div');
+            nameEl.className = 'battle-party-name';
+            nameEl.textContent = name;
+
+            const levelEl = document.createElement('div');
+            levelEl.className = 'battle-party-level';
+            levelEl.textContent = `Lv.${member.level || 1}`;
+
+            head.appendChild(nameEl);
+            head.appendChild(levelEl);
+            info.appendChild(head);
+
+            info.appendChild(this.createBattlePartyMeter('HP', currentHp, maxHp, hpRatio, 'hp'));
+            info.appendChild(this.createBattlePartyMeter('MP', currentMp, maxMp, mpRatio, 'mp'));
+
+            statusBox.appendChild(portrait);
+            statusBox.appendChild(info);
 
             statusContainer.appendChild(statusBox);
         });

@@ -235,16 +235,20 @@
             margin: 3px 0;
         }
 
-        /* Battle Screen Styles (サイバーパンク × ドラクエ風) */
+        /* Battle Screen Styles (画像ベース正面ビュー) */
         .battle-screen {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(180deg, #001122 0%, #002244 50%, #001133 100%);
+            overflow: hidden;
+            background:
+                linear-gradient(180deg, #07111f 0%, #0a1830 48%, #040811 100%);
             display: none;
             z-index: 500;
+            color: #e6f7ff;
+            font-family: "Noto Sans JP", system-ui, sans-serif;
         }
 
         .battle-screen.active {
@@ -259,55 +263,177 @@
 
         .battle-background {
             position: absolute;
-            top: 0;
-            left: 0;
+            inset: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(180deg, #112233 0%, #001122 100%);
-            box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            background:
+                linear-gradient(180deg, #07111f 0%, #0a1830 48%, #040811 100%);
+            box-shadow: inset 0 0 52px rgba(0, 0, 0, 0.68);
         }
 
-        .battle-grid {
+        .battle-bg-image {
             position: absolute;
-            top: 0;
-            left: 0;
+            inset: 0;
             width: 100%;
             height: 100%;
-            background-image: 
-                repeating-linear-gradient(0deg, rgba(0, 255, 255, 0.05) 0px, transparent 1px, transparent 31px, rgba(0, 255, 255, 0.05) 32px),
-                repeating-linear-gradient(90deg, rgba(0, 255, 255, 0.05) 0px, transparent 1px, transparent 31px, rgba(0, 255, 255, 0.05) 32px);
+            object-fit: cover;
+            z-index: 0;
+        }
+
+        .battle-background::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            pointer-events: none;
+            background:
+                linear-gradient(180deg, rgba(2, 6, 23, 0.14) 0%, rgba(5, 14, 28, 0.18) 46%, rgba(2, 6, 23, 0.78) 100%),
+                linear-gradient(90deg, rgba(0, 255, 255, 0.12) 0%, transparent 18%, transparent 82%, rgba(59, 130, 246, 0.16) 100%);
         }
 
         .enemy-area {
             position: absolute;
-            top: 25%;
+            top: 8%;
             left: 50%;
+            width: min(460px, 74%);
+            height: 54%;
             transform: translateX(-50%);
             text-align: center;
             z-index: 5;
+            pointer-events: none;
+        }
+
+        .enemy-hud {
+            width: min(230px, 68%);
+            margin: 0 auto 6px;
+            padding: 6px 10px 7px;
+            border: 1px solid rgba(34, 211, 238, 0.42);
+            border-radius: 14px;
+            background: rgba(2, 8, 23, 0.68);
+            box-shadow: 0 0 18px rgba(34, 211, 238, 0.16), inset 0 0 18px rgba(59, 130, 246, 0.12);
+            backdrop-filter: blur(5px);
+        }
+
+        .enemy-stage {
+            position: relative;
+            width: 100%;
+            height: calc(100% - 46px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .enemy-shadow {
+            position: absolute;
+            left: 50%;
+            bottom: 1%;
+            width: min(220px, 58%);
+            height: 22px;
+            transform: translateX(-50%);
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.46);
+            filter: blur(6px);
+            opacity: 0.86;
         }
 
         .enemy-sprite {
-            font-size: 72px;
-            filter: drop-shadow(0 0 10px rgba(255, 0, 0, 0.5));
-            animation: enemyFloat 2s ease-in-out infinite;
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 86px;
+            animation: enemyFloat 2.8s ease-in-out infinite;
+        }
+
+        .enemy-sprite img {
+            width: auto;
+            height: 100%;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 16px 22px rgba(0, 0, 0, 0.58)) drop-shadow(0 0 22px rgba(255, 80, 80, 0.36));
+        }
+
+        .enemy-sprite.is-hit::after,
+        .battle-party-card.is-hit::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: 5;
+            pointer-events: none;
+            background: rgba(255, 255, 255, 0.88);
+            mix-blend-mode: screen;
+            animation: battleHitFlash 0.28s ease-out forwards;
         }
 
         @keyframes enemyFloat {
             0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
+            50% { transform: translateY(-9px); }
+        }
+
+        .enemy-area.is-hit {
+            animation: enemyHitShake 0.28s ease-out;
+        }
+
+        @keyframes enemyHitShake {
+            0%, 100% { transform: translateX(-50%) translateX(0); }
+            20% { transform: translateX(-50%) translateX(-9px); }
+            42% { transform: translateX(-50%) translateX(8px); }
+            64% { transform: translateX(-50%) translateX(-5px); }
+            82% { transform: translateX(-50%) translateX(3px); }
+        }
+
+        .battle-screen.is-shaking {
+            animation: battleScreenShake 0.42s ease-out;
+        }
+
+        @keyframes battleScreenShake {
+            0%, 100% { transform: translate(0, 0); }
+            18% { transform: translate(-7px, 3px); }
+            36% { transform: translate(6px, -3px); }
+            54% { transform: translate(-4px, -2px); }
+            72% { transform: translate(4px, 2px); }
+        }
+
+        @keyframes battleHitFlash {
+            0% { opacity: 0; }
+            22% { opacity: 1; }
+            100% { opacity: 0; }
         }
 
         .enemy-name {
-            color: #ff4444;
-            font-size: 16px;
-            margin-top: 10px;
-            text-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
+            color: #f8fafc;
+            font-size: 14px;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 5px;
+            text-shadow: 0 0 10px rgba(34, 211, 238, 0.62);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .enemy-hp-container {
-            margin: 10px auto;
-            width: 120px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .enemy-hp-container .hp-bar {
+            width: 100%;
+            height: 8px;
+            border: 1px solid rgba(248, 113, 113, 0.48);
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.82);
+            box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.72);
+        }
+
+        #enemyHpFill {
+            background: linear-gradient(90deg, #ef4444, #fb7185, #facc15);
+            box-shadow: 0 0 10px rgba(248, 113, 113, 0.55);
         }
 
         .battle-ui {
@@ -363,16 +489,177 @@
             display: none;
         }
 
-        /* バトル中のパーティステータス（キャンバス右上にコンパクト表示） */
+        /* バトル中のパーティステータス（画面下部の立ち絵パネル） */
         #battlePartyStatus {
             position: absolute;
-            top: 10px;
-            right: 10px;
+            left: 12px;
+            right: 12px;
+            bottom: 8px;
+            height: min(136px, 31%);
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 8px;
+            max-width: none;
+            z-index: 12;
+            pointer-events: none;
+        }
+
+        .battle-party-card {
+            position: relative;
+            flex: 1 1 0;
+            max-width: 174px;
+            min-width: 0;
+            height: 118px;
+            display: grid;
+            grid-template-columns: 54px minmax(0, 1fr);
+            gap: 8px;
+            align-items: center;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 2px solid rgba(34, 211, 238, 0.58);
+            border-radius: 14px;
+            background:
+                linear-gradient(135deg, rgba(3, 12, 28, 0.92), rgba(8, 24, 48, 0.78));
+            box-shadow: 0 0 16px rgba(34, 211, 238, 0.2), inset 0 0 18px rgba(59, 130, 246, 0.1);
+            overflow: hidden;
+            transform-origin: center bottom;
+            transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+            pointer-events: auto;
+        }
+
+        .battle-party-card:nth-child(even) {
+            transform: translateY(4px) skewX(-1.5deg);
+        }
+
+        .battle-party-card.is-active:not([style*="2px solid"]),
+        .battle-party-card[style*="3px solid"] {
+            z-index: 3;
+            border-color: #facc15;
+            box-shadow: 0 0 24px rgba(250, 204, 21, 0.55), 0 0 18px rgba(34, 211, 238, 0.28), inset 0 0 18px rgba(250, 204, 21, 0.1);
+            transform: translateY(-7px) scale(1.04);
+        }
+
+        .battle-party-card.is-down {
+            opacity: 0.58;
+            filter: grayscale(0.85);
+        }
+
+        .battle-party-portrait {
+            position: relative;
+            width: 54px;
+            height: 88px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: linear-gradient(180deg, rgba(34, 211, 238, 0.22), rgba(59, 130, 246, 0.1));
+            border: 1px solid rgba(125, 211, 252, 0.45);
+        }
+
+        .battle-party-portrait img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center top;
+            z-index: 2;
+        }
+
+        .battle-party-initial {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            color: #e0f2fe;
+            font-size: 24px;
+            font-weight: 800;
+            background: linear-gradient(160deg, rgba(14, 165, 233, 0.5), rgba(30, 64, 175, 0.58));
+            text-shadow: 0 0 12px rgba(0, 255, 255, 0.55);
+        }
+
+        .battle-party-info {
+            min-width: 0;
             display: flex;
             flex-direction: column;
+            gap: 4px;
+        }
+
+        .battle-party-head {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
             gap: 6px;
-            max-width: 240px;
-            z-index: 10;
+            min-width: 0;
+        }
+
+        .battle-party-name {
+            min-width: 0;
+            color: #f8fafc;
+            font-size: 13px;
+            font-weight: 800;
+            line-height: 1.15;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .battle-party-level {
+            flex: 0 0 auto;
+            color: #67e8f9;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .battle-party-meter {
+            min-width: 0;
+        }
+
+        .battle-party-meter-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 4px;
+            color: #cbd5e1;
+            font-size: 9px;
+            line-height: 1.15;
+        }
+
+        .battle-party-meter-value {
+            color: #f8fafc;
+            white-space: nowrap;
+        }
+
+        .battle-party-track {
+            width: 100%;
+            height: 7px;
+            margin-top: 2px;
+            overflow: hidden;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(148, 163, 184, 0.18);
+        }
+
+        .battle-party-fill {
+            height: 100%;
+            border-radius: inherit;
+            transition: width 0.3s ease;
+        }
+
+        .battle-party-fill.hp {
+            background: linear-gradient(90deg, #22c55e, #bef264);
+            box-shadow: 0 0 8px rgba(34, 197, 94, 0.42);
+        }
+
+        .battle-party-fill.hp.warn {
+            background: linear-gradient(90deg, #facc15, #fb923c);
+        }
+
+        .battle-party-fill.hp.danger {
+            background: linear-gradient(90deg, #ef4444, #fb7185);
+        }
+
+        .battle-party-fill.mp {
+            background: linear-gradient(90deg, #3b82f6, #22d3ee);
+            box-shadow: 0 0 8px rgba(34, 211, 238, 0.38);
         }
 
         /* メッセージパネルがバトルモードのときのスタイル */
@@ -459,27 +746,40 @@
 
         .damage-number {
             position: absolute;
+            left: 50%;
+            top: 30%;
+            transform: translate(-50%, 0);
             font-size: 32px;
             font-weight: bold;
-            color: #ffff00;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            line-height: 1;
+            color: #fb7185;
+            text-shadow: 0 0 14px rgba(248, 113, 113, 0.65), 2px 2px 4px rgba(0, 0, 0, 0.86);
             animation: damageFloat 1s ease-out forwards;
             pointer-events: none;
             z-index: 1000;
         }
 
+        .damage-number.party-damage {
+            color: #e0f2fe;
+            text-shadow: 0 0 14px rgba(34, 211, 238, 0.7), 2px 2px 4px rgba(0, 0, 0, 0.86);
+        }
+
         .damage-number.critical {
-            font-size: 48px;
-            color: #ff0000;
+            font-size: 46px;
+            color: #facc15;
+            text-shadow: 0 0 16px rgba(250, 204, 21, 0.85), 0 0 8px rgba(239, 68, 68, 0.72), 2px 2px 4px rgba(0, 0, 0, 0.9);
         }
 
         @keyframes damageFloat {
             0% {
-                transform: translateY(0);
+                transform: translate(-50%, 10px) scale(0.82);
+                opacity: 0;
+            }
+            14% {
                 opacity: 1;
             }
             100% {
-                transform: translateY(-50px);
+                transform: translate(-50%, -58px) scale(1.08);
                 opacity: 0;
             }
         }
@@ -1914,13 +2214,45 @@
                 font-size: 13px;
             }
 
-            /* 戦闘画面のUI調整（パネル化済みのため、パーティ表示の縮小のみ） */
+            /* 戦闘画面のUI調整（下部パネルをコンパクト化） */
+            .enemy-area {
+                top: 7%;
+                width: 78%;
+                height: 50%;
+            }
+
             #battlePartyStatus {
-                top: 6px;
+                left: 6px;
                 right: 6px;
-                font-size: 11px;
-                max-width: 200px;
-                gap: 4px;
+                bottom: 6px;
+                height: min(126px, 32%);
+                gap: 5px;
+            }
+
+            .battle-party-card {
+                height: 104px;
+                grid-template-columns: 42px minmax(0, 1fr);
+                gap: 6px;
+                padding: 6px;
+                border-radius: 12px;
+            }
+
+            .battle-party-portrait {
+                width: 42px;
+                height: 78px;
+                border-radius: 10px;
+            }
+
+            .battle-party-name {
+                font-size: 12px;
+            }
+
+            .battle-party-meter-row {
+                font-size: 8px;
+            }
+
+            .battle-party-track {
+                height: 6px;
             }
 
             .game-message-panel.battle-mode .game-msg-body {
@@ -2078,10 +2410,10 @@
             }
 
             #battlePartyStatus {
-                top: 4px;
+                left: 4px;
                 right: 4px;
-                font-size: 10px;
-                max-width: 180px;
+                bottom: 4px;
+                height: min(112px, 34%);
                 gap: 3px;
             }
 
@@ -2094,11 +2426,54 @@
             }
 
             .enemy-sprite {
-                font-size: 48px; /* 敵キャラを小さく */
+                font-size: 58px;
             }
 
             .enemy-name {
-                font-size: 13px;
+                font-size: 12px;
+            }
+
+            .enemy-hud {
+                width: min(210px, 76%);
+                padding: 5px 8px 6px;
+            }
+
+            .battle-party-card {
+                height: 94px;
+                grid-template-columns: 30px minmax(0, 1fr);
+                gap: 4px;
+                padding: 5px 4px;
+                border-radius: 10px;
+            }
+
+            .battle-party-portrait {
+                width: 30px;
+                height: 68px;
+                border-radius: 8px;
+            }
+
+            .battle-party-initial {
+                font-size: 18px;
+            }
+
+            .battle-party-head {
+                gap: 3px;
+            }
+
+            .battle-party-name {
+                font-size: 10px;
+            }
+
+            .battle-party-level {
+                display: none;
+            }
+
+            .battle-party-meter-row {
+                font-size: 7px;
+            }
+
+            .battle-party-track {
+                height: 5px;
             }
 
             /* マップ情報を小画面でも見やすく */
@@ -2500,25 +2875,30 @@
             </div>
         </div>
 
-        <!-- Battle Screen (サイバーパンク × ドラクエ風) -->
+        <!-- Battle Screen (画像ベース正面ビュー) -->
         <!-- バトル中の操作UI（コマンド・メッセージ）は #gameMessagePanel に統合済み。
              この領域では敵スプライトとパーティHP/MPのみを描画する。 -->
         <div class="battle-screen" id="battleScreen">
             <div class="battle-background">
-                <div class="battle-grid"></div>
+                <img class="battle-bg-image" id="battleBgImage" alt="" aria-hidden="true" decoding="async">
                 <div class="enemy-area" id="enemyArea">
-                    <div class="enemy-sprite" id="enemySprite">🤖</div>
-                    <div class="enemy-name" id="enemyName">デウス・マキナ</div>
-                    <div class="enemy-hp-container">
-                        <div class="hp-bar">
-                            <div class="hp-fill" id="enemyHpFill" style="width: 100%"></div>
+                    <div class="enemy-hud">
+                        <div class="enemy-name" id="enemyName">デウス・マキナ</div>
+                        <div class="enemy-hp-container">
+                            <div class="hp-bar">
+                                <div class="hp-fill" id="enemyHpFill" style="width: 100%"></div>
+                            </div>
                         </div>
                     </div>
+                    <div class="enemy-stage">
+                        <div class="enemy-shadow" aria-hidden="true"></div>
+                        <div class="enemy-sprite" id="enemySprite">🤖</div>
+                    </div>
                 </div>
-            </div>
-            <!-- パーティメンバーステータス（キャンバス右上にコンパクト表示） -->
-            <div id="battlePartyStatus">
-                <!-- JavaScriptで動的生成 -->
+                <!-- パーティメンバーステータス（画面下部に横並び表示） -->
+                <div id="battlePartyStatus" class="battle-party-panels" role="list" aria-label="パーティステータス">
+                    <!-- JavaScriptで動的生成 -->
+                </div>
             </div>
             <!-- 旧UI要素：他コードからの参照互換のため残置（CSSで非表示） -->
             <div class="battle-ui" aria-hidden="true">
@@ -2611,7 +2991,7 @@
     <script src="item-system.js?v=47"></script>
     <script src="equipment-system.js?v=50"></script>
     <script src="magic-system.js?v=47"></script>
-    <script src="battle-system.js?v=50"></script>
+    <script src="battle-system.js?v=53"></script>
     <script src="map-walkability-data.js?v=6"></script>
     <script src="map-system.js?v=52"></script>
     <script src="map-system-grid.js"></script>
