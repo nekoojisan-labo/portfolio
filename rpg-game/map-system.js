@@ -1990,8 +1990,9 @@ class MapSystem {
             };
 
             if (Array.isArray(data.walkableRects)) {
-                const walkableRects = data.walkableRects.map(normalizeRect).filter(Boolean);
-                if (walkableRects.length > 0) map.walkableRects = walkableRects;
+                // 空配列が来たら whitelist を解除＝「全域可動モード」（障害物 collisionRects だけで判定）。
+                // 非空ならその矩形群で whitelist。キー自体が無い場合はソース定義を維持。
+                map.walkableRects = data.walkableRects.map(normalizeRect).filter(Boolean);
             }
 
             if (Array.isArray(data.collisionRects)) {

@@ -93,6 +93,8 @@
         <span>🖌可動セル <b id="cWalkCells">0</b></span>
         <span>🖌壁セル <b id="cCollCells">0</b></span>
       </div>
+      <label class="check" style="margin-top:8px"><input type="checkbox" id="openMode"> 🟢 <b style="color:var(--walk)">全域可動モード</b>（このマップは「非可動域だけ」塗る）</label>
+      <div class="lbl" id="openHint" style="display:none;margin-top:2px">全域が歩ける前提。🖌壁/壁矩形で<b>通れない所だけ</b>設定。可動域の設定は不要（無視されます）。</div>
     </div>
 
     <div class="card">
@@ -197,7 +199,7 @@
   const els = {};
   ['mapSelect','exitTo','exitFields','exitSpawnX','exitSpawnY','cWalk','cColl','cExit','cWalkCells','cCollCells',
    'pointerInfo','selInfo','selDetail','optResult','optErode','optGrid','optDim','optNpc','brushSize','brushLabel',
-   'output','exportCard','saveMsg','visWalk','visColl','visExit','overlapPicker'].forEach(k=>els[k]=document.getElementById(k));
+   'output','exportCard','saveMsg','visWalk','visColl','visExit','overlapPicker','openMode','openHint'].forEach(k=>els[k]=document.getElementById(k));
 
   // ---- 座標 ----
   function scaleOf(id){ const m=mapSystem.maps[id]; return (m&&m.worldScale)?m.worldScale:1; }
@@ -211,7 +213,7 @@
       walkableRects:(m.walkableRects||[]).map(r=>toBase(r,s)),
       collisionRects:(m.buildings||[]).filter(b=>b.collisionOnly||b.type==='collision').map(r=>toBase(r,s)),
       exits:(m.exits||[]).map(e=>({...toBase(e,s),to:e.to||'',spawnX:e.spawnX,spawnY:e.spawnY})),
-      walkMask:new Set(), collMask:new Set(),
+      walkMask:new Set(), collMask:new Set(), openMode:false,
     };
   }
   function loadEditorBlob(){ try{ return JSON.parse(localStorage.getItem(EDITOR_KEY)||'{}'); }catch{ return {}; } }
@@ -224,6 +226,7 @@
         collisionRects:(blob[id].collisionRects||[]).map(clampRect),
         exits:(blob[id].exits||[]).map(e=>({...clampRect(e),to:e.to||'',spawnX:e.spawnX,spawnY:e.spawnY})),
         walkMask:new Set(blob[id].walkMask||[]), collMask:new Set(blob[id].collMask||[]),
+        openMode:!!blob[id].openMode,
       };
     } else data[id]=freshFromSource(id);
   });
@@ -314,10 +317,10 @@
   // ---- 結果（実際に歩ける範囲）計算 ----
   function computeStandable(){
     const d=data[state.mapId]; const walk=new Uint8Array(COLS*ROWS);
-    const wRects=d.walkableRects, cRects=d.collisionRects;
+    const wRects=d.walkableRects, cRects=d.collisionRects; const open=!!d.openMode;
     for(let cy=0;cy<ROWS;cy++)for(let cx=0;cx<COLS;cx++){
       const px=cx*GRID+GRID/2, py=cy*GRID+GRID/2;
-      let w=d.walkMask.has(cx+','+cy);
+      let w = open || d.walkMask.has(cx+','+cy);   // 全域可動モードは全セルが基本可動
       if(!w){ for(const r of wRects){ if(px>=r.x&&px<r.x+r.width&&py>=r.y&&py<r.y+r.height){w=true;break;} } }
       if(!w) continue;
       let blk=d.collMask.has(cx+','+cy);
@@ -350,13 +353,13 @@
       for(let c=0;c<=COLS;c++){ const x=L2C(c*GRID); ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,canvas.height); ctx.stroke(); }
       for(let r=0;r<=ROWS;r++){ const y=L2Cy(r*GRID); ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(canvas.width,y); ctx.stroke(); } }
 
-    // ブラシマスク
+    // ブラシマスク（全域可動モードでは可動マスクは無意味なので描かない）
     const W=cw(),H=ch();
-    ctx.fillStyle='rgba(68,224,138,.30)'; d.walkMask.forEach(k=>{ const [x,y]=k.split(',').map(Number); ctx.fillRect(L2C(x*GRID),L2Cy(y*GRID),W+0.5,H+0.5); });
+    if(!d.openMode){ ctx.fillStyle='rgba(68,224,138,.30)'; d.walkMask.forEach(k=>{ const [x,y]=k.split(',').map(Number); ctx.fillRect(L2C(x*GRID),L2Cy(y*GRID),W+0.5,H+0.5); }); }
     ctx.fillStyle='rgba(255,90,122,.34)'; d.collMask.forEach(k=>{ const [x,y]=k.split(',').map(Number); ctx.fillRect(L2C(x*GRID),L2Cy(y*GRID),W+0.5,H+0.5); });
 
     // 矩形レイヤー
-    ['walkableRects','collisionRects','exits'].forEach(layer=>{ const st=LS[layer]; if(!isVis(layer)) return;
+    ['walkableRects','collisionRects','exits'].forEach(layer=>{ const st=LS[layer]; if(!isVis(layer)) return; if(d.openMode&&layer==='walkableRects') return;
       d[layer].forEach((r,i)=>{ const x=L2C(r.x),y=L2Cy(r.y),w=L2C(r.width),h=L2Cy(r.height);
         ctx.fillStyle=st.fill; ctx.fillRect(x,y,w,h);
         const seld=state.sel&&state.sel.layer===layer&&state.sel.index===i;
@@ -472,7 +475,7 @@
   document.querySelectorAll('#zoomSeg button').forEach(b=>b.addEventListener('click',()=>{ document.querySelectorAll('#zoomSeg button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); const z=+b.dataset.zoom; document.querySelector('.canvas-wrap').style.width=(z*100)+'%'; }));
 
   // マップ切替
-  els.mapSelect.addEventListener('change',()=>{ state.mapId=els.mapSelect.value; state.sel=null; state.pickStack=[]; state.cycle=null; state.history=[]; getImage(state.mapId); refresh(); });
+  els.mapSelect.addEventListener('change',()=>{ state.mapId=els.mapSelect.value; state.sel=null; state.pickStack=[]; state.cycle=null; state.history=[]; getImage(state.mapId); syncOpenMode(); refresh(); });
 
   // exit編集
   els.exitTo.addEventListener('change',()=>{ if(state.sel&&state.sel.layer==='exits'){ data[state.mapId].exits[state.sel.index].to=els.exitTo.value; refresh(); } });
@@ -499,9 +502,14 @@
   function buildGamePayload(){
     const out={};
     mapIds.forEach(id=>{ const d=data[id]; const entry={};
-      const wr=d.walkableRects.concat(meshMask(d.walkMask));
       const cr=d.collisionRects.concat(meshMask(d.collMask));
-      if(wr.length) entry.walkableRects=wr.map(r=>({x:r.x,y:r.y,width:r.width,height:r.height}));
+      if(d.openMode){
+        // 全域可動モード: 空の walkableRects を明示送出して whitelist を解除（障害物だけで判定）
+        entry.walkableRects=[];
+      } else {
+        const wr=d.walkableRects.concat(meshMask(d.walkMask));
+        if(wr.length) entry.walkableRects=wr.map(r=>({x:r.x,y:r.y,width:r.width,height:r.height}));
+      }
       if(cr.length) entry.collisionRects=cr.map(r=>({x:r.x,y:r.y,width:r.width,height:r.height}));
       if(d.exits.length) entry.exits=d.exits.filter(e=>e.to).map(e=>{ const o={x:e.x,y:e.y,width:e.width,height:e.height,to:e.to}; if(Number.isFinite(e.spawnX)) o.spawnX=e.spawnX; if(Number.isFinite(e.spawnY)) o.spawnY=e.spawnY; return o; });
       if(Object.keys(entry).length) out[id]=entry; });
@@ -510,8 +518,8 @@
   function buildEditorBlob(){
     const out={};
     mapIds.forEach(id=>{ const d=data[id];
-      if(d.walkableRects.length||d.collisionRects.length||d.exits.length||d.walkMask.size||d.collMask.size)
-        out[id]={ walkableRects:d.walkableRects, collisionRects:d.collisionRects, exits:d.exits, walkMask:[...d.walkMask], collMask:[...d.collMask] }; });
+      if(d.walkableRects.length||d.collisionRects.length||d.exits.length||d.walkMask.size||d.collMask.size||d.openMode)
+        out[id]={ walkableRects:d.walkableRects, collisionRects:d.collisionRects, exits:d.exits, walkMask:[...d.walkMask], collMask:[...d.collMask], openMode:!!d.openMode }; });
     return out;
   }
   function persist(){ localStorage.setItem(STORAGE_KEY,JSON.stringify(buildGamePayload())); localStorage.setItem(EDITOR_KEY,JSON.stringify(buildEditorBlob())); }
@@ -525,8 +533,15 @@
   ['optResult','optErode','optGrid','optDim','optNpc'].forEach(k=>els[k].addEventListener('change',render));
   ['visWalk','visColl','visExit'].forEach(k=>els[k].addEventListener('change',()=>{ if(state.sel&&!isVis(state.sel.layer)){ state.sel=null; state.pickStack=[]; state.cycle=null; } refresh(); }));
 
-  getImage(state.mapId); refresh();
-  window.__editor = { data, state, paintCell, bucketFill, refresh };   // デモ/検証用フック
+  // 全域可動モード
+  function syncOpenMode(){ const on=!!data[state.mapId].openMode; els.openMode.checked=on; els.openHint.style.display=on?'block':'none'; }
+  els.openMode.addEventListener('change',()=>{ const on=els.openMode.checked; data[state.mapId].openMode=on; els.openHint.style.display=on?'block':'none';
+    if(on){ document.querySelectorAll('.tool').forEach(x=>x.classList.remove('active')); const ct=document.querySelector('.tool[data-tool="brushColl"]'); if(ct) ct.classList.add('active'); state.tool='brushColl'; canvas.style.cursor='crosshair'; els.optResult.checked=true; }
+    state.sel=null; state.pickStack=[]; state.cycle=null; refresh();
+  });
+
+  getImage(state.mapId); syncOpenMode(); refresh();
+  window.__editor = { data, state, paintCell, bucketFill, refresh, syncOpenMode };   // デモ/検証用フック
 })();
 </script>
 </body>
