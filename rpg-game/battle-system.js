@@ -173,15 +173,36 @@ class BattleSystem {
         this.encounterThreshold = this.getRandomEncounterSteps('medium');
         this.firstEncounter = true;  // 初回エンカウントフラグ
         this.enemyImageMap = {
-            watcher: 'assets/enemies/watcher.png',
-            drone: 'assets/enemies/watcher.png',
-            android: 'assets/enemies/deus_machina.png',
-            mecha: 'assets/enemies/cerberus.png',
-            construct: 'assets/enemies/dust_golem.png',
-            hybrid: 'assets/enemies/alraune.png',
-            boss: 'assets/enemies/ark_prime.png',
-            corrupted_drone_boss: 'assets/enemies/watcher.png',
-            rogue_ai_core: 'assets/enemies/abyss_ruler.png'
+            // 旧type（フォールバック用に新アートへ差し替え）
+            watcher: 'assets/enemies/enemy_corrupted_drone.png',
+            drone: 'assets/enemies/enemy_patrol_drone.png',
+            android: 'assets/enemies/enemy_guard_robo.png',
+            mecha: 'assets/enemies/enemy_data_dragon.png',
+            construct: 'assets/enemies/enemy_guard_robo.png',
+            hybrid: 'assets/enemies/enemy_data_spider.png',
+            boss: 'assets/enemies/enemy_ark_prime.png',
+            corrupted_drone_boss: 'assets/enemies/enemy_corrupted_drone.png',
+            rogue_ai_core: 'assets/enemies/enemy_abyss_ruler.png',
+            // bossId（ボス戦の画像解決用）
+            corrupted_drone: 'assets/enemies/enemy_corrupted_drone.png',
+            arc_prime: 'assets/enemies/enemy_ark_prime.png',
+            // 敵名（マップ symbol と一致。戦闘画像もこれで解決）
+            'パトロールドローン': 'assets/enemies/enemy_patrol_drone.png',
+            '暴走ドローン': 'assets/enemies/enemy_corrupted_drone.png',
+            'セキュリティドローン': 'assets/enemies/enemy_security_drone.png',
+            'ガードロボ': 'assets/enemies/enemy_guard_robo.png',
+            'アーク・プライム': 'assets/enemies/enemy_ark_prime.png',
+            'シャドウエンティティ': 'assets/enemies/enemy_shadow_entity.png',
+            'データスパイダー': 'assets/enemies/enemy_data_spider.png',
+            'クイーンスパイダー': 'assets/enemies/enemy_queen_spider.png',
+            'グリッチスピリット': 'assets/enemies/enemy_glitch_spirit.png',
+            'ファントム': 'assets/enemies/enemy_phantom.png',
+            'データドラゴン': 'assets/enemies/enemy_data_dragon.png',
+            'ネクロマンサー': 'assets/enemies/enemy_necromancer.png',
+            'スケルトンナイト': 'assets/enemies/enemy_skeleton_knight.png',
+            'ダークバット群': 'assets/enemies/enemy_dark_bats.png',
+            'デーモンロード': 'assets/enemies/enemy_demon_lord.png',
+            '深淵の支配者': 'assets/enemies/enemy_abyss_ruler.png'
         };
 
         // ボス戦設定
@@ -1250,10 +1271,11 @@ class BattleSystem {
         const path = (
             enemy.image ||
             (enemy.bossId && this.enemyImageMap[enemy.bossId]) ||
+            (enemy.name && this.enemyImageMap[enemy.name]) ||
             (enemy.type && this.enemyImageMap[enemy.type]) ||
-            (enemy.name && enemy.name.includes('ドローン') ? 'assets/enemies/watcher.png' : null) ||
-            (enemy.name && enemy.name.includes('デウス') ? 'assets/enemies/deus_machina.png' : null) ||
-            (enemy.name && enemy.name.includes('アーク') ? 'assets/enemies/ark_prime.png' : null)
+            (enemy.name && enemy.name.includes('スパイダー') ? 'assets/enemies/enemy_data_spider.png' : null) ||
+            (enemy.name && enemy.name.includes('ドローン') ? 'assets/enemies/enemy_patrol_drone.png' : null) ||
+            (enemy.name && enemy.name.includes('アーク') ? 'assets/enemies/enemy_ark_prime.png' : null)
         );
         if (typeof path === 'string' && path.startsWith('assets/enemies/') && path.endsWith('.png')) {
             return path.replace(/\.png$/, '.webp');
