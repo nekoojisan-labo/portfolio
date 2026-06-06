@@ -53,6 +53,11 @@
   .seg{display:flex;gap:6px;}
   .seg button{flex:1;padding:6px;}
   .seg button.on{border-color:var(--accent);background:#13314a;}
+  .pick-list{display:flex;flex-direction:column;gap:4px;margin-top:8px;max-height:160px;overflow:auto;}
+  .pick-hd{font-size:11px;color:var(--muted);margin-top:8px;}
+  .pick-item{display:flex;align-items:center;gap:7px;padding:5px 7px;border:1px solid var(--line);border-radius:6px;font-size:12px;cursor:pointer;background:var(--panel-2);}
+  .pick-item:hover{border-color:var(--accent);}
+  .pick-item.cur{border-color:var(--accent);background:#13314a;box-shadow:0 0 0 1px var(--accent) inset;}
 </style>
 </head>
 <body>
@@ -131,10 +136,15 @@
       <label class="check"><input type="checkbox" id="optGrid"> グリッド線を表示</label>
       <label class="check"><input type="checkbox" id="optDim" checked> 背景を暗くする</label>
       <label class="check"><input type="checkbox" id="optNpc" checked> NPC位置を参照表示</label>
+      <div class="sub" style="margin-top:8px">レイヤー表示（OFFで選択対象外＝重なり回避）</div>
+      <label class="check"><input type="checkbox" id="visWalk" checked> <span class="swatch sw-walk" style="display:inline-block"></span> 可動域(矩形)</label>
+      <label class="check"><input type="checkbox" id="visColl" checked> <span class="swatch sw-coll" style="display:inline-block"></span> 壁・建物(矩形)</label>
+      <label class="check"><input type="checkbox" id="visExit" checked> <span class="swatch sw-exit" style="display:inline-block"></span> 出口</label>
     </div>
 
     <div class="card">
       <div class="sel-box" id="selDetail">選択中の矩形なし</div>
+      <div id="overlapPicker"></div>
       <div class="row" style="margin-top:8px">
         <button id="btnDelete">選択を削除</button>
         <button id="btnClearLayer" class="danger">このレイヤー全消去</button>
@@ -187,7 +197,7 @@
   const els = {};
   ['mapSelect','exitTo','exitFields','exitSpawnX','exitSpawnY','cWalk','cColl','cExit','cWalkCells','cCollCells',
    'pointerInfo','selInfo','selDetail','optResult','optErode','optGrid','optDim','optNpc','brushSize','brushLabel',
-   'output','exportCard','saveMsg'].forEach(k=>els[k]=document.getElementById(k));
+   'output','exportCard','saveMsg','visWalk','visColl','visExit','overlapPicker'].forEach(k=>els[k]=document.getElementById(k));
 
   // ---- 座標 ----
   function scaleOf(id){ const m=mapSystem.maps[id]; return (m&&m.worldScale)?m.worldScale:1; }
@@ -228,6 +238,7 @@
     mapId: mapIds.includes('shinjuku_center_plaza')?'shinjuku_center_plaza':mapIds[0],
     tool:'walkableRects', sel:null, dragging:false, draft:null, startX:0, startY:0,
     moving:false, moveDX:0, moveDY:0, painting:false, brush:3, history:[],
+    cycle:null, pickStack:[], hover:null,
   };
   els.mapSelect.value=state.mapId;
 
@@ -248,7 +259,26 @@
     return { x:Math.round(cx/r.width*BASE_W), y:Math.round(cy/r.height*BASE_H) };
   }
   function evToCell(ev){ const p=evToLogical(ev); return { cx:Math.max(0,Math.min(COLS-1,Math.floor(p.x/GRID))), cy:Math.max(0,Math.min(ROWS-1,Math.floor(p.y/GRID))), p }; }
-  function hitTest(x,y){ const layers=['exits','collisionRects','walkableRects']; for(const layer of layers){ const arr=data[state.mapId][layer]; for(let i=arr.length-1;i>=0;i--){ const r=arr[i]; if(x>=r.x&&x<=r.x+r.width&&y>=r.y&&y<=r.y+r.height) return {layer,index:i}; } } return null; }
+  function isVis(layer){ return layer==='walkableRects'?els.visWalk.checked : layer==='collisionRects'?els.visColl.checked : layer==='exits'?els.visExit.checked : true; }
+  // 指定点の下にある矩形を全部（上→下順）。layerFilter があればその層のみ。非表示レイヤーは除外。
+  function stackAt(x,y,layerFilter){
+    const layers = layerFilter ? [layerFilter] : ['exits','collisionRects','walkableRects'];
+    const res=[];
+    for(const layer of layers){ if(!isVis(layer)) continue; const arr=data[state.mapId][layer];
+      for(let i=arr.length-1;i>=0;i--){ const r=arr[i]; if(x>=r.x&&x<=r.x+r.width&&y>=r.y&&y<=r.y+r.height) res.push({layer,index:i}); } }
+    return res;
+  }
+  function hitTest(x,y,layerFilter){ const s=stackAt(x,y,layerFilter); return s.length?s[0]:null; }
+  // クリック地点の処理: 選択中の矩形が真下にあればそれを掴んで移動（選択維持）、
+  // 無ければ最前面を選択。重なりの中の特定1個はピッカーリストで正確に選べる。
+  function pickFromStack(stack,p){
+    let pick = state.sel && stack.find(s=>s.layer===state.sel.layer && s.index===state.sel.index);
+    if(!pick) pick = stack[0];
+    state.sel={layer:pick.layer,index:pick.index}; state.pickStack=stack;
+    const r=data[state.mapId][pick.layer][pick.index];
+    state.moving=true; state.moveDX=p.x-r.x; state.moveDY=p.y-r.y; pushHistory();
+    refresh();
+  }
 
   // ---- ブラシ ----
   function paintCell(cx,cy,erase){
@@ -326,7 +356,7 @@
     ctx.fillStyle='rgba(255,90,122,.34)'; d.collMask.forEach(k=>{ const [x,y]=k.split(',').map(Number); ctx.fillRect(L2C(x*GRID),L2Cy(y*GRID),W+0.5,H+0.5); });
 
     // 矩形レイヤー
-    ['walkableRects','collisionRects','exits'].forEach(layer=>{ const st=LS[layer];
+    ['walkableRects','collisionRects','exits'].forEach(layer=>{ const st=LS[layer]; if(!isVis(layer)) return;
       d[layer].forEach((r,i)=>{ const x=L2C(r.x),y=L2Cy(r.y),w=L2C(r.width),h=L2Cy(r.height);
         ctx.fillStyle=st.fill; ctx.fillRect(x,y,w,h);
         const seld=state.sel&&state.sel.layer===layer&&state.sel.index===i;
@@ -350,18 +380,40 @@
         ctx.fillStyle='#e9d6ff'; ctx.font='12px sans-serif'; ctx.fillText(n.name||'NPC',x+9,y-6); });
       const sp=mapSystem.maps[id].savePoint; if(sp){ const x=L2C(sp.x/s),y=L2Cy(sp.y/s); ctx.fillStyle='#7fffd4'; ctx.fillRect(x-5,y-5,10,10); } }
 
+    // ホバー強調（掴める矩形の予告）
+    if(state.hover && isVis(state.hover.layer)){ const hr=d[state.hover.layer] && d[state.hover.layer][state.hover.index]; if(hr){ ctx.setLineDash([5,4]); ctx.strokeStyle='#ffffff'; ctx.lineWidth=2; ctx.strokeRect(L2C(hr.x),L2Cy(hr.y),L2C(hr.width),L2Cy(hr.height)); ctx.setLineDash([]); } }
+
     // ドラフト
     if(state.draft){ const st=LS[state.tool]||LS.walkableRects; const x=L2C(state.draft.x),y=L2Cy(state.draft.y),w=L2C(state.draft.width),h=L2Cy(state.draft.height);
       ctx.setLineDash([6,4]); ctx.strokeStyle=st.stroke; ctx.lineWidth=2; ctx.strokeRect(x,y,w,h); ctx.setLineDash([]); }
   }
 
   function updateCounts(){ const d=data[state.mapId]; els.cWalk.textContent=d.walkableRects.length; els.cColl.textContent=d.collisionRects.length; els.cExit.textContent=d.exits.length; els.cWalkCells.textContent=d.walkMask.size; els.cCollCells.textContent=d.collMask.size; }
+  const JP_LAYER={walkableRects:'可動域',collisionRects:'壁・建物',exits:'出口'};
+  const SW_LAYER={walkableRects:'sw-walk',collisionRects:'sw-coll',exits:'sw-exit'};
   function updateSel(){ if(!state.sel){ els.selInfo.textContent='選択: なし'; els.selDetail.textContent='選択中の矩形なし'; els.exitFields.classList.remove('show'); return; }
     const {layer,index}=state.sel; const r=data[state.mapId][layer][index]; if(!r){ state.sel=null; return updateSel(); }
-    const jp={walkableRects:'可動域',collisionRects:'壁・建物',exits:'出口'}[layer];
-    els.selInfo.textContent=`選択: ${jp} #${index}`; els.selDetail.textContent=`${jp} #${index} — x:${r.x} y:${r.y} w:${r.width} h:${r.height}`;
+    const jp=JP_LAYER[layer];
+    let pos=''; if(state.pickStack&&state.pickStack.length>1){ const k=state.pickStack.findIndex(s=>s.layer===layer&&s.index===index); if(k>=0) pos=` (${k+1}/${state.pickStack.length})`; }
+    els.selInfo.textContent=`選択: ${jp} #${index}${pos}`; els.selDetail.textContent=`${jp} #${index} — x:${r.x} y:${r.y} w:${r.width} h:${r.height}`;
     if(layer==='exits'){ els.exitFields.classList.add('show'); els.exitTo.value=r.to||''; els.exitSpawnX.value=(r.spawnX??''); els.exitSpawnY.value=(r.spawnY??''); } else els.exitFields.classList.remove('show'); }
-  function refresh(){ updateCounts(); updateSel(); render(); }
+  // 重なりピッカー: クリック地点の全矩形をリスト表示し、クリックで正確に選択
+  function renderPicker(){
+    const el=els.overlapPicker; el.innerHTML='';
+    const stack=state.pickStack||[];
+    if(!state.sel || stack.length<=1) return;
+    const hd=document.createElement('div'); hd.className='pick-hd'; hd.textContent=`この地点の重なり ${stack.length}個（クリックで選択→ドラッグで移動／Delで削除）`; el.appendChild(hd);
+    const list=document.createElement('div'); list.className='pick-list';
+    stack.forEach((s,k)=>{ const r=data[state.mapId][s.layer][s.index]; if(!r) return;
+      const cur=(state.sel.layer===s.layer&&state.sel.index===s.index);
+      const it=document.createElement('div'); it.className='pick-item'+(cur?' cur':'');
+      it.innerHTML=`<span class="swatch ${SW_LAYER[s.layer]}"></span>${JP_LAYER[s.layer]} #${s.index} <span style="color:var(--muted);margin-left:auto">${r.width}×${r.height}</span>`;
+      it.addEventListener('click',()=>{ state.sel={layer:s.layer,index:s.index}; if(state.cycle) state.cycle.idx=k; refresh(); });
+      list.appendChild(it);
+    });
+    el.appendChild(list);
+  }
+  function refresh(){ updateCounts(); updateSel(); renderPicker(); render(); }
 
   const isBrush=()=>['brushWalk','brushColl','erase','bucket'].includes(state.tool);
 
@@ -371,15 +423,29 @@
       if(state.tool==='bucket'){ bucketFill(cx,cy); state.painting=false; refresh(); return; }
       state.painting=true; paintCell(cx,cy,state.tool==='erase'); refresh(); return; }
     const p=evToLogical(ev);
-    if(state.tool==='select'){ const hit=hitTest(p.x,p.y); state.sel=hit; if(hit){ const r=data[state.mapId][hit.layer][hit.index]; state.moving=true; state.moveDX=p.x-r.x; state.moveDY=p.y-r.y; pushHistory(); } refresh(); return; }
-    const hit=hitTest(p.x,p.y);
-    if(hit&&hit.layer===state.tool){ state.sel=hit; const r=data[state.mapId][hit.layer][hit.index]; state.moving=true; state.moveDX=p.x-r.x; state.moveDY=p.y-r.y; pushHistory(); refresh(); return; }
+    if(state.tool==='select'){
+      const stack=stackAt(p.x,p.y);
+      if(stack.length){ pickFromStack(stack,p); }
+      else { state.sel=null; state.pickStack=[]; state.cycle=null; refresh(); }
+      return;
+    }
+    // 描画ツール: 同レイヤーの矩形があれば掴む（重なりは巡回＋ピッカー）、無ければ新規ドラッグ
+    const stack=stackAt(p.x,p.y,state.tool);
+    if(stack.length){ pickFromStack(stack,p); return; }
+    state.cycle=null; state.pickStack=[];
     state.dragging=true; state.startX=p.x; state.startY=p.y; state.draft={x:p.x,y:p.y,width:0,height:0};
   }
   function onMove(ev){ const p=evToLogical(ev); els.pointerInfo.textContent=`ポインタ: x:${p.x} y:${p.y}`;
     if(state.painting){ const {cx,cy}=evToCell(ev); paintCell(cx,cy,state.tool==='erase'); render(); updateCounts(); return; }
     if(state.moving&&state.sel){ const r=data[state.mapId][state.sel.layer][state.sel.index]; r.x=Math.max(0,Math.min(BASE_W-r.width,p.x-state.moveDX)); r.y=Math.max(0,Math.min(BASE_H-r.height,p.y-state.moveDY)); refresh(); return; }
-    if(state.dragging){ const x=Math.min(state.startX,p.x),y=Math.min(state.startY,p.y); state.draft=clampRect({x,y,width:Math.abs(p.x-state.startX),height:Math.abs(p.y-state.startY)}); render(); }
+    if(state.dragging){ const x=Math.min(state.startX,p.x),y=Math.min(state.startY,p.y); state.draft=clampRect({x,y,width:Math.abs(p.x-state.startX),height:Math.abs(p.y-state.startY)}); render(); return; }
+    // ホバー: 掴める矩形を白破線で予告（アイドル時のみ）
+    if(!isBrush() && p.x>=0&&p.x<=BASE_W&&p.y>=0&&p.y<=BASE_H){
+      const lf = state.tool==='select'?undefined:state.tool;
+      const h=stackAt(p.x,p.y,lf)[0]||null;
+      const changed=(!!h!==!!state.hover)||(h&&state.hover&&(h.layer!==state.hover.layer||h.index!==state.hover.index));
+      if(changed){ state.hover=h; render(); }
+    } else if(state.hover){ state.hover=null; render(); }
   }
   function onUp(){ if(state.painting){ state.painting=false; refresh(); return; }
     if(state.moving){ state.moving=false; refresh(); return; }
@@ -406,7 +472,7 @@
   document.querySelectorAll('#zoomSeg button').forEach(b=>b.addEventListener('click',()=>{ document.querySelectorAll('#zoomSeg button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); const z=+b.dataset.zoom; document.querySelector('.canvas-wrap').style.width=(z*100)+'%'; }));
 
   // マップ切替
-  els.mapSelect.addEventListener('change',()=>{ state.mapId=els.mapSelect.value; state.sel=null; state.history=[]; getImage(state.mapId); refresh(); });
+  els.mapSelect.addEventListener('change',()=>{ state.mapId=els.mapSelect.value; state.sel=null; state.pickStack=[]; state.cycle=null; state.history=[]; getImage(state.mapId); refresh(); });
 
   // exit編集
   els.exitTo.addEventListener('change',()=>{ if(state.sel&&state.sel.layer==='exits'){ data[state.mapId].exits[state.sel.index].to=els.exitTo.value; refresh(); } });
@@ -415,7 +481,7 @@
   els.exitSpawnY.addEventListener('input',()=>{ if(state.sel&&state.sel.layer==='exits') data[state.mapId].exits[state.sel.index].spawnY=numOrUndef(els.exitSpawnY.value); });
 
   // ボタン
-  function deleteSel(){ if(!state.sel) return; pushHistory(); data[state.mapId][state.sel.layer].splice(state.sel.index,1); state.sel=null; refresh(); }
+  function deleteSel(){ if(!state.sel) return; pushHistory(); data[state.mapId][state.sel.layer].splice(state.sel.index,1); state.sel=null; state.pickStack=[]; state.cycle=null; refresh(); }
   document.getElementById('btnDelete').addEventListener('click',deleteSel);
   document.getElementById('btnClearLayer').addEventListener('click',()=>{ const d=data[state.mapId];
     let layer = isBrush()? (state.tool==='brushColl'?'collMask':'walkMask') : (state.tool==='select'?'walkableRects':state.tool);
@@ -457,6 +523,7 @@
   document.getElementById('btnDownload').addEventListener('click',()=>{ const blob2=new Blob([els.output.value],{type:'text/javascript'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob2); a.download='map-walkability-data.js'; a.click(); });
 
   ['optResult','optErode','optGrid','optDim','optNpc'].forEach(k=>els[k].addEventListener('change',render));
+  ['visWalk','visColl','visExit'].forEach(k=>els[k].addEventListener('change',()=>{ if(state.sel&&!isVis(state.sel.layer)){ state.sel=null; state.pickStack=[]; state.cycle=null; } refresh(); }));
 
   getImage(state.mapId); refresh();
   window.__editor = { data, state, paintCell, bucketFill, refresh };   // デモ/検証用フック
