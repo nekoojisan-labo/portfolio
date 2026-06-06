@@ -1766,6 +1766,12 @@ class BattleSystem {
         this.isBossBattle = false;
         this.onBossDefeat = null;
 
+        // 戦闘で付与されたステータス異常を全員クリア（フィールドに持ち越さない）
+        try {
+            const partyForClear = this.getPartyMembers ? this.getPartyMembers() : [];
+            [window.player, ...partyForClear].forEach(m => { if (m) m.statusAilments = {}; });
+        } catch (e) { /* noop */ }
+
         // 戦闘UIに残存しているフラグ・要素を強制クリア（フィールド復帰時の入力封じ防止）
         this.kamuiSkillMenuActive = false;
         this.kamuiPlanning = false;

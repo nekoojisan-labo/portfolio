@@ -287,17 +287,24 @@ class EquipmentSystem {
             }
         };
         
-        // プレイヤーの装備スロット
-        this.equipped = {
-            weapon: null,
-            head: null,
-            body: null,
-            hands: null,
-            accessory: null
-        };
-        
-        // 所持している装備（インベントリ）
+        // キャラクター別の装備スロット（charId -> {weapon,head,...}）
+        this.equippedByCharacter = {};
+        // 所持している装備（インベントリ）※全キャラ共有
         this.inventory = {};
+    }
+
+    // キャラID（パーティ別装備のキー）
+    _charId(character) {
+        return (character && (character.characterId || character.name)) || 'player';
+    }
+
+    // 指定キャラの装備スロット（無ければ生成）
+    getEquipped(character) {
+        const id = this._charId(character);
+        if (!this.equippedByCharacter[id]) {
+            this.equippedByCharacter[id] = { weapon: null, head: null, body: null, hands: null, accessory: null };
+        }
+        return this.equippedByCharacter[id];
     }
     
     // 装備を追加
@@ -340,7 +347,8 @@ class EquipmentSystem {
         }
         
         const slot = equipment.slot;
-        const oldEquipmentId = this.equipped[slot];
+        const equipped = this.getEquipped(player);
+        const oldEquipmentId = equipped[slot];
         
         console.log(`Equipping ${equipment.name} to slot ${slot}`);
         
@@ -354,7 +362,7 @@ class EquipmentSystem {
         }
         
         // 新しい装備を装備
-        this.equipped[slot] = equipmentId;
+        equipped[slot] = equipmentId;
         
         // インベントリから削除
         this.inventory[equipmentId].quantity--;
@@ -374,17 +382,18 @@ class EquipmentSystem {
     
     // 装備を外す
     unequipItem(slot, player, returnToInventory = true) {
-        const equipmentId = this.equipped[slot];
+        const equipped = this.getEquipped(player);
+        const equipmentId = equipped[slot];
         if (!equipmentId) {
             return { success: false, message: '何も装備していない' };
         }
-        
+
         const equipment = this.equipmentDatabase[equipmentId];
-        
+
         console.log(`Unequipping ${equipment.name} from slot ${slot}`);
-        
+
         // 装備を外す
-        this.equipped[slot] = null;
+        equipped[slot] = null;
         
         // インベントリに戻す
         if (returnToInventory) {
@@ -446,16 +455,13 @@ class EquipmentSystem {
         });
     }
     
-    // 装備中のアイテムを取得
-    getEquippedItems() {
+    // 装備中のアイテムを取得（キャラ別）
+    getEquippedItems(character) {
+        const slots = this.getEquipped(character);
         const equipped = {};
-        for (const slot in this.equipped) {
-            const equipmentId = this.equipped[slot];
-            if (equipmentId) {
-                equipped[slot] = this.equipmentDatabase[equipmentId];
-            } else {
-                equipped[slot] = null;
-            }
+        for (const slot in slots) {
+            const equipmentId = slots[slot];
+            equipped[slot] = equipmentId ? this.equipmentDatabase[equipmentId] : null;
         }
         return equipped;
     }
@@ -527,17 +533,18 @@ class EquipmentSystem {
         };
     }
     
-    // 総ステータスを計算
-    getTotalStats() {
+    // 総ステータスを計算（キャラ別）
+    getTotalStats(character) {
         const stats = {
             attack: 0,
             defense: 0,
             hp: 0,
             mp: 0
         };
-        
-        for (const slot in this.equipped) {
-            const equipmentId = this.equipped[slot];
+
+        const slots = this.getEquipped(character);
+        for (const slot in slots) {
+            const equipmentId = slots[slot];
             if (equipmentId) {
                 const equipment = this.equipmentDatabase[equipmentId];
                 stats.attack += equipment.attack || 0;
@@ -566,8 +573,8 @@ class EquipmentSystem {
             player.baseMaxMp = 50;
         }
 
-        // 装備ボーナスを計算
-        const equipStats = this.getTotalStats();
+        // 装備ボーナスを計算（このキャラの装備）
+        const equipStats = this.getTotalStats(player);
 
         // 現在のHPとMPの割合を保存（maxHp/maxMp=0時のNaN伝播を防止）
         const hpRatio = player.maxHp ? player.hp / player.maxHp : 1;
@@ -590,15 +597,17 @@ class EquipmentSystem {
         });
     }
 
-    // === セーブ用: 装備スロット(id)と在庫(id→数量) ===
+    // === セーブ用: キャラ別装備スロット(id)と在庫(id→数量) ===
     toJSON() {
         const inv = {};
         for (const id in this.inventory) inv[id] = this.inventory[id].quantity;
-        return { equipped: { ...this.equipped }, inventory: inv };
+        const eq = {};
+        for (const cid in this.equippedByCharacter) eq[cid] = { ...this.equippedByCharacter[cid] };
+        return { equippedByCharacter: eq, inventory: inv };
     }
-    // === ロード用: DB参照で再構築。equipped は在庫を消費せず直接セット ===
+    // === ロード用: DB参照で再構築。装備は在庫を消費せず直接セット ===
     fromJSON(data, player) {
-        this.equipped = { weapon: null, head: null, body: null, hands: null, accessory: null };
+        this.equippedByCharacter = {};
         this.inventory = {};
         if (data) {
             if (data.inventory) {
@@ -606,14 +615,25 @@ class EquipmentSystem {
                     if (this.equipmentDatabase[id] && data.inventory[id] > 0) this.addEquipment(id, data.inventory[id]);
                 }
             }
-            if (data.equipped) {
-                for (const slot in this.equipped) {
-                    const id = data.equipped[slot];
-                    if (id && this.equipmentDatabase[id]) this.equipped[slot] = id;
+            if (data.equippedByCharacter) {
+                for (const cid in data.equippedByCharacter) {
+                    const src = data.equippedByCharacter[cid];
+                    const dst = { weapon: null, head: null, body: null, hands: null, accessory: null };
+                    for (const slot in dst) { const id = src[slot]; if (id && this.equipmentDatabase[id]) dst[slot] = id; }
+                    this.equippedByCharacter[cid] = dst;
                 }
+            } else if (data.equipped && player) {
+                // 旧形式（単一装備）→ player の装備として割り当て
+                const dst = this.getEquipped(player);
+                for (const slot in dst) { const id = data.equipped[slot]; if (id && this.equipmentDatabase[id]) dst[slot] = id; }
             }
         }
         if (player) this.recalculatePlayerStats(player);
+    }
+
+    // ロード後、パーティ全員のステータスを装備込みで再計算
+    recalcAll(members) {
+        (members || []).forEach(m => { if (m) this.recalculatePlayerStats(m); });
     }
 }
 

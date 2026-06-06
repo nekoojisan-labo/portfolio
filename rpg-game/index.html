@@ -2609,11 +2609,11 @@
 
     <!-- 外部スクリプト読み込み -->
     <script src="item-system.js?v=47"></script>
-    <script src="equipment-system.js?v=47"></script>
+    <script src="equipment-system.js?v=50"></script>
     <script src="magic-system.js?v=47"></script>
-    <script src="battle-system.js?v=49"></script>
-    <script src="map-walkability-data.js?v=5"></script>
-    <script src="map-system.js?v=51"></script>
+    <script src="battle-system.js?v=50"></script>
+    <script src="map-walkability-data.js?v=6"></script>
+    <script src="map-system.js?v=52"></script>
     <script src="map-system-grid.js"></script>
     <script src="player-grid-movement.js"></script>
     <script src="bgm-system.js?v=35"></script>
@@ -4263,7 +4263,11 @@ function drawWalkChar(ctx, cx, footY, facing, isMoving, t, pal, scale){
             if (magicSystem) magicSystem.fromJSON(data.magic);
             if (partySystem) partySystem.fromJSON(data.party);
             // 装備は最後（recalculatePlayerStats が base+装備を一発計算＝二重加算なし）
-            if (equipmentSystem) equipmentSystem.fromJSON(data.equipment, player);
+            if (equipmentSystem) {
+                equipmentSystem.fromJSON(data.equipment, player);
+                // パーティメンバーも装備込みで再計算
+                if (partySystem && equipmentSystem.recalcAll) equipmentSystem.recalcAll(partySystem.getMembers());
+            }
 
             // マップ復元: currentMap を直接セットしスポーン地点へ
             const mapId = mapSystem.normalizeMapId(data.currentMap);
@@ -5234,13 +5238,8 @@ function drawWalkChar(ctx, cx, footY, facing, isMoving, t, pal, scale){
         }
         
         function updateEquipmentDisplay() {
-            console.log('updateEquipmentDisplay called');
-            console.log('equipmentSystem:', equipmentSystem);
-            console.log('equipmentSystem.inventory:', equipmentSystem ? equipmentSystem.inventory : 'N/A');
-            console.log('equipmentSystem.equipped:', equipmentSystem ? equipmentSystem.equipped : 'N/A');
-            
-            // 装備中のアイテムを表示
-            const equipped = equipmentSystem.getEquippedItems();
+            // 装備中のアイテムを表示（選択中メンバーの装備）
+            const equipped = equipmentSystem.getEquippedItems(getEquipTargetMember());
             
             document.getElementById('equippedWeapon').textContent = 
                 equipped.weapon ? `${equipped.weapon.emoji} ${equipped.weapon.name}` : '-';
@@ -5299,16 +5298,30 @@ function drawWalkChar(ctx, cx, footY, facing, isMoving, t, pal, scale){
             });
         }
         
+        // 装備の対象＝メニューで選択中のメンバー（パーティ別装備）
+        function getEquipTargetMember() {
+            const all = getMenuMembers();
+            return all[selectedPartyMemberIndex] || player;
+        }
+        function refreshEquipmentCharacterName() {
+            const el = document.getElementById('equipmentCharacterName');
+            if (el) el.textContent = getEquipTargetMember().name || 'カイト';
+        }
+
         function handleEquipmentMenuInput(key) {
+            // ←→/Q/E で装備するキャラを切替
+            if (key === 'ArrowLeft' || key === 'q' || key === 'Q') {
+                changeSelectedPartyMember(-1); equipmentSelectedIndex = 0;
+                refreshEquipmentCharacterName(); updateEquipmentDisplay(); return;
+            } else if (key === 'ArrowRight' || key === 'e' || key === 'E') {
+                changeSelectedPartyMember(1); equipmentSelectedIndex = 0;
+                refreshEquipmentCharacterName(); updateEquipmentDisplay(); return;
+            }
             const inventory = equipmentSystem.getEquipmentInventory();
-            
             if (inventory.length === 0) {
-                if (key === 'Escape' || key === 'x' || key === 'X') {
-                    closeEquipmentMenu();
-                }
+                if (key === 'Escape' || key === 'x' || key === 'X') closeEquipmentMenu();
                 return;
             }
-            
             if (key === 'ArrowUp' || key === 'w' || key === 'W') {
                 equipmentSelectedIndex = (equipmentSelectedIndex - 1 + inventory.length) % inventory.length;
                 updateEquipmentDisplay();
@@ -5319,34 +5332,15 @@ function drawWalkChar(ctx, cx, footY, facing, isMoving, t, pal, scale){
                 const selectedEquipment = inventory[equipmentSelectedIndex];
                 equipFromMenu(selectedEquipment.id);
             } else if (key === 'Escape' || key === 'x' || key === 'X') {
-                // キャンセルキー: X / Escape
                 closeEquipmentMenu();
             }
         }
-        
+
         function equipFromMenu(equipmentId) {
-            console.log('equipFromMenu called with:', equipmentId);
-            console.log('Player stats before:', { 
-                attack: player.attack, 
-                defense: player.defense,
-                maxHp: player.maxHp,
-                maxMp: player.maxMp 
-            });
-            console.log('Equipment inventory:', equipmentSystem.inventory);
-            console.log('Currently equipped:', equipmentSystem.equipped);
-            
-            const result = equipmentSystem.equipItem(equipmentId, player);
-            
-            console.log('Equip result:', result);
-            console.log('Player stats after:', { 
-                attack: player.attack, 
-                defense: player.defense,
-                maxHp: player.maxHp,
-                maxMp: player.maxMp 
-            });
-            
+            const target = getEquipTargetMember();
+            const result = equipmentSystem.equipItem(equipmentId, target);
             if (result.success) {
-                showMessage(result.message);
+                showMessage(`${target.name || 'カイト'}は ${result.message}`);
                 updateUI();
                 updateMenuStats();
                 updateEquipmentDisplay();

@@ -2970,7 +2970,10 @@ class MapSystem {
     // storyFlags に応じて消えるべきNPCか（撃破ボス・加入済み仲間）。
     // 描画・接触判定・衝突すべてで参照し、リロード/セーブをまたいで永続させる。
     isNPCHidden(npc, storyFlags) {
-        if (!npc || !storyFlags) return false;
+        if (!npc) return false;
+        // 敵シンボルはイベント用ボスのみ表示。他の敵はランダムエンカウント扱いでマップから消す
+        if (npc.hostile && npc.name !== '暴走ドローン' && npc.name !== 'アーク・プライム') return true;
+        if (!storyFlags) return false;
         switch (npc.name) {
             // 仲間になったキャラはマップから消す（パーティにいるのに立っている矛盾を防ぐ）
             case 'アカリ': return !!(storyFlags.chapter1_started || storyFlags.metAkari);
