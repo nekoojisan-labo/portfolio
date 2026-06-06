@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>デウス・コード マップエディタ v2（矩形＋ブラシ）</title>
+<style>
+  :root{
+    --bg:#0a0f1a; --panel:#111a2b; --panel-2:#16223a; --line:rgba(120,180,255,.14);
+    --txt:#dbe7ff; --muted:#8aa0c4; --accent:#35d9ff;
+    --walk:#44e08a; --coll:#ff5a7a; --exit:#ffd23f; --npc:#c98bff; --result:#39ff9e;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:'Noto Sans JP',system-ui,sans-serif;font-size:14px;}
+  header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 16px;background:var(--panel);border-bottom:1px solid var(--line);}
+  header h1{font-size:16px;margin:0;}
+  header .hint{color:var(--muted);font-size:12px;}
+  header .badge{font-size:11px;color:#0a0f1a;background:var(--accent);border-radius:6px;padding:2px 8px;font-weight:700;}
+  main{display:grid;grid-template-columns:1fr 340px;gap:14px;padding:14px;align-items:start;}
+  @media (max-width:1000px){main{grid-template-columns:1fr;}}
+  .stage{background:#050a14;border:1px solid var(--line);border-radius:12px;padding:10px;}
+  .canvas-scroll{position:relative;width:100%;max-height:78vh;overflow:auto;border-radius:8px;background:#02060d;}
+  .canvas-wrap{position:relative;width:100%;}
+  canvas{display:block;width:100%;height:auto;image-rendering:auto;border-radius:8px;background:#02060d;cursor:crosshair;touch-action:none;}
+  .coords{margin-top:8px;color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums;}
+  aside{display:flex;flex-direction:column;gap:12px;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;}
+  .card h2{font-size:12px;margin:0 0 8px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;}
+  select,button,input{font-family:inherit;font-size:13px;color:var(--txt);background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;}
+  select,input{width:100%;}
+  button{cursor:pointer;transition:.15s;}
+  button:hover{border-color:var(--accent);}
+  .row{display:flex;gap:8px;flex-wrap:wrap;}
+  .row>*{flex:1;}
+  .tool-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .tool{display:flex;align-items:center;gap:7px;justify-content:center;padding:9px;border-radius:8px;background:var(--panel-2);border:1px solid var(--line);font-size:12px;}
+  .tool.active{border-color:var(--accent);background:#13314a;box-shadow:0 0 0 1px var(--accent) inset;}
+  .swatch{width:12px;height:12px;border-radius:3px;flex:none;}
+  .sw-walk{background:var(--walk);} .sw-coll{background:var(--coll);} .sw-exit{background:var(--exit);} .sw-sel{background:var(--accent);}
+  .sub{font-size:11px;color:var(--muted);margin:6px 0 4px;}
+  label.check{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:12px;cursor:pointer;margin:2px 0;}
+  label.check input{width:auto;}
+  .counts{display:flex;gap:12px;color:var(--muted);font-size:12px;flex-wrap:wrap;}
+  .counts b{color:var(--txt);}
+  .sel-box{font-size:12px;color:var(--muted);min-height:18px;}
+  .exit-fields{display:none;flex-direction:column;gap:6px;margin-top:8px;}
+  .exit-fields.show{display:flex;}
+  .lbl{font-size:11px;color:var(--muted);}
+  textarea{width:100%;height:120px;resize:vertical;background:#05101f;color:#bfe4ff;border:1px solid var(--line);border-radius:8px;padding:8px;font-family:ui-monospace,monospace;font-size:11px;}
+  .danger{color:#ffb4c2;}
+  .ok{color:var(--walk);}
+  kbd{background:#05101f;border:1px solid var(--line);border-radius:4px;padding:1px 5px;font-size:11px;}
+  .seg{display:flex;gap:6px;}
+  .seg button{flex:1;padding:6px;}
+  .seg button.on{border-color:var(--accent);background:#13314a;}
+</style>
+</head>
+<body>
+<header>
+  <h1>🗺️ マップエディタ <span class="badge">v2 試作</span></h1>
+  <span class="hint">矩形でも、ブラシで塗っても可動域を設定できる。✅結果プレビューで「実際に歩ける範囲」を確認 → 保存/エクスポート</span>
+</header>
+
+<main>
+  <div class="stage">
+    <div class="canvas-scroll" id="canvasScroll">
+      <div class="canvas-wrap">
+        <canvas id="canvas" width="1600" height="900"></canvas>
+      </div>
+    </div>
+    <div class="coords">
+      <span id="pointerInfo">ポインタ: -</span> ｜
+      <span id="selInfo">選択: なし</span> ｜
+      <span class="hint">矩形=ドラッグ / ブラシ=なぞる / <kbd>Del</kbd>削除 / <kbd>Ctrl+Z</kbd>取消 / <kbd>[</kbd><kbd>]</kbd>ブラシ径</span>
+    </div>
+  </div>
+
+  <aside>
+    <div class="card">
+      <h2>マップ</h2>
+      <select id="mapSelect"></select>
+      <div class="counts" style="margin-top:8px">
+        <span><span class="swatch sw-walk" style="display:inline-block;vertical-align:middle"></span> 可動矩形 <b id="cWalk">0</b></span>
+        <span><span class="swatch sw-coll" style="display:inline-block;vertical-align:middle"></span> 壁矩形 <b id="cColl">0</b></span>
+        <span><span class="swatch sw-exit" style="display:inline-block;vertical-align:middle"></span> 出口 <b id="cExit">0</b></span>
+      </div>
+      <div class="counts" style="margin-top:4px">
+        <span>🖌可動セル <b id="cWalkCells">0</b></span>
+        <span>🖌壁セル <b id="cCollCells">0</b></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>ツール</h2>
+      <div class="sub">矩形（ドラッグで作成）</div>
+      <div class="tool-grid">
+        <div class="tool active" data-tool="walkableRects"><span class="swatch sw-walk"></span>可動域</div>
+        <div class="tool" data-tool="collisionRects"><span class="swatch sw-coll"></span>壁・建物</div>
+        <div class="tool" data-tool="exits"><span class="swatch sw-exit"></span>出口</div>
+        <div class="tool" data-tool="select"><span class="swatch sw-sel"></span>選択/移動</div>
+      </div>
+      <div class="sub">ブラシ（なぞって塗る）</div>
+      <div class="tool-grid">
+        <div class="tool" data-tool="brushWalk"><span class="swatch sw-walk"></span>🖌可動</div>
+        <div class="tool" data-tool="brushColl"><span class="swatch sw-coll"></span>🖌壁</div>
+        <div class="tool" data-tool="erase">🧹消しゴム</div>
+        <div class="tool" data-tool="bucket">🪣塗りつぶし</div>
+      </div>
+      <div class="sub">ブラシ径: <b id="brushLabel">3</b> セル（<kbd>[</kbd>/<kbd>]</kbd>）</div>
+      <input id="brushSize" type="range" min="1" max="10" value="3">
+      <div class="exit-fields" id="exitFields">
+        <div class="lbl">遷移先マップ (to)</div>
+        <select id="exitTo"></select>
+        <div class="row">
+          <div><div class="lbl">spawnX</div><input id="exitSpawnX" type="number" placeholder="任意"></div>
+          <div><div class="lbl">spawnY</div><input id="exitSpawnY" type="number" placeholder="任意"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>表示 / ズーム</h2>
+      <div class="seg" id="zoomSeg">
+        <button data-zoom="1" class="on">1x</button>
+        <button data-zoom="1.5">1.5x</button>
+        <button data-zoom="2">2x</button>
+        <button data-zoom="3">3x</button>
+      </div>
+      <label class="check" style="margin-top:8px"><input type="checkbox" id="optResult"> ✅ 結果プレビュー（実際に歩ける範囲）</label>
+      <label class="check"><input type="checkbox" id="optErode" checked> └ 体の幅で侵食（通り抜け検出）</label>
+      <label class="check"><input type="checkbox" id="optGrid"> グリッド線を表示</label>
+      <label class="check"><input type="checkbox" id="optDim" checked> 背景を暗くする</label>
+      <label class="check"><input type="checkbox" id="optNpc" checked> NPC位置を参照表示</label>
+    </div>
+
+    <div class="card">
+      <div class="sel-box" id="selDetail">選択中の矩形なし</div>
+      <div class="row" style="margin-top:8px">
+        <button id="btnDelete">選択を削除</button>
+        <button id="btnClearLayer" class="danger">このレイヤー全消去</button>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button id="btnUndo">↶ 取消</button>
+        <button id="btnResetMap" class="danger">このマップ初期化</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>保存 / 反映</h2>
+      <button id="btnSave" style="width:100%">💾 保存（localStorage・即プレビュー）</button>
+      <div class="row" style="margin-top:8px">
+        <button id="btnTest">🎮 ゲームで確認</button>
+        <button id="btnExport">📤 ソース用エクスポート</button>
+      </div>
+      <div id="saveMsg" class="ok" style="font-size:12px;margin-top:6px;min-height:16px"></div>
+    </div>
+
+    <div class="card" id="exportCard" style="display:none">
+      <h2>map-walkability-data.js に貼る内容</h2>
+      <textarea id="output" readonly></textarea>
+      <div class="row" style="margin-top:8px">
+        <button id="btnCopy">📋 コピー</button>
+        <button id="btnDownload">⬇ ダウンロード</button>
+      </div>
+      <div class="hint" style="margin-top:6px">ブラシの塗りは自動で矩形に圧縮されて含まれます。</div>
+    </div>
+  </aside>
+</main>
+
+<script src="map-walkability-data.js"></script>
+<script src="map-system.js"></script>
+<script>
+(function(){
+  'use strict';
+  const STORAGE_KEY = 'deusCodeWalkabilityOverrides';     // ゲームが読む（矩形）
+  const EDITOR_KEY  = 'deusCodeWalkabilityEditorV2';      // エディタ専用（矩形＋ブラシマスク）
+  const BASE_W = 800, BASE_H = 450, GRID = 10;            // 80×45 セル
+  const COLS = BASE_W / GRID, ROWS = BASE_H / GRID;
+
+  const mapSystem = new MapSystem();
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  const scroll = document.getElementById('canvasScroll');
+
+  const mapIds = Object.keys(mapSystem.maps).filter(id => mapSystem.maps[id] && mapSystem.maps[id].image).sort((a,b)=>a.localeCompare(b));
+
+  const els = {};
+  ['mapSelect','exitTo','exitFields','exitSpawnX','exitSpawnY','cWalk','cColl','cExit','cWalkCells','cCollCells',
+   'pointerInfo','selInfo','selDetail','optResult','optErode','optGrid','optDim','optNpc','brushSize','brushLabel',
+   'output','exportCard','saveMsg'].forEach(k=>els[k]=document.getElementById(k));
+
+  // ---- 座標 ----
+  function scaleOf(id){ const m=mapSystem.maps[id]; return (m&&m.worldScale)?m.worldScale:1; }
+  function toBase(r,s){ return {x:Math.round(r.x/s),y:Math.round(r.y/s),width:Math.round(r.width/s),height:Math.round(r.height/s)}; }
+  function clampRect(r){ let x=Math.max(0,Math.min(BASE_W,r.x)),y=Math.max(0,Math.min(BASE_H,r.y)); let w=Math.max(1,Math.min(BASE_W-x,r.width)),h=Math.max(1,Math.min(BASE_H-y,r.height)); return {...r,x,y,width:w,height:h}; }
+
+  // ---- データ ----
+  function freshFromSource(id){
+    const m=mapSystem.maps[id], s=scaleOf(id);
+    return {
+      walkableRects:(m.walkableRects||[]).map(r=>toBase(r,s)),
+      collisionRects:(m.buildings||[]).filter(b=>b.collisionOnly||b.type==='collision').map(r=>toBase(r,s)),
+      exits:(m.exits||[]).map(e=>({...toBase(e,s),to:e.to||'',spawnX:e.spawnX,spawnY:e.spawnY})),
+      walkMask:new Set(), collMask:new Set(),
+    };
+  }
+  function loadEditorBlob(){ try{ return JSON.parse(localStorage.getItem(EDITOR_KEY)||'{}'); }catch{ return {}; } }
+  const data = {};
+  const blob = loadEditorBlob();
+  mapIds.forEach(id=>{
+    if(blob[id]){
+      data[id]={
+        walkableRects:(blob[id].walkableRects||[]).map(clampRect),
+        collisionRects:(blob[id].collisionRects||[]).map(clampRect),
+        exits:(blob[id].exits||[]).map(e=>({...clampRect(e),to:e.to||'',spawnX:e.spawnX,spawnY:e.spawnY})),
+        walkMask:new Set(blob[id].walkMask||[]), collMask:new Set(blob[id].collMask||[]),
+      };
+    } else data[id]=freshFromSource(id);
+  });
+
+  // ---- UI構築 ----
+  mapIds.forEach(id=>{
+    const o=document.createElement('option'); o.value=id; o.textContent=`${mapSystem.maps[id].name||id} (${id})`; els.mapSelect.appendChild(o);
+    const o2=document.createElement('option'); o2.value=id; o2.textContent=id; els.exitTo.appendChild(o2);
+  });
+
+  const state={
+    mapId: mapIds.includes('shinjuku_center_plaza')?'shinjuku_center_plaza':mapIds[0],
+    tool:'walkableRects', sel:null, dragging:false, draft:null, startX:0, startY:0,
+    moving:false, moveDX:0, moveDY:0, painting:false, brush:3, history:[],
+  };
+  els.mapSelect.value=state.mapId;
+
+  // ---- 画像 ----
+  const imgCache=new Map();
+  function getImage(id){ if(imgCache.has(id)) return imgCache.get(id); const im=new Image(); im.src=mapSystem.maps[id].image; im.onload=render; imgCache.set(id,im); return im; }
+
+  // ---- 履歴（マスクはArray化して保存） ----
+  function snapshot(){ const d=data[state.mapId]; return JSON.stringify({wr:d.walkableRects,cr:d.collisionRects,ex:d.exits,wm:[...d.walkMask],cm:[...d.collMask]}); }
+  function pushHistory(){ state.history.push(snapshot()); if(state.history.length>80) state.history.shift(); }
+  function undo(){ if(!state.history.length) return; const s=JSON.parse(state.history.pop()); const d=data[state.mapId]; d.walkableRects=s.wr; d.collisionRects=s.cr; d.exits=s.ex; d.walkMask=new Set(s.wm); d.collMask=new Set(s.cm); state.sel=null; refresh(); }
+
+  // ---- 入力座標 ----
+  function evToLogical(ev){
+    const r=canvas.getBoundingClientRect();
+    const cx=(ev.touches?ev.touches[0].clientX:ev.clientX)-r.left;
+    const cy=(ev.touches?ev.touches[0].clientY:ev.clientY)-r.top;
+    return { x:Math.round(cx/r.width*BASE_W), y:Math.round(cy/r.height*BASE_H) };
+  }
+  function evToCell(ev){ const p=evToLogical(ev); return { cx:Math.max(0,Math.min(COLS-1,Math.floor(p.x/GRID))), cy:Math.max(0,Math.min(ROWS-1,Math.floor(p.y/GRID))), p }; }
+  function hitTest(x,y){ const layers=['exits','collisionRects','walkableRects']; for(const layer of layers){ const arr=data[state.mapId][layer]; for(let i=arr.length-1;i>=0;i--){ const r=arr[i]; if(x>=r.x&&x<=r.x+r.width&&y>=r.y&&y<=r.y+r.height) return {layer,index:i}; } } return null; }
+
+  // ---- ブラシ ----
+  function paintCell(cx,cy,erase){
+    const d=data[state.mapId]; const b=state.brush; const half=Math.floor(b/2);
+    for(let dy=0;dy<b;dy++)for(let dx=0;dx<b;dx++){
+      const x=cx+dx-half, y=cy+dy-half; if(x<0||y<0||x>=COLS||y>=ROWS) continue; const key=x+','+y;
+      if(erase){ d.walkMask.delete(key); d.collMask.delete(key); }
+      else if(state.tool==='brushWalk'){ d.walkMask.add(key); d.collMask.delete(key); }
+      else if(state.tool==='brushColl'){ d.collMask.add(key); d.walkMask.delete(key); }
+    }
+  }
+  function bucketFill(cx,cy){
+    // 同種(空き)の連結セルを可動域マスクで塗る（壁マスク/壁矩形/可動矩形外は境界）
+    const d=data[state.mapId]; const seen=new Set(); const stack=[[cx,cy]];
+    const blocked=(x,y)=>{ const px=x*GRID+GRID/2,py=y*GRID+GRID/2; if(d.collMask.has(x+','+y)) return true; for(const r of d.collisionRects){ if(px>=r.x&&px<r.x+r.width&&py>=r.y&&py<r.y+r.height) return true; } return false; };
+    let n=0;
+    while(stack.length && n<COLS*ROWS+10){ const [x,y]=stack.pop(); const k=x+','+y; if(seen.has(k)) continue; if(x<0||y<0||x>=COLS||y>=ROWS) continue; if(blocked(x,y)) continue; seen.add(k); d.walkMask.add(k); stack.push([x+1,y],[x-1,y],[x,y+1],[x,y-1]); n++; }
+  }
+
+  // ---- greedy mesh: マスク → 矩形 ----
+  function meshMask(set){
+    const cells=new Set(set); const has=(x,y)=>cells.has(x+','+y); const rects=[];
+    const sorted=[...cells].map(s=>s.split(',').map(Number)).sort((a,b)=>a[1]-b[1]||a[0]-b[0]);
+    for(const [cx,cy] of sorted){ if(!has(cx,cy)) continue;
+      let w=1; while(has(cx+w,cy)) w++;
+      let h=1,ok=true; while(ok){ for(let i=0;i<w;i++){ if(!has(cx+i,cy+h)){ok=false;break;} } if(ok) h++; }
+      for(let yy=0;yy<h;yy++)for(let xx=0;xx<w;xx++) cells.delete((cx+xx)+','+(cy+yy));
+      rects.push({x:cx*GRID,y:cy*GRID,width:w*GRID,height:h*GRID});
+    }
+    return rects;
+  }
+
+  // ---- 結果（実際に歩ける範囲）計算 ----
+  function computeStandable(){
+    const d=data[state.mapId]; const walk=new Uint8Array(COLS*ROWS);
+    const wRects=d.walkableRects, cRects=d.collisionRects;
+    for(let cy=0;cy<ROWS;cy++)for(let cx=0;cx<COLS;cx++){
+      const px=cx*GRID+GRID/2, py=cy*GRID+GRID/2;
+      let w=d.walkMask.has(cx+','+cy);
+      if(!w){ for(const r of wRects){ if(px>=r.x&&px<r.x+r.width&&py>=r.y&&py<r.y+r.height){w=true;break;} } }
+      if(!w) continue;
+      let blk=d.collMask.has(cx+','+cy);
+      if(!blk){ for(const r of cRects){ if(px>=r.x&&px<r.x+r.width&&py>=r.y&&py<r.y+r.height){blk=true;break;} } }
+      if(!blk) walk[cy*COLS+cx]=1;
+    }
+    if(!els.optErode.checked) return walk;
+    const E=2, out=new Uint8Array(COLS*ROWS);   // 体の半幅≒2セル(20px)で侵食
+    for(let cy=0;cy<ROWS;cy++)for(let cx=0;cx<COLS;cx++){ if(!walk[cy*COLS+cx]) continue; let ok=true;
+      for(let dy=-E;dy<=E&&ok;dy++)for(let dx=-E;dx<=E;dx++){ const nx=cx+dx,ny=cy+dy; if(nx<0||ny<0||nx>=COLS||ny>=ROWS||!walk[ny*COLS+nx]){ok=false;break;} }
+      if(ok) out[cy*COLS+cx]=1; }
+    return out;
+  }
+
+  // ---- 描画 ----
+  const LS={walkableRects:{fill:'rgba(68,224,138,.20)',stroke:'#44e08a'},collisionRects:{fill:'rgba(255,90,122,.22)',stroke:'#ff5a7a'},exits:{fill:'rgba(255,210,63,.24)',stroke:'#ffd23f'}};
+  function L2C(v){ return v*(canvas.width/BASE_W); }
+  function L2Cy(v){ return v*(canvas.height/BASE_H); }
+  function cw(){ return GRID*(canvas.width/BASE_W); }
+  function ch(){ return GRID*(canvas.height/BASE_H); }
+
+  function render(){
+    const id=state.mapId, d=data[id];
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    const im=getImage(id); if(im.complete&&im.naturalWidth) ctx.drawImage(im,0,0,canvas.width,canvas.height);
+    if(els.optDim.checked){ ctx.fillStyle='rgba(2,6,13,.45)'; ctx.fillRect(0,0,canvas.width,canvas.height); }
+
+    // グリッド線
+    if(els.optGrid.checked){ ctx.strokeStyle='rgba(120,180,255,.08)'; ctx.lineWidth=1;
+      for(let c=0;c<=COLS;c++){ const x=L2C(c*GRID); ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,canvas.height); ctx.stroke(); }
+      for(let r=0;r<=ROWS;r++){ const y=L2Cy(r*GRID); ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(canvas.width,y); ctx.stroke(); } }
+
+    // ブラシマスク
+    const W=cw(),H=ch();
+    ctx.fillStyle='rgba(68,224,138,.30)'; d.walkMask.forEach(k=>{ const [x,y]=k.split(',').map(Number); ctx.fillRect(L2C(x*GRID),L2Cy(y*GRID),W+0.5,H+0.5); });
+    ctx.fillStyle='rgba(255,90,122,.34)'; d.collMask.forEach(k=>{ const [x,y]=k.split(',').map(Number); ctx.fillRect(L2C(x*GRID),L2Cy(y*GRID),W+0.5,H+0.5); });
+
+    // 矩形レイヤー
+    ['walkableRects','collisionRects','exits'].forEach(layer=>{ const st=LS[layer];
+      d[layer].forEach((r,i)=>{ const x=L2C(r.x),y=L2Cy(r.y),w=L2C(r.width),h=L2Cy(r.height);
+        ctx.fillStyle=st.fill; ctx.fillRect(x,y,w,h);
+        const seld=state.sel&&state.sel.layer===layer&&state.sel.index===i;
+        ctx.lineWidth=seld?3:1.5; ctx.strokeStyle=seld?'#35d9ff':st.stroke; ctx.strokeRect(x,y,w,h);
+        if(layer==='exits'){ ctx.fillStyle='#ffd23f'; ctx.font='14px sans-serif'; ctx.textBaseline='top'; ctx.fillText('→ '+(r.to||'?'),x+4,y+4); }
+      });
+    });
+
+    // 結果プレビュー
+    if(els.optResult.checked){
+      const walk=computeStandable();
+      ctx.fillStyle='rgba(57,255,158,.42)';
+      for(let cy=0;cy<ROWS;cy++)for(let cx=0;cx<COLS;cx++){ if(walk[cy*COLS+cx]) ctx.fillRect(L2C(cx*GRID),L2Cy(cy*GRID),W+0.5,H+0.5); }
+      ctx.strokeStyle='rgba(57,255,158,.9)'; ctx.lineWidth=1;
+    }
+
+    // NPC参照
+    if(els.optNpc.checked){ const s=scaleOf(id);
+      (mapSystem.maps[id].npcs||[]).forEach(n=>{ const x=L2C(n.x/s),y=L2Cy(n.y/s);
+        ctx.beginPath(); ctx.arc(x,y,7,0,Math.PI*2); ctx.fillStyle='rgba(201,139,255,.85)'; ctx.fill(); ctx.strokeStyle='#fff'; ctx.lineWidth=1; ctx.stroke();
+        ctx.fillStyle='#e9d6ff'; ctx.font='12px sans-serif'; ctx.fillText(n.name||'NPC',x+9,y-6); });
+      const sp=mapSystem.maps[id].savePoint; if(sp){ const x=L2C(sp.x/s),y=L2Cy(sp.y/s); ctx.fillStyle='#7fffd4'; ctx.fillRect(x-5,y-5,10,10); } }
+
+    // ドラフト
+    if(state.draft){ const st=LS[state.tool]||LS.walkableRects; const x=L2C(state.draft.x),y=L2Cy(state.draft.y),w=L2C(state.draft.width),h=L2Cy(state.draft.height);
+      ctx.setLineDash([6,4]); ctx.strokeStyle=st.stroke; ctx.lineWidth=2; ctx.strokeRect(x,y,w,h); ctx.setLineDash([]); }
+  }
+
+  function updateCounts(){ const d=data[state.mapId]; els.cWalk.textContent=d.walkableRects.length; els.cColl.textContent=d.collisionRects.length; els.cExit.textContent=d.exits.length; els.cWalkCells.textContent=d.walkMask.size; els.cCollCells.textContent=d.collMask.size; }
+  function updateSel(){ if(!state.sel){ els.selInfo.textContent='選択: なし'; els.selDetail.textContent='選択中の矩形なし'; els.exitFields.classList.remove('show'); return; }
+    const {layer,index}=state.sel; const r=data[state.mapId][layer][index]; if(!r){ state.sel=null; return updateSel(); }
+    const jp={walkableRects:'可動域',collisionRects:'壁・建物',exits:'出口'}[layer];
+    els.selInfo.textContent=`選択: ${jp} #${index}`; els.selDetail.textContent=`${jp} #${index} — x:${r.x} y:${r.y} w:${r.width} h:${r.height}`;
+    if(layer==='exits'){ els.exitFields.classList.add('show'); els.exitTo.value=r.to||''; els.exitSpawnX.value=(r.spawnX??''); els.exitSpawnY.value=(r.spawnY??''); } else els.exitFields.classList.remove('show'); }
+  function refresh(){ updateCounts(); updateSel(); render(); }
+
+  const isBrush=()=>['brushWalk','brushColl','erase','bucket'].includes(state.tool);
+
+  // ---- ポインタ ----
+  function onDown(ev){ ev.preventDefault();
+    if(isBrush()){ const {cx,cy}=evToCell(ev); pushHistory();
+      if(state.tool==='bucket'){ bucketFill(cx,cy); state.painting=false; refresh(); return; }
+      state.painting=true; paintCell(cx,cy,state.tool==='erase'); refresh(); return; }
+    const p=evToLogical(ev);
+    if(state.tool==='select'){ const hit=hitTest(p.x,p.y); state.sel=hit; if(hit){ const r=data[state.mapId][hit.layer][hit.index]; state.moving=true; state.moveDX=p.x-r.x; state.moveDY=p.y-r.y; pushHistory(); } refresh(); return; }
+    const hit=hitTest(p.x,p.y);
+    if(hit&&hit.layer===state.tool){ state.sel=hit; const r=data[state.mapId][hit.layer][hit.index]; state.moving=true; state.moveDX=p.x-r.x; state.moveDY=p.y-r.y; pushHistory(); refresh(); return; }
+    state.dragging=true; state.startX=p.x; state.startY=p.y; state.draft={x:p.x,y:p.y,width:0,height:0};
+  }
+  function onMove(ev){ const p=evToLogical(ev); els.pointerInfo.textContent=`ポインタ: x:${p.x} y:${p.y}`;
+    if(state.painting){ const {cx,cy}=evToCell(ev); paintCell(cx,cy,state.tool==='erase'); render(); updateCounts(); return; }
+    if(state.moving&&state.sel){ const r=data[state.mapId][state.sel.layer][state.sel.index]; r.x=Math.max(0,Math.min(BASE_W-r.width,p.x-state.moveDX)); r.y=Math.max(0,Math.min(BASE_H-r.height,p.y-state.moveDY)); refresh(); return; }
+    if(state.dragging){ const x=Math.min(state.startX,p.x),y=Math.min(state.startY,p.y); state.draft=clampRect({x,y,width:Math.abs(p.x-state.startX),height:Math.abs(p.y-state.startY)}); render(); }
+  }
+  function onUp(){ if(state.painting){ state.painting=false; refresh(); return; }
+    if(state.moving){ state.moving=false; refresh(); return; }
+    if(state.dragging){ state.dragging=false; const r=state.draft; state.draft=null;
+      if(r&&r.width>=6&&r.height>=6){ pushHistory();
+        if(state.tool==='exits'){ data[state.mapId].exits.push({...r,to:mapIds[0]||'',spawnX:undefined,spawnY:undefined}); state.sel={layer:'exits',index:data[state.mapId].exits.length-1}; }
+        else if(state.tool==='collisionRects'){ data[state.mapId].collisionRects.push(r); state.sel={layer:'collisionRects',index:data[state.mapId].collisionRects.length-1}; }
+        else { data[state.mapId].walkableRects.push(r); state.sel={layer:'walkableRects',index:data[state.mapId].walkableRects.length-1}; } }
+      refresh(); } }
+  canvas.addEventListener('mousedown',onDown);
+  window.addEventListener('mousemove',onMove);
+  window.addEventListener('mouseup',onUp);
+  canvas.addEventListener('touchstart',onDown,{passive:false});
+  canvas.addEventListener('touchmove',e=>{e.preventDefault();onMove(e);},{passive:false});
+  canvas.addEventListener('touchend',onUp);
+
+  // ---- ツール切替 ----
+  document.querySelectorAll('.tool').forEach(t=>t.addEventListener('click',()=>{ document.querySelectorAll('.tool').forEach(x=>x.classList.remove('active')); t.classList.add('active'); state.tool=t.dataset.tool; canvas.style.cursor=(state.tool==='select')?'pointer':'crosshair'; }));
+
+  // ブラシ径
+  els.brushSize.addEventListener('input',()=>{ state.brush=+els.brushSize.value; els.brushLabel.textContent=state.brush; });
+
+  // ズーム
+  document.querySelectorAll('#zoomSeg button').forEach(b=>b.addEventListener('click',()=>{ document.querySelectorAll('#zoomSeg button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); const z=+b.dataset.zoom; document.querySelector('.canvas-wrap').style.width=(z*100)+'%'; }));
+
+  // マップ切替
+  els.mapSelect.addEventListener('change',()=>{ state.mapId=els.mapSelect.value; state.sel=null; state.history=[]; getImage(state.mapId); refresh(); });
+
+  // exit編集
+  els.exitTo.addEventListener('change',()=>{ if(state.sel&&state.sel.layer==='exits'){ data[state.mapId].exits[state.sel.index].to=els.exitTo.value; refresh(); } });
+  function numOrUndef(v){ const n=Number(v); return v===''||!Number.isFinite(n)?undefined:Math.round(n); }
+  els.exitSpawnX.addEventListener('input',()=>{ if(state.sel&&state.sel.layer==='exits') data[state.mapId].exits[state.sel.index].spawnX=numOrUndef(els.exitSpawnX.value); });
+  els.exitSpawnY.addEventListener('input',()=>{ if(state.sel&&state.sel.layer==='exits') data[state.mapId].exits[state.sel.index].spawnY=numOrUndef(els.exitSpawnY.value); });
+
+  // ボタン
+  function deleteSel(){ if(!state.sel) return; pushHistory(); data[state.mapId][state.sel.layer].splice(state.sel.index,1); state.sel=null; refresh(); }
+  document.getElementById('btnDelete').addEventListener('click',deleteSel);
+  document.getElementById('btnClearLayer').addEventListener('click',()=>{ const d=data[state.mapId];
+    let layer = isBrush()? (state.tool==='brushColl'?'collMask':'walkMask') : (state.tool==='select'?'walkableRects':state.tool);
+    if(!confirm(`「${layer}」を全消去しますか？`)) return; pushHistory();
+    if(layer==='walkMask') d.walkMask=new Set(); else if(layer==='collMask') d.collMask=new Set(); else d[layer]=[]; state.sel=null; refresh(); });
+  document.getElementById('btnUndo').addEventListener('click',undo);
+  document.getElementById('btnResetMap').addEventListener('click',()=>{ if(!confirm('このマップの編集を破棄し、ソース定義から取り直しますか？')) return; pushHistory(); data[state.mapId]=freshFromSource(state.mapId); state.sel=null; refresh(); });
+  document.addEventListener('keydown',e=>{ if(['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName)) return;
+    if(e.key==='Delete'||e.key==='Backspace'){ e.preventDefault(); deleteSel(); }
+    if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){ e.preventDefault(); undo(); }
+    if(e.key==='['){ state.brush=Math.max(1,state.brush-1); els.brushSize.value=state.brush; els.brushLabel.textContent=state.brush; }
+    if(e.key===']'){ state.brush=Math.min(10,state.brush+1); els.brushSize.value=state.brush; els.brushLabel.textContent=state.brush; } });
+
+  // ---- ペイロード ----
+  function buildGamePayload(){
+    const out={};
+    mapIds.forEach(id=>{ const d=data[id]; const entry={};
+      const wr=d.walkableRects.concat(meshMask(d.walkMask));
+      const cr=d.collisionRects.concat(meshMask(d.collMask));
+      if(wr.length) entry.walkableRects=wr.map(r=>({x:r.x,y:r.y,width:r.width,height:r.height}));
+      if(cr.length) entry.collisionRects=cr.map(r=>({x:r.x,y:r.y,width:r.width,height:r.height}));
+      if(d.exits.length) entry.exits=d.exits.filter(e=>e.to).map(e=>{ const o={x:e.x,y:e.y,width:e.width,height:e.height,to:e.to}; if(Number.isFinite(e.spawnX)) o.spawnX=e.spawnX; if(Number.isFinite(e.spawnY)) o.spawnY=e.spawnY; return o; });
+      if(Object.keys(entry).length) out[id]=entry; });
+    return out;
+  }
+  function buildEditorBlob(){
+    const out={};
+    mapIds.forEach(id=>{ const d=data[id];
+      if(d.walkableRects.length||d.collisionRects.length||d.exits.length||d.walkMask.size||d.collMask.size)
+        out[id]={ walkableRects:d.walkableRects, collisionRects:d.collisionRects, exits:d.exits, walkMask:[...d.walkMask], collMask:[...d.collMask] }; });
+    return out;
+  }
+  function persist(){ localStorage.setItem(STORAGE_KEY,JSON.stringify(buildGamePayload())); localStorage.setItem(EDITOR_KEY,JSON.stringify(buildEditorBlob())); }
+
+  document.getElementById('btnSave').addEventListener('click',()=>{ persist(); els.saveMsg.textContent='✅ 保存（ブラウザのプレビューに即反映）。本番はエクスポート→焼き込み。'; setTimeout(()=>els.saveMsg.textContent='',6000); });
+  document.getElementById('btnTest').addEventListener('click',()=>{ persist(); window.open(`index.html?walkabilityPreview=1&v=${Date.now()}`,'_blank'); });
+  document.getElementById('btnExport').addEventListener('click',()=>{ const json=JSON.stringify(buildGamePayload(),null,2); els.output.value=`window.MAP_WALKABILITY_DEFAULTS = ${json};\n`; els.exportCard.style.display='block'; els.exportCard.scrollIntoView({behavior:'smooth',block:'nearest'}); persist(); });
+  document.getElementById('btnCopy').addEventListener('click',()=>{ els.output.select(); document.execCommand('copy'); els.saveMsg.textContent='📋 コピーしました'; setTimeout(()=>els.saveMsg.textContent='',3000); });
+  document.getElementById('btnDownload').addEventListener('click',()=>{ const blob2=new Blob([els.output.value],{type:'text/javascript'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob2); a.download='map-walkability-data.js'; a.click(); });
+
+  ['optResult','optErode','optGrid','optDim','optNpc'].forEach(k=>els[k].addEventListener('change',render));
+
+  getImage(state.mapId); refresh();
+  window.__editor = { data, state, paintCell, bucketFill, refresh };   // デモ/検証用フック
+})();
+</script>
+</body>
+</html>
