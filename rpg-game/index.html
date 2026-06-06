@@ -294,10 +294,10 @@
 
         .enemy-area {
             position: absolute;
-            top: 8%;
+            top: 4%;
             left: 50%;
-            width: min(460px, 74%);
-            height: 54%;
+            width: min(500px, 78%);
+            height: 60%;
             transform: translateX(-50%);
             text-align: center;
             z-index: 5;
@@ -489,33 +489,37 @@
             display: none;
         }
 
-        /* バトル中のパーティステータス（画面下部の立ち絵パネル） */
+        /* バトル中のパーティステータス（画面下部の立ち絵パネル＋全幅シェルフ） */
         #battlePartyStatus {
             position: absolute;
-            left: 12px;
-            right: 12px;
-            bottom: 8px;
-            height: min(136px, 31%);
+            left: 0;
+            right: 0;
+            bottom: 0;
+            height: min(158px, 37%);
             display: flex;
-            align-items: flex-end;
+            align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 12px;
+            padding: 14px 18px 16px;
+            box-sizing: border-box;
             max-width: none;
             z-index: 12;
             pointer-events: none;
+            background: linear-gradient(180deg, rgba(2, 8, 23, 0) 0%, rgba(2, 8, 23, 0.5) 44%, rgba(2, 8, 23, 0.85) 100%);
+            border-top: 1px solid rgba(34, 211, 238, 0.16);
         }
 
         .battle-party-card {
             position: relative;
             flex: 1 1 0;
-            max-width: 174px;
+            max-width: 244px;
             min-width: 0;
-            height: 118px;
+            height: 126px;
             display: grid;
-            grid-template-columns: 54px minmax(0, 1fr);
-            gap: 8px;
+            grid-template-columns: 62px minmax(0, 1fr);
+            gap: 10px;
             align-items: center;
-            padding: 8px;
+            padding: 9px 10px;
             box-sizing: border-box;
             border: 2px solid rgba(34, 211, 238, 0.58);
             border-radius: 14px;
@@ -547,8 +551,8 @@
 
         .battle-party-portrait {
             position: relative;
-            width: 54px;
-            height: 88px;
+            width: 62px;
+            height: 104px;
             border-radius: 12px;
             overflow: hidden;
             background: linear-gradient(180deg, rgba(34, 211, 238, 0.22), rgba(59, 130, 246, 0.1));
