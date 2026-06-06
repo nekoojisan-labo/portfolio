@@ -4063,8 +4063,12 @@ function drawWalkChar(ctx, cx, footY, facing, isMoving, t, pal, scale){
             window.playerMovement = null;
 
             try {
-                bgmSystem = new BGMSystem();
-                console.log('[DEBUG] ✓ BGMSystem initialized');
+                // ⚠️ オープニングで生成済みのインスタンス(window.bgmSystem)を再利用する。
+                // ここで new BGMSystem() し直すと、オープニング曲を鳴らしている旧インスタンスが
+                // 停止されないまま孤児化し、再生中の<audio>はGCされず曲が裏で鳴り続ける
+                // （＝戦闘BGMに前の曲が重なる二重再生バグ）。単一インスタンスに統一する。
+                bgmSystem = window.bgmSystem || new BGMSystem();
+                console.log('[DEBUG] ✓ BGMSystem initialized (reused:', !!window.bgmSystem, ')');
             } catch (e) {
                 console.error('[ERROR] BGMSystem failed:', e);
             }
