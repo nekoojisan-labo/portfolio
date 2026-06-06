@@ -304,6 +304,7 @@ class StoryEventSystem {
         // イベント4: 神社への道
         this.registerEvent('shrine_path_opens', {
             trigger: 'boss_defeat',
+            oneTime: true,
             bossId: 'corrupted_drone_boss',
             scenes: [
                 {
@@ -349,6 +350,7 @@ class StoryEventSystem {
         // 老神主の神託（神宮で老神主に話しかけた時に index.html から発火）
         this.registerEvent('priest_oracle', {
             trigger: 'manual',
+            oneTime: true,
             scenes: [
                 { character: '老神主', text: 'よく来た、神威の力に目覚めし者よ。わしはこの社を守りし最後の神主じゃ。' },
                 { character: '老神主', text: 'アーク...あの機械仕掛けの神は、人から「心」を奪い、完全なる管理で世を凍りつかせた。' },
@@ -368,6 +370,7 @@ class StoryEventSystem {
         // アーク・プライム撃破エンディング（都庁最上階のボス撃破時に発火）
         this.registerEvent('arc_defeated_ending', {
             trigger: 'manual',
+            oneTime: true,
             scenes: [
                 { character: 'アーク・プライム', text: 'バカな...完全なる秩序が...人間ごときの「不確定」に...敗れる...だと...' },
                 { character: 'カイト', text: '秩序だけじゃ、人は生きられない。喜びも、痛みも、全部ひっくるめて人間なんだ。' },
@@ -390,6 +393,14 @@ class StoryEventSystem {
         const event = this.events.get(eventId);
         if (!event) {
             console.warn(`Event not found: ${eventId}`);
+            return false;
+        }
+
+        // 再入ガード: 別イベント再生中は新規イベントで currentEvent を上書きしない。
+        // setTimeout 競合で複数イベントが重なると会話が混線・多重発火するのを防ぐ
+        // （ドロップされた発火は次回の移動/会話/checkAutoEvents で再評価される）。
+        if (this.isEventPlaying) {
+            console.warn(`[Event] ${eventId} skipped - another event is playing`);
             return false;
         }
 

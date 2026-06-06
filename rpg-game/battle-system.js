@@ -421,6 +421,9 @@ class BattleSystem {
     // 歩数をカウント
     countStep(currentArea = 'city', encounterRate = 'medium') {
         if (this.inBattle) return;
+        // マップ遷移中はエンカウント抽選しない。遷移とエンカウントが同フレームで
+        // 競合すると、遷移の遅延フィールドBGM要求が戦闘BGMを上書きする不具合になる。
+        if (window.mapSystem && window.mapSystem.transitioning) return;
 
         if (encounterRate === 'none') {
             this.encounterSteps = 0;
@@ -1888,17 +1891,13 @@ class BattleSystem {
             }, 500);
         }
 
-        // ボス戦勝利イベントをトリガー
-        if (wasBossBattle && victory && window.storyEventSystem && bossId) {
-            setTimeout(() => {
-                window.storyEventSystem.triggerEvent('shrine_path_opens', {
-                    storyFlags: window.storyFlags,
-                    player: window.player,
-                    mapSystem: window.mapSystem
-                });
-            }, 1000);
-        }
-        
+        // ⚠️ ボス撃破後イベントは onBossDefeat コールバック一本に統一する。
+        // 以前ここで直接 triggerEvent('shrine_path_opens') していたが、これは
+        // (a) 全ボスで shrine_path_opens を撃つためアーク撃破でも誤発火し、
+        // (b) コールバック側(onBossDefeated)と二重発火していた。
+        // onBossDefeated(bossKey) が corrupted_drone→shrine_path_opens /
+        // arc_prime→arc_defeated_ending を正しく振り分けるのでここでは何もしない。
+
         // UI更新
         if (window.updateUI) {
             window.updateUI();
@@ -1925,6 +1924,24 @@ class BattleSystem {
         const kamuiMenu = document.getElementById('kamuiSkillMenu');
         if (kamuiMenu) kamuiMenu.style.display = 'none';
 
+        // ⚠️ 敗北経路は endBattle を通らないため、戦闘終了の後始末を必ずここで行う。
+        // 怠ると inBattle=true のまま固定＋戦闘BGMがループし続け、モーダルで
+        // 「閉じる」/Esc を選ぶとフィールドに戻れず永久ロックになる。
+        const teardownToField = () => {
+            this.inBattle = false;
+            this.waitingForCommand = false;
+            this.currentEnemy = null;
+            if (window.bgmSystem) window.bgmSystem.stop(true); // 戦闘BGMを停止
+            const battleScreen = document.getElementById('battleScreen');
+            if (battleScreen) {
+                battleScreen.classList.remove('active');
+                const ui = document.getElementById('gameUI');
+                if (ui) ui.style.display = 'block';
+            }
+            if (typeof BattlePanel !== 'undefined' && BattlePanel.deactivate) BattlePanel.deactivate();
+            if (typeof window.resetBattleUIState === 'function') window.resetBattleUIState();
+        };
+
         setTimeout(() => {
             if (typeof window.showGameModal === 'function') {
                 window.showGameModal({
@@ -1938,11 +1955,16 @@ class BattleSystem {
                     onSelect: (value) => {
                         if (value === 'title') {
                             location.reload();
+                        } else {
+                            // 「閉じる」/Esc(null): 戦闘画面を閉じてフィールドへ復帰（ロック解除）
+                            teardownToField();
                         }
                     }
                 });
             } else if (confirm('ゲームオーバー。タイトルに戻りますか？')) {
                 location.reload();
+            } else {
+                teardownToField();
             }
         }, 2000);
     }

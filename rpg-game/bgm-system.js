@@ -277,6 +277,14 @@ class BGMSystem {
     changeFieldBGM(trackId) {
         console.log(`[BGM] === Field BGM Change: ${this.currentBGM} -> ${trackId} ===`);
         this.fieldBGM = trackId;
+        // ⚠️ 戦闘中に届いたフィールドBGM要求（マップ遷移の遅延コールバック等）は
+        // 復帰先(fieldBGM)だけ更新して再生はしない。戦闘終了時 endBattleBGM が
+        // この fieldBGM を拾って正しく復帰する。これを怠ると、遷移とエンカウントが
+        // 同フレームで競合した際に遅延 field 要求が戦闘BGMを上書きしてしまう。
+        if (this.currentScene === 'battle') {
+            console.log('[BGM] 戦闘中のためフィールドBGM再生を保留（復帰先のみ更新）');
+            return;
+        }
         this._requestTrack(trackId, { scene: 'field', fadeIn: true });
     }
 
