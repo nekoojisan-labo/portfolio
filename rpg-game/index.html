@@ -2613,7 +2613,7 @@
     <script src="magic-system.js?v=47"></script>
     <script src="battle-system.js?v=48"></script>
     <script src="map-walkability-data.js?v=5"></script>
-    <script src="map-system.js?v=49"></script>
+    <script src="map-system.js?v=50"></script>
     <script src="map-system-grid.js"></script>
     <script src="player-grid-movement.js"></script>
     <script src="bgm-system.js?v=35"></script>
@@ -3871,7 +3871,17 @@ function drawWalkChar(ctx, cx, footY, facing, isMoving, t, pal, scale){
                 player.isMoving = false;
                 return;
             }
-            
+
+            // 駆け寄り型NPC（リク/ヤミ/神主）が近くにいたら主人公へ走り寄り、到達で会話
+            if (mapSystem.updateApproachNPCs) {
+                const approachNpc = mapSystem.updateApproachNPCs(player.x, player.y, storyFlags);
+                if (approachNpc) {
+                    handleApproachConversation(approachNpc);
+                    player.isMoving = false;
+                    return; // 会話開始時はこのフレームの移動を止める
+                }
+            }
+
             const debugInfo = document.getElementById('debugInfo');
             if (debugInfo) debugInfo.remove();
             
@@ -4082,6 +4092,14 @@ function drawWalkChar(ctx, cx, footY, facing, isMoving, t, pal, scale){
                 showMessage(`老神主: 「リクとヤミを集め、都庁のアークを討つのじゃ。」`);
             }
             refreshObjective();
+        }
+
+        // 駆け寄り型NPCが到達した時の会話発火（リク/ヤミ=加入, 老神主=神託）
+        function handleApproachConversation(npc) {
+            if (!npc) return;
+            if (npc.name === 'リク') recruitMember('riku', npc);
+            else if (npc.name === 'ヤミ') recruitMember('yami', npc);
+            else if (npc.name === '老神主') advancePriest(npc);
         }
 
         // ボスNPC撃破時のフラグ＆イベント

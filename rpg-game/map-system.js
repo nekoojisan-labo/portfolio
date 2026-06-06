@@ -3504,6 +3504,45 @@ class MapSystem {
 
         return null;
     }
+
+    // 駆け寄り型NPC（リク/ヤミ/神主）: 近づくと主人公へ走り寄り、到達したら会話用にそのNPCを返す。
+    // 戻り値が non-null の時、呼び出し側が会話を発火する。
+    updateApproachNPCs(playerX, playerY, storyFlags) {
+        const map = this.maps[this.currentMap];
+        if (!map || !map.npcs) return null;
+        const APPROACH = { 'リク': true, 'ヤミ': true, '老神主': true };
+        const TRIGGER = 132, REACH = 40, GIVEUP = 240, SPEED = 2.4;
+        for (const npc of map.npcs) {
+            if (!APPROACH[npc.name]) continue;
+            if (this.isNPCHidden(npc, storyFlags)) continue;
+            if (npc._approachDone) continue;
+            if (npc.name === '老神主' && storyFlags && storyFlags.metPriest) continue;
+
+            const dx = playerX - npc.x, dy = playerY - npc.y;
+            const dist = Math.hypot(dx, dy);
+            const faceDir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
+
+            if (npc._approaching) {
+                if (dist <= REACH) {
+                    npc._approaching = false;
+                    npc._approachDone = true;
+                    npc.isMoving = false;
+                    npc.facing = faceDir;
+                    return npc; // 到達 → 会話トリガー
+                }
+                if (dist > GIVEUP) { npc._approaching = false; npc.isMoving = false; continue; }
+                const len = dist || 1;
+                npc.x += (dx / len) * SPEED;
+                npc.y += (dy / len) * SPEED;
+                npc.isMoving = true;
+                npc.animTime = (npc.animTime || 0) + 16;
+                npc.facing = faceDir;
+            } else if (dist <= TRIGGER && dist > REACH) {
+                npc._approaching = true;
+            }
+        }
+        return null;
+    }
     
     // エンカウント率取得
     getEncounterRate() {
