@@ -62,8 +62,8 @@
 </head>
 <body>
 <header>
-  <h1>🗺️ マップエディタ <span class="badge">v2 試作</span></h1>
-  <span class="hint">矩形でも、ブラシで塗っても可動域を設定できる。✅結果プレビューで「実際に歩ける範囲」を確認 → 保存/エクスポート</span>
+  <h1>🗺️ マップエディタ <span class="badge">壁だけ塗る</span></h1>
+  <span class="hint">🟢全域可動。<b>赤（壁）だけ</b>を設定。通したい所は🧹で消す／塞ぎたい所は🖌で塗る。✅結果プレビュー(緑)＝実際に歩ける範囲 → 📤エクスポート</span>
 </header>
 
 <main>
@@ -85,33 +85,35 @@
       <h2>マップ</h2>
       <select id="mapSelect"></select>
       <div class="counts" style="margin-top:8px">
-        <span><span class="swatch sw-walk" style="display:inline-block;vertical-align:middle"></span> 可動矩形 <b id="cWalk">0</b></span>
+        <span style="display:none"><b id="cWalk">0</b></span>
         <span><span class="swatch sw-coll" style="display:inline-block;vertical-align:middle"></span> 壁矩形 <b id="cColl">0</b></span>
+        <span>🖌 壁セル <b id="cCollCells">0</b></span>
         <span><span class="swatch sw-exit" style="display:inline-block;vertical-align:middle"></span> 出口 <b id="cExit">0</b></span>
+        <span style="display:none"><b id="cWalkCells">0</b></span>
       </div>
-      <div class="counts" style="margin-top:4px">
-        <span>🖌可動セル <b id="cWalkCells">0</b></span>
-        <span>🖌壁セル <b id="cCollCells">0</b></span>
-      </div>
-      <label class="check" style="margin-top:8px"><input type="checkbox" id="openMode"> 🟢 <b style="color:var(--walk)">全域可動モード</b>（このマップは「非可動域だけ」塗る）</label>
-      <div class="lbl" id="openHint" style="display:none;margin-top:2px">全域が歩ける前提。🖌壁/壁矩形で<b>通れない所だけ</b>設定。可動域の設定は不要（無視されます）。</div>
+      <div class="lbl" style="margin-top:8px;color:var(--walk)">🟢 全域可動モード ＝ <b>赤（壁）だけ</b>設定。通したい所は壁を消す／塞ぎたい所は壁を塗る。緑(可動域)は使いません。</div>
+      <label class="check" style="display:none"><input type="checkbox" id="openMode" checked> openMode</label>
+      <div class="lbl" id="openHint" style="display:none"></div>
     </div>
 
     <div class="card">
       <h2>ツール</h2>
-      <div class="sub">矩形（ドラッグで作成）</div>
+      <div class="sub">非可動域（壁）を塗る／消す</div>
       <div class="tool-grid">
-        <div class="tool active" data-tool="walkableRects"><span class="swatch sw-walk"></span>可動域</div>
-        <div class="tool" data-tool="collisionRects"><span class="swatch sw-coll"></span>壁・建物</div>
-        <div class="tool" data-tool="exits"><span class="swatch sw-exit"></span>出口</div>
+        <div class="tool active" data-tool="brushColl"><span class="swatch sw-coll"></span>🖌 壁を塗る</div>
+        <div class="tool" data-tool="erase">🧹 消しゴム（通す）</div>
+        <div class="tool" data-tool="collisionRects"><span class="swatch sw-coll"></span>壁を矩形で</div>
         <div class="tool" data-tool="select"><span class="swatch sw-sel"></span>選択/移動</div>
       </div>
-      <div class="sub">ブラシ（なぞって塗る）</div>
+      <div class="sub">出口</div>
       <div class="tool-grid">
-        <div class="tool" data-tool="brushWalk"><span class="swatch sw-walk"></span>🖌可動</div>
-        <div class="tool" data-tool="brushColl"><span class="swatch sw-coll"></span>🖌壁</div>
-        <div class="tool" data-tool="erase">🧹消しゴム</div>
-        <div class="tool" data-tool="bucket">🪣塗りつぶし</div>
+        <div class="tool" data-tool="exits"><span class="swatch sw-exit"></span>出口を矩形で</div>
+      </div>
+      <!-- 緑(可動域)ツールはblacklist方式では非表示。JS互換のためdata-toolだけ残置 -->
+      <div style="display:none">
+        <div class="tool" data-tool="walkableRects"></div>
+        <div class="tool" data-tool="brushWalk"></div>
+        <div class="tool" data-tool="bucket"></div>
       </div>
       <div class="sub">ブラシ径: <b id="brushLabel">3</b> セル（<kbd>[</kbd>/<kbd>]</kbd>）</div>
       <input id="brushSize" type="range" min="1" max="10" value="3">
@@ -133,15 +135,14 @@
         <button data-zoom="2">2x</button>
         <button data-zoom="3">3x</button>
       </div>
-      <label class="check" style="margin-top:8px"><input type="checkbox" id="optResult"> ✅ 結果プレビュー（実際に歩ける範囲）</label>
+      <label class="check" style="margin-top:8px"><input type="checkbox" id="optResult" checked> ✅ 結果プレビュー（実際に歩ける範囲＝緑）</label>
       <label class="check"><input type="checkbox" id="optErode" checked> └ 体の幅で侵食（通り抜け検出）</label>
       <label class="check"><input type="checkbox" id="optGrid"> グリッド線を表示</label>
       <label class="check"><input type="checkbox" id="optDim" checked> 背景を暗くする</label>
       <label class="check"><input type="checkbox" id="optNpc" checked> NPC位置を参照表示</label>
-      <div class="sub" style="margin-top:8px">レイヤー表示（OFFで選択対象外＝重なり回避）</div>
-      <label class="check"><input type="checkbox" id="visWalk" checked> <span class="swatch sw-walk" style="display:inline-block"></span> 可動域(矩形)</label>
-      <label class="check"><input type="checkbox" id="visColl" checked> <span class="swatch sw-coll" style="display:inline-block"></span> 壁・建物(矩形)</label>
-      <label class="check"><input type="checkbox" id="visExit" checked> <span class="swatch sw-exit" style="display:inline-block"></span> 出口</label>
+      <label class="check" style="display:none"><input type="checkbox" id="visWalk" checked></label>
+      <label class="check" style="margin-top:8px"><input type="checkbox" id="visColl" checked> <span class="swatch sw-coll" style="display:inline-block"></span> 壁を表示</label>
+      <label class="check"><input type="checkbox" id="visExit" checked> <span class="swatch sw-exit" style="display:inline-block"></span> 出口を表示</label>
     </div>
 
     <div class="card">
@@ -179,13 +180,13 @@
   </aside>
 </main>
 
-<script src="map-walkability-data.js"></script>
+<script src="map-walkability-data.js?v=9"></script>
 <script src="map-system.js"></script>
 <script>
 (function(){
   'use strict';
   const STORAGE_KEY = 'deusCodeWalkabilityOverrides';     // ゲームが読む（矩形）
-  const EDITOR_KEY  = 'deusCodeWalkabilityEditorV2';      // エディタ専用（矩形＋ブラシマスク）
+  const EDITOR_KEY  = 'deusCodeWalkabilityEditorV3';      // エディタ専用（blacklist: 壁のみ）
   const BASE_W = 800, BASE_H = 450, GRID = 10;            // 80×45 セル
   const COLS = BASE_W / GRID, ROWS = BASE_H / GRID;
 
@@ -209,24 +210,34 @@
   // ---- データ ----
   function freshFromSource(id){
     const m=mapSystem.maps[id], s=scaleOf(id);
-    return {
-      walkableRects:(m.walkableRects||[]).map(r=>toBase(r,s)),
-      collisionRects:(m.buildings||[]).filter(b=>b.collisionOnly||b.type==='collision').map(r=>toBase(r,s)),
-      exits:(m.exits||[]).map(e=>({...toBase(e,s),to:e.to||'',spawnX:e.spawnX,spawnY:e.spawnY})),
-      walkMask:new Set(), collMask:new Set(), openMode:false,
-    };
+    const baked=(window.MAP_WALKABILITY_DEFAULTS||{})[id]||{};
+    // 非可動域(赤)はベイク済blacklist(base座標)を優先。無ければソースbuildingsを/scaleで戻す。可動域(緑)は使わない。
+    const coll=(Array.isArray(baked.collisionRects)&&baked.collisionRects.length)
+      ? baked.collisionRects.map(r=>({x:r.x,y:r.y,width:r.width,height:r.height}))
+      : (m.buildings||[]).filter(b=>b.collisionOnly||b.type==='collision').map(r=>toBase(r,s));
+    const exits=(Array.isArray(baked.exits)&&baked.exits.length)
+      ? baked.exits.map(e=>({x:e.x,y:e.y,width:e.width,height:e.height,to:e.to||'',spawnX:e.spawnX,spawnY:e.spawnY}))
+      : (m.exits||[]).map(e=>({...toBase(e,s),to:e.to||'',spawnX:e.spawnX,spawnY:e.spawnY}));
+    return { walkableRects:[], collisionRects:coll.map(clampRect), exits, walkMask:new Set(), collMask:new Set(), openMode:true };
   }
   function loadEditorBlob(){ try{ return JSON.parse(localStorage.getItem(EDITOR_KEY)||'{}'); }catch{ return {}; } }
+  // 旧whitelist時代のlocalStorageを掃除（ゲームがベイクblacklistを使えるように／エディタも素から開始）
+  try {
+    localStorage.removeItem('deusCodeWalkabilityEditorV2');
+    const ov=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
+    const hasWhitelist=Object.values(ov).some(x=>x&&Array.isArray(x.walkableRects)&&x.walkableRects.length>0);
+    if(hasWhitelist) localStorage.removeItem(STORAGE_KEY);
+  } catch(e){}
   const data = {};
   const blob = loadEditorBlob();
   mapIds.forEach(id=>{
     if(blob[id]){
       data[id]={
-        walkableRects:(blob[id].walkableRects||[]).map(clampRect),
+        walkableRects:[],
         collisionRects:(blob[id].collisionRects||[]).map(clampRect),
         exits:(blob[id].exits||[]).map(e=>({...clampRect(e),to:e.to||'',spawnX:e.spawnX,spawnY:e.spawnY})),
-        walkMask:new Set(blob[id].walkMask||[]), collMask:new Set(blob[id].collMask||[]),
-        openMode:!!blob[id].openMode,
+        walkMask:new Set(), collMask:new Set(blob[id].collMask||[]),
+        openMode:true,
       };
     } else data[id]=freshFromSource(id);
   });
@@ -239,7 +250,7 @@
 
   const state={
     mapId: mapIds.includes('shinjuku_center_plaza')?'shinjuku_center_plaza':mapIds[0],
-    tool:'walkableRects', sel:null, dragging:false, draft:null, startX:0, startY:0,
+    tool:'brushColl', sel:null, dragging:false, draft:null, startX:0, startY:0,
     moving:false, moveDX:0, moveDY:0, painting:false, brush:3, history:[],
     cycle:null, pickStack:[], hover:null,
   };
